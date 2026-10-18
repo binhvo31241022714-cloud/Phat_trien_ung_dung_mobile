@@ -1,0 +1,44 @@
+# ===== Chung =====
+.DS_Store
+Thumbs.db
+*.log
+.env
+.env.*
+
+# ===== IDE =====
+.vscode/
+.idea/
+*.iml
+
+# ===== Flutter / Dart =====
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+.pub-cache/
+.pub/
+build/
+
+# ===== Android =====
+.gradle/
+local.properties
+/android/app/debug/
+/android/app/profile/
+/android/app/release/
+*.apk
+*.aab
+*.keystore
+*.jks
+
+# ===== iOS =====
+/ios/Pods/
+/ios/.symlinks/
+/ios/Flutter/Flutter.framework
+/ios/Flutter/Generated.xcconfig
+xcuserdata/
+
+# ===== React Native / Node =====
+node_modules/
+.expo/
+npm-debug.log*
+yarn-error.log*
