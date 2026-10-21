@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'core/theme/app_theme.dart';
+import 'core/theme/app_scroll_behavior.dart';
 import 'routes/app_routes.dart';
 
 class App extends StatelessWidget {
@@ -9,10 +10,11 @@ class App extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'KTHP PTUD',
+      title: 'MediCare Dental',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.light,
-      initialRoute: AppRoutes.home,
+      scrollBehavior: const AppScrollBehavior(),
+      initialRoute: AppRoutes.welcome,
       onGenerateRoute: AppRoutes.onGenerateRoute,
     );
   }

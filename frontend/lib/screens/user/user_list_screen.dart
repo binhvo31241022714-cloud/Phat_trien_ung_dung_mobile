@@ -19,7 +19,9 @@ class _UserListScreenState extends State<UserListScreen> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback(
-      (_) => context.read<UserProvider>().fetchUsers(),
+      (_) {
+        if (mounted) context.read<UserProvider>().fetchUsers();
+      },
     );
   }
 
@@ -30,8 +32,12 @@ class _UserListScreenState extends State<UserListScreen> {
         title: const Text('Xoá người dùng'),
         content: Text('Xoá "${user.name}"?'),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Huỷ')),
-          FilledButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Xoá')),
+          TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: const Text('Huỷ')),
+          FilledButton(
+              onPressed: () => Navigator.pop(ctx, true),
+              child: const Text('Xoá')),
         ],
       ),
     );
@@ -57,7 +63,8 @@ class _UserListScreenState extends State<UserListScreen> {
       body: Builder(builder: (_) {
         if (provider.isLoading) return const LoadingView();
         if (provider.error != null) {
-          return AppErrorView(message: provider.error!, onRetry: provider.fetchUsers);
+          return AppErrorView(
+              message: provider.error!, onRetry: provider.fetchUsers);
         }
         if (provider.users.isEmpty) {
           return const Center(child: Text('Chưa có người dùng nào'));

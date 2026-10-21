@@ -1,47 +1,37 @@
-# Frontend (Flutter)
+# MediCare Dental — Flutter Frontend
 
-## Lần đầu: sinh thư mục nền tảng
+Ứng dụng dành cho bệnh nhân. **Mock Mode là mặc định và không cần backend hoặc
+Firebase để demo.** Các thư mục nền tảng đã có trong source; không cần chạy lại
+`flutter create .` để bắt đầu.
 
-Thư mục này mới có phần code Dart (`lib/`). Các thư mục `android/`, `ios/`,
-`web/`, `windows/` do Flutter sinh ra, chạy lệnh sau một lần (không ghi đè `lib/`):
+Baseline được kiểm tra bằng Flutter 3.47.2 stable / Dart 3.13.2. Giữ pubspec.lock
+khi bàn giao; chưa xác minh mọi phiên bản SDK cũ.
 
-```bash
+Từ thư mục gốc dự án:
+
+```sh
 cd frontend
-flutter create . --project-name frontend
 flutter pub get
+flutter devices
+flutter run -t lib/main.dart -d emulator-5554 --dart-define=DATA_SOURCE=mock
 ```
 
-## Chạy
+Thay emulator-5554 bằng ID trong `flutter devices`. Không dùng test/*.dart làm
+entrypoint ứng dụng. Nếu chưa có emulator chạy, xem hướng dẫn demo bên dưới.
 
-Chạy backend trước (xem `../backend/README.md`), sau đó:
-
-```bash
-flutter run                      # chọn thiết bị
-flutter run -d chrome            # chạy trên web
-flutter run --dart-define=API_URL=http://10.0.2.2:8080   # Android emulator
+```sh
+flutter analyze
+flutter test
 ```
 
-## Cấu trúc
+- [Release baseline và kết quả kiểm tra mới nhất](docs/handover/FRONTEND_RELEASE_BASELINE.md)
+- [Hướng dẫn chạy/demo và kiểm thử Android](docs/handover/DEMO_RUN_GUIDE.md)
+- [Kiến trúc/màn hình/Provider](docs/handover/FRONTEND_OVERVIEW.md)
+- [Phân công và bàn giao cho nhóm](docs/handover/TEAM_HANDOVER.md)
+- [Kế hoạch commit riêng frontend](docs/handover/FRONTEND_COMMIT_PLAN.md)
+- [Phần API nội dung tiếp theo của Nhi](docs/handover/NHI_NEXT_STEPS.md)
 
-```
-frontend/
-├── assets/images/               # Ảnh, icon
-├── lib/
-│   ├── main.dart                # Khởi động app, đăng ký Provider
-│   ├── app.dart                 # MaterialApp, theme, route
-│   ├── core/
-│   │   ├── constants/           # URL API, màu sắc
-│   │   ├── network/api_client.dart  # Gọi HTTP
-│   │   ├── theme/               # Theme chung
-│   │   └── utils/               # Hàm kiểm tra dữ liệu nhập
-│   ├── data/
-│   │   ├── models/              # Model parse JSON
-│   │   └── services/            # Gọi API theo từng module
-│   ├── providers/               # Quản lý state (provider)
-│   ├── routes/app_routes.dart   # Khai báo màn hình
-│   ├── screens/                 # Các màn hình
-│   └── widgets/                 # Widget dùng chung
-└── test/
-```
-
-Luồng dữ liệu: `screen -> provider -> service -> ApiClient -> backend`.
+API foundation hiện chỉ hỗ trợ user legacy, không phải Auth hay dữ liệu bệnh
+nhân thật. Bài viết, Home, thông báo, đặt lịch và hồ sơ vẫn demo. API contract
+còn chờ nhóm xác nhận; không tự bật API/Firebase hoặc đưa secret vào dart-define.
+Baseline này dành cho bàn giao source/demo, chưa phải phát hành lên cửa hàng.

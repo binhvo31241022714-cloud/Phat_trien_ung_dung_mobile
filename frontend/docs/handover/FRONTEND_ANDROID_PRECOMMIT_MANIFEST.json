@@ -1,0 +1,976 @@
+{
+  "schema_version": 1,
+  "status": "PRE-COMMIT",
+  "created_at": "2026-10-21T22:49:48.316033+07:00",
+  "scope": "Flutter source/config/dependencies/tests + Android scaffold + frontend handover documentation only",
+  "authorization": "Prompt 12.7: 149 candidates from Prompt 12.6, four synchronized documents, this new manifest; no commit or push",
+  "expected_staged_path_count": 154,
+  "expected_staged_paths": [
+    "frontend/.gitignore",
+    "frontend/.metadata",
+    "frontend/README.md",
+    "frontend/analysis_options.yaml",
+    "frontend/android/.gitignore",
+    "frontend/android/app/build.gradle.kts",
+    "frontend/android/app/src/debug/AndroidManifest.xml",
+    "frontend/android/app/src/main/AndroidManifest.xml",
+    "frontend/android/app/src/main/kotlin/com/example/frontend/MainActivity.kt",
+    "frontend/android/app/src/main/res/drawable-v21/launch_background.xml",
+    "frontend/android/app/src/main/res/drawable/launch_background.xml",
+    "frontend/android/app/src/main/res/mipmap-hdpi/ic_launcher.png",
+    "frontend/android/app/src/main/res/mipmap-mdpi/ic_launcher.png",
+    "frontend/android/app/src/main/res/mipmap-xhdpi/ic_launcher.png",
+    "frontend/android/app/src/main/res/mipmap-xxhdpi/ic_launcher.png",
+    "frontend/android/app/src/main/res/mipmap-xxxhdpi/ic_launcher.png",
+    "frontend/android/app/src/main/res/values-night/styles.xml",
+    "frontend/android/app/src/main/res/values/styles.xml",
+    "frontend/android/app/src/profile/AndroidManifest.xml",
+    "frontend/android/build.gradle.kts",
+    "frontend/android/gradle.properties",
+    "frontend/android/gradle/wrapper/gradle-wrapper.properties",
+    "frontend/android/settings.gradle.kts",
+    "frontend/assets/icons/.gitkeep",
+    "frontend/assets/images/articles/.gitkeep",
+    "frontend/assets/images/doctors/.gitkeep",
+    "frontend/assets/images/logo/.gitkeep",
+    "frontend/assets/images/services/.gitkeep",
+    "frontend/docs/handover/API_INTEGRATION_MAP.md",
+    "frontend/docs/handover/CONTENT_MODULE_HANDOVER.md",
+    "frontend/docs/handover/DEMO_RUN_GUIDE.md",
+    "frontend/docs/handover/FRONTEND_ANDROID_PRECOMMIT_MANIFEST.json",
+    "frontend/docs/handover/FRONTEND_BASELINE_MANIFEST.json",
+    "frontend/docs/handover/FRONTEND_COMMIT_FILES.txt",
+    "frontend/docs/handover/FRONTEND_COMMIT_PLAN.md",
+    "frontend/docs/handover/FRONTEND_OVERVIEW.md",
+    "frontend/docs/handover/FRONTEND_RELEASE_BASELINE.md",
+    "frontend/docs/handover/NHI_NEXT_STEPS.md",
+    "frontend/docs/handover/PENDING_BACKEND_REVIEW.md",
+    "frontend/docs/handover/QA_RESULTS.md",
+    "frontend/docs/handover/TEAM_HANDOVER.md",
+    "frontend/integration_test/api_foundation_test.dart",
+    "frontend/integration_test/content_handover_test.dart",
+    "frontend/integration_test/final_flow_test.dart",
+    "frontend/integration_test/overscroll_test.dart",
+    "frontend/integration_test/release_baseline_test.dart",
+    "frontend/lib/app.dart",
+    "frontend/lib/app/main_shell.dart",
+    "frontend/lib/app/patient_navigation.dart",
+    "frontend/lib/core/config/app_config.dart",
+    "frontend/lib/core/constants/api_constants.dart",
+    "frontend/lib/core/constants/app_colors.dart",
+    "frontend/lib/core/network/api_client.dart",
+    "frontend/lib/core/theme/app_scroll_behavior.dart",
+    "frontend/lib/core/theme/app_text_styles.dart",
+    "frontend/lib/core/theme/app_theme.dart",
+    "frontend/lib/core/utils/formatters.dart",
+    "frontend/lib/core/utils/validators.dart",
+    "frontend/lib/core/widgets/app_card.dart",
+    "frontend/lib/core/widgets/app_text_field.dart",
+    "frontend/lib/core/widgets/custom_text_field.dart",
+    "frontend/lib/core/widgets/empty_view.dart",
+    "frontend/lib/core/widgets/error_state.dart",
+    "frontend/lib/core/widgets/loading_view.dart",
+    "frontend/lib/core/widgets/page_header.dart",
+    "frontend/lib/core/widgets/primary_button.dart",
+    "frontend/lib/core/widgets/secondary_button.dart",
+    "frontend/lib/core/widgets/section_header.dart",
+    "frontend/lib/core/widgets/status_chip.dart",
+    "frontend/lib/data/mock_data.dart",
+    "frontend/lib/data/models/appointment.dart",
+    "frontend/lib/data/models/article.dart",
+    "frontend/lib/data/models/dental_service.dart",
+    "frontend/lib/data/models/doctor.dart",
+    "frontend/lib/data/models/patient.dart",
+    "frontend/lib/data/models/patient_records.dart",
+    "frontend/lib/data/models/user_model.dart",
+    "frontend/lib/data/providers/patient_data_provider.dart",
+    "frontend/lib/data/repositories/user_read_repository.dart",
+    "frontend/lib/data/services/user_service.dart",
+    "frontend/lib/features/articles/article_detail_screen.dart",
+    "frontend/lib/features/articles/article_list_screen.dart",
+    "frontend/lib/features/auth/forgot_password_screen.dart",
+    "frontend/lib/features/auth/login_screen.dart",
+    "frontend/lib/features/auth/register_screen.dart",
+    "frontend/lib/features/auth/welcome_screen.dart",
+    "frontend/lib/features/booking/booking_controller.dart",
+    "frontend/lib/features/booking/booking_screen.dart",
+    "frontend/lib/features/booking/booking_success_screen.dart",
+    "frontend/lib/features/booking/steps/confirm_booking_step.dart",
+    "frontend/lib/features/booking/steps/select_datetime_step.dart",
+    "frontend/lib/features/booking/steps/select_doctor_step.dart",
+    "frontend/lib/features/booking/steps/select_services_step.dart",
+    "frontend/lib/features/booking/widgets/booking_price_summary.dart",
+    "frontend/lib/features/booking/widgets/booking_stepper.dart",
+    "frontend/lib/features/doctors/doctor_detail_screen.dart",
+    "frontend/lib/features/doctors/doctor_list_screen.dart",
+    "frontend/lib/features/home/patient_home_screen.dart",
+    "frontend/lib/features/me/change_password_screen.dart",
+    "frontend/lib/features/me/edit_profile_screen.dart",
+    "frontend/lib/features/me/family_form_screen.dart",
+    "frontend/lib/features/me/family_list_screen.dart",
+    "frontend/lib/features/me/help_screen.dart",
+    "frontend/lib/features/me/language_screen.dart",
+    "frontend/lib/features/me/me_screen.dart",
+    "frontend/lib/features/me/me_widgets.dart",
+    "frontend/lib/features/me/notifications_screen.dart",
+    "frontend/lib/features/me/privacy_screen.dart",
+    "frontend/lib/features/me/saved_items_screen.dart",
+    "frontend/lib/features/me/settings_screen.dart",
+    "frontend/lib/features/records/appointment_detail_screen.dart",
+    "frontend/lib/features/records/appointments_screen.dart",
+    "frontend/lib/features/records/exam_result_screen.dart",
+    "frontend/lib/features/records/followup_screen.dart",
+    "frontend/lib/features/records/payment_receipt_screen.dart",
+    "frontend/lib/features/records/prescription_screen.dart",
+    "frontend/lib/features/records/records_home_screen.dart",
+    "frontend/lib/features/records/records_widgets.dart",
+    "frontend/lib/features/records/treatment_detail_screen.dart",
+    "frontend/lib/features/records/treatment_list_screen.dart",
+    "frontend/lib/features/records/treatment_photos_screen.dart",
+    "frontend/lib/features/records/visit_detail_screen.dart",
+    "frontend/lib/features/records/visit_history_screen.dart",
+    "frontend/lib/features/services/service_detail_screen.dart",
+    "frontend/lib/features/services/service_list_screen.dart",
+    "frontend/lib/features/shared/article_card.dart",
+    "frontend/lib/features/shared/catalog_navigation.dart",
+    "frontend/lib/features/shared/doctor_card.dart",
+    "frontend/lib/features/shared/patient_avatar.dart",
+    "frontend/lib/features/shared/patient_detail_screen.dart",
+    "frontend/lib/features/shared/service_card.dart",
+    "frontend/lib/main.dart",
+    "frontend/lib/providers/user_provider.dart",
+    "frontend/lib/routes/app_routes.dart",
+    "frontend/lib/screens/home/home_screen.dart",
+    "frontend/lib/screens/user/user_form_screen.dart",
+    "frontend/lib/screens/user/user_list_screen.dart",
+    "frontend/lib/widgets/loading_view.dart",
+    "frontend/pubspec.lock",
+    "frontend/pubspec.yaml",
+    "frontend/test/api_foundation_test.dart",
+    "frontend/test/booking_test.dart",
+    "frontend/test/content_handover_test.dart",
+    "frontend/test/final_qa_test.dart",
+    "frontend/test/me_test.dart",
+    "frontend/test/patient_data_test.dart",
+    "frontend/test/records_test.dart",
+    "frontend/test/scroll_behavior_test.dart",
+    "frontend/test/widget_test.dart",
+    "frontend/test_driver/api_foundation_driver.dart",
+    "frontend/test_driver/final_qa_driver.dart",
+    "frontend/test_driver/handover_driver.dart",
+    "frontend/test_driver/overscroll_driver.dart",
+    "frontend/test_driver/release_baseline_driver.dart"
+  ],
+  "historical_test_reference": {
+    "manifest": "frontend/docs/handover/FRONTEND_BASELINE_MANIFEST.json",
+    "captured_at": "2026-10-21T22:11:13.840005+07:00",
+    "file_count": 254,
+    "aggregate_sha256": "2a8e04a91bbf488b46d45fba44edccdcaf78fcebf95d4873f2c8e3cc81fd58c2",
+    "flutter": "3.47.2 stable",
+    "dart": "3.13.2",
+    "flutter_tests_passed": 97,
+    "android_application_scenarios_passed": 2,
+    "mock_http_attempts": 0,
+    "note": "Historical Prompt 12 evidence only. Not rerun or re-certified in Prompt 12.7."
+  },
+  "hash_source": "SHA256 of working-tree file bytes after authorized documentation synchronization; verify these bytes against Git index blobs after staging. This is not fresh runtime test evidence.",
+  "hashed_file_count": 153,
+  "self_hash_policy": "This manifest is listed in expected_staged_paths but excluded from files/aggregate to avoid self-reference. Verify its exact bytes separately against the index.",
+  "aggregate_sha256": "2d7c74fbeb32ef4b8927c76bdafc46d21c10782863bcb7bd682511424d7c0547",
+  "aggregate_serialization": "For files sorted by root-relative path: sha256 + two spaces + path + LF, UTF-8",
+  "files": [
+    {
+      "path": "frontend/.gitignore",
+      "sha256": "441eaa1de5b3db9fae056e7503567e9f8dd94173e1389c60f76956abf729015a",
+      "category": "flutter_config_dependencies_assets"
+    },
+    {
+      "path": "frontend/.metadata",
+      "sha256": "adf9465f630921e9859fe74f17580635c6d1c0f24934bca95637506430077099",
+      "category": "flutter_config_dependencies_assets"
+    },
+    {
+      "path": "frontend/README.md",
+      "sha256": "132efd72ca3465b3822ebbe5df4106e41b17564ebadf8abf4a2c82e5733abd87",
+      "category": "flutter_config_dependencies_assets"
+    },
+    {
+      "path": "frontend/analysis_options.yaml",
+      "sha256": "f57abb82d8e4a5e5a8bf34849e4049a1d84eb25ec2f294c31c5410c426dde7c0",
+      "category": "flutter_config_dependencies_assets"
+    },
+    {
+      "path": "frontend/android/.gitignore",
+      "sha256": "b027c9de1011765c015e5819bf857c0d75bfcd0886fb01721c091159012e50f1",
+      "category": "android_scaffold"
+    },
+    {
+      "path": "frontend/android/app/build.gradle.kts",
+      "sha256": "6b3f9bd5ad1b7a20134cd4ff24b04844f1285ed8ffdd83bb9786f1eabf57cd73",
+      "category": "android_scaffold"
+    },
+    {
+      "path": "frontend/android/app/src/debug/AndroidManifest.xml",
+      "sha256": "30b0832ed8b92dfbd6ae2abfa939ccf26333d37600056b1572bd4a397a18a74b",
+      "category": "android_scaffold"
+    },
+    {
+      "path": "frontend/android/app/src/main/AndroidManifest.xml",
+      "sha256": "43790bededb217942dfdab84db336161d56b703f3a906a6a4e4f9d1019deaf89",
+      "category": "android_scaffold"
+    },
+    {
+      "path": "frontend/android/app/src/main/kotlin/com/example/frontend/MainActivity.kt",
+      "sha256": "5064a9524403524a65a773f3672b2c7b16fbf288d8437327dc26958a8f68b9d0",
+      "category": "android_scaffold"
+    },
+    {
+      "path": "frontend/android/app/src/main/res/drawable-v21/launch_background.xml",
+      "sha256": "7ca6d5cec2169c5a98661a119db23a6f3399c8fef2256ff04f3a642831282478",
+      "category": "android_scaffold"
+    },
+    {
+      "path": "frontend/android/app/src/main/res/drawable/launch_background.xml",
+      "sha256": "94433756fe10005ddd6fc55cc5c0b1e9f3c10b66a08ceac795ece6713d34e28a",
+      "category": "android_scaffold"
+    },
+    {
+      "path": "frontend/android/app/src/main/res/mipmap-hdpi/ic_launcher.png",
+      "sha256": "6a7c8f0d703e3682108f9662f813302236240d3f8f638bb391e32bfb96055fef",
+      "category": "android_scaffold"
+    },
+    {
+      "path": "frontend/android/app/src/main/res/mipmap-mdpi/ic_launcher.png",
+      "sha256": "c7c0c0189145e4e32a401c61c9bdc615754b0264e7afae24e834bb81049eaf81",
+      "category": "android_scaffold"
+    },
+    {
+      "path": "frontend/android/app/src/main/res/mipmap-xhdpi/ic_launcher.png",
+      "sha256": "e14aa40904929bf313fded22cf7e7ffcbf1d1aac4263b5ef1be8bfce650397aa",
+      "category": "android_scaffold"
+    },
+    {
+      "path": "frontend/android/app/src/main/res/mipmap-xxhdpi/ic_launcher.png",
+      "sha256": "4d470bf22d5c17d84edc5f82516d1ba8a1c09559cd761cefb792f86d9f52b540",
+      "category": "android_scaffold"
+    },
+    {
+      "path": "frontend/android/app/src/main/res/mipmap-xxxhdpi/ic_launcher.png",
+      "sha256": "3c34e1f298d0c9ea3455d46db6b7759c8211a49e9ec6e44b635fc5c87dfb4180",
+      "category": "android_scaffold"
+    },
+    {
+      "path": "frontend/android/app/src/main/res/values-night/styles.xml",
+      "sha256": "8c5bad5152f217e837519f9c15211d19f39bd45f5f67faf6dd81cb4b299e518f",
+      "category": "android_scaffold"
+    },
+    {
+      "path": "frontend/android/app/src/main/res/values/styles.xml",
+      "sha256": "937d7c82f539c72eb94fd3a3773f29b3d3fef1997213c92cb632298cedf4bda9",
+      "category": "android_scaffold"
+    },
+    {
+      "path": "frontend/android/app/src/profile/AndroidManifest.xml",
+      "sha256": "30b0832ed8b92dfbd6ae2abfa939ccf26333d37600056b1572bd4a397a18a74b",
+      "category": "android_scaffold"
+    },
+    {
+      "path": "frontend/android/build.gradle.kts",
+      "sha256": "6a26dba2cb8dfba1e74f540b0d17a89d96c1301d3c3bfda14348bed257fddcba",
+      "category": "android_scaffold"
+    },
+    {
+      "path": "frontend/android/gradle.properties",
+      "sha256": "0f82b18017fba6bb5ce3aa4b2d1a00c9382fc8aae7b1d9326e44b18abd66d80b",
+      "category": "android_scaffold"
+    },
+    {
+      "path": "frontend/android/gradle/wrapper/gradle-wrapper.properties",
+      "sha256": "b690d26223576fe4e63889fad9a00df81945cb870b9476cc5a563152a1a88a74",
+      "category": "android_scaffold"
+    },
+    {
+      "path": "frontend/android/settings.gradle.kts",
+      "sha256": "016759283e88ade6eba92910583feeef88b962839b957aa414296afd2952d122",
+      "category": "android_scaffold"
+    },
+    {
+      "path": "frontend/assets/icons/.gitkeep",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "category": "flutter_config_dependencies_assets"
+    },
+    {
+      "path": "frontend/assets/images/articles/.gitkeep",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "category": "flutter_config_dependencies_assets"
+    },
+    {
+      "path": "frontend/assets/images/doctors/.gitkeep",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "category": "flutter_config_dependencies_assets"
+    },
+    {
+      "path": "frontend/assets/images/logo/.gitkeep",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "category": "flutter_config_dependencies_assets"
+    },
+    {
+      "path": "frontend/assets/images/services/.gitkeep",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "category": "flutter_config_dependencies_assets"
+    },
+    {
+      "path": "frontend/docs/handover/API_INTEGRATION_MAP.md",
+      "sha256": "5c83c22b102e99cde5377e98fcceb057723e785dcaf0a724e0614150a25f9c65",
+      "category": "handover_docs"
+    },
+    {
+      "path": "frontend/docs/handover/CONTENT_MODULE_HANDOVER.md",
+      "sha256": "e295e68a2b1e41bb6a85e0ccda14cf5ee34093788e3ca722302f21f2de16db04",
+      "category": "handover_docs"
+    },
+    {
+      "path": "frontend/docs/handover/DEMO_RUN_GUIDE.md",
+      "sha256": "f280e9a613545baa02064df20ea7fbc9a9edba2344abc634ed879553bc9cb908",
+      "category": "handover_docs"
+    },
+    {
+      "path": "frontend/docs/handover/FRONTEND_BASELINE_MANIFEST.json",
+      "sha256": "3ce1d58e2411b00d6c7b220b162a6c25ea9d0bbc1b971b36cec9d65666c3d0d4",
+      "category": "handover_docs"
+    },
+    {
+      "path": "frontend/docs/handover/FRONTEND_COMMIT_FILES.txt",
+      "sha256": "6cf2a818c748b5b74760e8284415973d0aae15d4d343fa106adc56db7f31d20e",
+      "category": "handover_docs"
+    },
+    {
+      "path": "frontend/docs/handover/FRONTEND_COMMIT_PLAN.md",
+      "sha256": "77c2b640688ae75c5de5856c8ee3ed2fff962c8caa7ccaf0fbdd80f8f49f2147",
+      "category": "handover_docs"
+    },
+    {
+      "path": "frontend/docs/handover/FRONTEND_OVERVIEW.md",
+      "sha256": "5ccdd3484d9c17fef4a57fa2ece5641c41b6abf1e9dcca37d1486ca0890f9676",
+      "category": "handover_docs"
+    },
+    {
+      "path": "frontend/docs/handover/FRONTEND_RELEASE_BASELINE.md",
+      "sha256": "c95867f093040a9a7a233c08f6b4c6a3819548431f840669e3b99de5bf60eb06",
+      "category": "handover_docs"
+    },
+    {
+      "path": "frontend/docs/handover/NHI_NEXT_STEPS.md",
+      "sha256": "502688296c8322df53c8015b1cbc4e3fb7cee83bbb1f185ee660f28ad6b56e33",
+      "category": "handover_docs"
+    },
+    {
+      "path": "frontend/docs/handover/PENDING_BACKEND_REVIEW.md",
+      "sha256": "6f726416304275af2c0e234526a11c929d31603943916cb9d3ae39b0600a9d9a",
+      "category": "handover_docs"
+    },
+    {
+      "path": "frontend/docs/handover/QA_RESULTS.md",
+      "sha256": "efb001aa2b77d7c97fcec0bdf0d85d767892c8e692e1a8d91cca0cfe998dbba0",
+      "category": "handover_docs"
+    },
+    {
+      "path": "frontend/docs/handover/TEAM_HANDOVER.md",
+      "sha256": "cc7354974dc001b391ad6c85f6cbf98293663b5ee4c8423b75e4a749b385ca62",
+      "category": "handover_docs"
+    },
+    {
+      "path": "frontend/integration_test/api_foundation_test.dart",
+      "sha256": "5098bc10f4e892bb6ec44ff8138b623eee0e9d99557621eec3e16f5fe1a60269",
+      "category": "tests_and_drivers"
+    },
+    {
+      "path": "frontend/integration_test/content_handover_test.dart",
+      "sha256": "ff6eac27bc700ef87a9e377b09b07cc262dd7b0c6de771d7a9f156bf492d7f0b",
+      "category": "tests_and_drivers"
+    },
+    {
+      "path": "frontend/integration_test/final_flow_test.dart",
+      "sha256": "692a9d9790cfe203e2690aaf53574123a461b728fb20564a26891d53611e2bf6",
+      "category": "tests_and_drivers"
+    },
+    {
+      "path": "frontend/integration_test/overscroll_test.dart",
+      "sha256": "c1369e2d6d972b61ecd95cb1a62c22a467ae314e3191e8158e3b98b5d0d4db2f",
+      "category": "tests_and_drivers"
+    },
+    {
+      "path": "frontend/integration_test/release_baseline_test.dart",
+      "sha256": "cbf26ca1e9adeeeb2ff9d30a9b988e81eaeb3a97f677a71326581119f5f380b0",
+      "category": "tests_and_drivers"
+    },
+    {
+      "path": "frontend/lib/app.dart",
+      "sha256": "7b46658dad8b4886afddcfdbd05f46ecb1004bf3d279b1ed7ed4d472956d6ee5",
+      "category": "flutter_source"
+    },
+    {
+      "path": "frontend/lib/app/main_shell.dart",
+      "sha256": "07145c5390f744479dd6f36bfd824ddb214303631d0c7ac3d548a534a0307152",
+      "category": "flutter_source"
+    },
+    {
+      "path": "frontend/lib/app/patient_navigation.dart",
+      "sha256": "e7c04b9fd930ede405657b60ec55d940db0fbee33c4718957ef9d3be1dd763bb",
+      "category": "flutter_source"
+    },
+    {
+      "path": "frontend/lib/core/config/app_config.dart",
+      "sha256": "3b126cd517e51fb8f12c12fb1222a4bf2dd40ffdf747cdbd3ad11b3452657b5e",
+      "category": "flutter_source"
+    },
+    {
+      "path": "frontend/lib/core/constants/api_constants.dart",
+      "sha256": "1ae477eae6a218fd367f44e034ac2e576ceb3a21f8ea761dac710187aadd717c",
+      "category": "flutter_source"
+    },
+    {
+      "path": "frontend/lib/core/constants/app_colors.dart",
+      "sha256": "6e5d505f1b28b01f5745b30223ee0639cef16d0acd655e5678458fcb0527210a",
+      "category": "flutter_source"
+    },
+    {
+      "path": "frontend/lib/core/network/api_client.dart",
+      "sha256": "677c660b36e770d75de76dcc290bc3d97d24c9590ca29bdf1268f2df3adc3929",
+      "category": "flutter_source"
+    },
+    {
+      "path": "frontend/lib/core/theme/app_scroll_behavior.dart",
+      "sha256": "6b88748a636ca46a6405e4f2a702a7d78325ad76077a8f5e959e5ef72797dd9a",
+      "category": "flutter_source"
+    },
+    {
+      "path": "frontend/lib/core/theme/app_text_styles.dart",
+      "sha256": "7e46e805992f7add45cdabf70ba532067ebb3a7426ce177cebd53b04d1a369b9",
+      "category": "flutter_source"
+    },
+    {
+      "path": "frontend/lib/core/theme/app_theme.dart",
+      "sha256": "ace1eeb08eb29ccc581199fc57011d433fd1f2a868550879b86932d6c3eb6343",
+      "category": "flutter_source"
+    },
+    {
+      "path": "frontend/lib/core/utils/formatters.dart",
+      "sha256": "5781ba3cbb4cb9fb3b9656cbf962634331723ff7a99ddb796309a2f7a36b5879",
+      "category": "flutter_source"
+    },
+    {
+      "path": "frontend/lib/core/utils/validators.dart",
+      "sha256": "1dde585fe3066c1125eff91b15945c70324180fa083c1cc9f6900c3a417c1468",
+      "category": "flutter_source"
+    },
+    {
+      "path": "frontend/lib/core/widgets/app_card.dart",
+      "sha256": "f5c557960fbc808e10734de708c33ba8fcc8f21a5c62d16f1bdba26ae5e9660b",
+      "category": "flutter_source"
+    },
+    {
+      "path": "frontend/lib/core/widgets/app_text_field.dart",
+      "sha256": "747f893b9d8664d3dd8a324b539f340ffc29a113e2411679ea4985efd0eec4d5",
+      "category": "flutter_source"
+    },
+    {
+      "path": "frontend/lib/core/widgets/custom_text_field.dart",
+      "sha256": "c1eb71ef8b8298213f8086627af22fe22f49ccd1c84e2dc2e0e8142525001840",
+      "category": "flutter_source"
+    },
+    {
+      "path": "frontend/lib/core/widgets/empty_view.dart",
+      "sha256": "82fe194884c3191d5ce3b10e8cc9351929673a6823a01eee53bb50b6189a2da1",
+      "category": "flutter_source"
+    },
+    {
+      "path": "frontend/lib/core/widgets/error_state.dart",
+      "sha256": "2acba4d712d23407011eca8c001cce630e66260dcf61244ba20f7e66c8ba6a45",
+      "category": "flutter_source"
+    },
+    {
+      "path": "frontend/lib/core/widgets/loading_view.dart",
+      "sha256": "d4f33865aa704779de0209b27aecaf9cedbe5b24886013480c200b083bcf15b4",
+      "category": "flutter_source"
+    },
+    {
+      "path": "frontend/lib/core/widgets/page_header.dart",
+      "sha256": "fd3564990f40ef72eb65442c66f278430de2821179d7272f106648812de42406",
+      "category": "flutter_source"
+    },
+    {
+      "path": "frontend/lib/core/widgets/primary_button.dart",
+      "sha256": "70f18caee6b385f1e29623c14e031e5bafcdf4625a74e1e754c0a1f39efd17e3",
+      "category": "flutter_source"
+    },
+    {
+      "path": "frontend/lib/core/widgets/secondary_button.dart",
+      "sha256": "df36f44957a7285820d96e73c6fcfdebba6433fa7ff66de51b6256b3e921ca84",
+      "category": "flutter_source"
+    },
+    {
+      "path": "frontend/lib/core/widgets/section_header.dart",
+      "sha256": "b5735c5130343cccd4dc1454541050c8e2d8a1ab353776e41cf29fd9bb3f6459",
+      "category": "flutter_source"
+    },
+    {
+      "path": "frontend/lib/core/widgets/status_chip.dart",
+      "sha256": "cbd0371b544ac01d636989ecb1ae08e93f4973d4e8f7b70d32b61c868bf6dbed",
+      "category": "flutter_source"
+    },
+    {
+      "path": "frontend/lib/data/mock_data.dart",
+      "sha256": "f4c980132a0187932e7492905cd1ae092858968463fccb29679da10ac6cce5f4",
+      "category": "flutter_source"
+    },
+    {
+      "path": "frontend/lib/data/models/appointment.dart",
+      "sha256": "83fdb935f8c664eff0cea931ba34d098b30cddaf49d7e49d388e141f3418317a",
+      "category": "flutter_source"
+    },
+    {
+      "path": "frontend/lib/data/models/article.dart",
+      "sha256": "a214edadd9ff0f01fc95fc444748006ef6a95fff7d5845f3d995755346b0c867",
+      "category": "flutter_source"
+    },
+    {
+      "path": "frontend/lib/data/models/dental_service.dart",
+      "sha256": "59dbdedaf945b7f578afc3c410c486f75611423cd6cdbe29fb0c2e68ff513e81",
+      "category": "flutter_source"
+    },
+    {
+      "path": "frontend/lib/data/models/doctor.dart",
+      "sha256": "19847cc9f89418c93c4165d0ad14d69aa4678886b647fc00ea5b5f0c3c3d2034",
+      "category": "flutter_source"
+    },
+    {
+      "path": "frontend/lib/data/models/patient.dart",
+      "sha256": "0ba3848b497a7ef5231e85e677ef095728fe0a330f068921b32d446cfb2fd8bf",
+      "category": "flutter_source"
+    },
+    {
+      "path": "frontend/lib/data/models/patient_records.dart",
+      "sha256": "77e8a1d3e5df5797ef15c5f2ee034d81b759d998c223ca30058db6f41852f24a",
+      "category": "flutter_source"
+    },
+    {
+      "path": "frontend/lib/data/models/user_model.dart",
+      "sha256": "3ca506d0bf8c12e13fb69b076d3049c57059be0c80a74d3d2f3bef353c011066",
+      "category": "flutter_source"
+    },
+    {
+      "path": "frontend/lib/data/providers/patient_data_provider.dart",
+      "sha256": "0ec0194ea09a8b0026f7ef7af46040315acf25a4474512d4ff238ad14bdcb4e3",
+      "category": "flutter_source"
+    },
+    {
+      "path": "frontend/lib/data/repositories/user_read_repository.dart",
+      "sha256": "27924768571cb46e9c0f97b260ac54119da3c6131b1b010d50e7565c01fdf9e3",
+      "category": "flutter_source"
+    },
+    {
+      "path": "frontend/lib/data/services/user_service.dart",
+      "sha256": "5a7aadb207b86f919eed2769a68545a95a6ce9a9faffefe26d4c812e2d757c93",
+      "category": "flutter_source"
+    },
+    {
+      "path": "frontend/lib/features/articles/article_detail_screen.dart",
+      "sha256": "51669dd126f659055521233cb21e1f76f6e1ad48d3d7786094df4a88adbcd853",
+      "category": "flutter_source"
+    },
+    {
+      "path": "frontend/lib/features/articles/article_list_screen.dart",
+      "sha256": "c770ce8a5db26f39db430abf6262b15d3abda42cbb2eeade842d2f2835571158",
+      "category": "flutter_source"
+    },
+    {
+      "path": "frontend/lib/features/auth/forgot_password_screen.dart",
+      "sha256": "4809cee191a2df1a4a9621d6dbb526229c7a485fc84428bf72d40bcdb76c34e1",
+      "category": "flutter_source"
+    },
+    {
+      "path": "frontend/lib/features/auth/login_screen.dart",
+      "sha256": "1299dbe6ff8cbac356a38e99655dcfbb90e825bb6f6efe860e1fb45884d04f9c",
+      "category": "flutter_source"
+    },
+    {
+      "path": "frontend/lib/features/auth/register_screen.dart",
+      "sha256": "5c9355c4332c2b69615935cc26110fa640d7a20accd226b02512711f91647834",
+      "category": "flutter_source"
+    },
+    {
+      "path": "frontend/lib/features/auth/welcome_screen.dart",
+      "sha256": "130b93cd29cd4c0f5e6c264807d532c5b1d27ff8aaaa9cdbbfcbf6d13e7b740e",
+      "category": "flutter_source"
+    },
+    {
+      "path": "frontend/lib/features/booking/booking_controller.dart",
+      "sha256": "1ddeca7c3fb9b2a0ee7ab9a690bdcae4997f7a1fe292a16bccdeaff48e7700b7",
+      "category": "flutter_source"
+    },
+    {
+      "path": "frontend/lib/features/booking/booking_screen.dart",
+      "sha256": "afb76538d7a11201b2f01dbd58f60422c44803d92d34376a58b78dd7cb728f9c",
+      "category": "flutter_source"
+    },
+    {
+      "path": "frontend/lib/features/booking/booking_success_screen.dart",
+      "sha256": "ed151e83337dc89a050c042902c629e4ed1eb8bdbaa9f9e2fb06b0b404ea7fc8",
+      "category": "flutter_source"
+    },
+    {
+      "path": "frontend/lib/features/booking/steps/confirm_booking_step.dart",
+      "sha256": "7b21bb8712669dde8e751fa2f83c856fa8252b5c9e35bf90329ef53ed048e0bb",
+      "category": "flutter_source"
+    },
+    {
+      "path": "frontend/lib/features/booking/steps/select_datetime_step.dart",
+      "sha256": "362a4e101922c0f05e58fd499450de05f2c6ef57405b186c93c90eed2a6bdfdd",
+      "category": "flutter_source"
+    },
+    {
+      "path": "frontend/lib/features/booking/steps/select_doctor_step.dart",
+      "sha256": "fbc945266793aaffbeeac5076ce3c88c9ecf1595a6a476c39ad14e98a43c913a",
+      "category": "flutter_source"
+    },
+    {
+      "path": "frontend/lib/features/booking/steps/select_services_step.dart",
+      "sha256": "0243f0f54b5150c73b358c664d4f92248f232a7e46387051e499cafede74dbf5",
+      "category": "flutter_source"
+    },
+    {
+      "path": "frontend/lib/features/booking/widgets/booking_price_summary.dart",
+      "sha256": "96f8b28bea334fd8e6735272b156f6e8f307fca082fdd938766550cec05ddf91",
+      "category": "flutter_source"
+    },
+    {
+      "path": "frontend/lib/features/booking/widgets/booking_stepper.dart",
+      "sha256": "abe00974b38197437f582f9d6b24152b483c0c2c072f5687bdec80a4c12394c5",
+      "category": "flutter_source"
+    },
+    {
+      "path": "frontend/lib/features/doctors/doctor_detail_screen.dart",
+      "sha256": "4704d80b6056a2b438e5a5a7abb1ee6a5f23ce5c0a7441fdd904bd6703359009",
+      "category": "flutter_source"
+    },
+    {
+      "path": "frontend/lib/features/doctors/doctor_list_screen.dart",
+      "sha256": "fbb7adff118d69cacc83114b1bee374804776e0024b27842046f62bbc2d23562",
+      "category": "flutter_source"
+    },
+    {
+      "path": "frontend/lib/features/home/patient_home_screen.dart",
+      "sha256": "2616d65c8b3dae575290657a58249637c9bf58b08939079e4052bb0ddb83d8b2",
+      "category": "flutter_source"
+    },
+    {
+      "path": "frontend/lib/features/me/change_password_screen.dart",
+      "sha256": "36822250aea635cb879fecfe23d205fe0cebc9a20b30f281771b1aecff96f595",
+      "category": "flutter_source"
+    },
+    {
+      "path": "frontend/lib/features/me/edit_profile_screen.dart",
+      "sha256": "3ee55f8250bc09251cf20ae8e0d24c5e15893d23d1c1249069afa0c4272e4f39",
+      "category": "flutter_source"
+    },
+    {
+      "path": "frontend/lib/features/me/family_form_screen.dart",
+      "sha256": "e31e3268c52281116c5c7f04d9db7889b38917e85d9db5802c26c2321ae5b918",
+      "category": "flutter_source"
+    },
+    {
+      "path": "frontend/lib/features/me/family_list_screen.dart",
+      "sha256": "46bfdca40be54f351eaf63ae86195d918dd6e67d4c1eca3f9f656c3daac46f26",
+      "category": "flutter_source"
+    },
+    {
+      "path": "frontend/lib/features/me/help_screen.dart",
+      "sha256": "cde33fb9f7bc852b17a89a15460b43e14d4eded25e27cdbdb75fc07995aa243b",
+      "category": "flutter_source"
+    },
+    {
+      "path": "frontend/lib/features/me/language_screen.dart",
+      "sha256": "9ce7201b73518dea33611baae74fd6dfe0e9ebc96269e254a11be7fe0918c540",
+      "category": "flutter_source"
+    },
+    {
+      "path": "frontend/lib/features/me/me_screen.dart",
+      "sha256": "a389d3be95e54ab21e5d06e731b8a99935368e823352ebfc2a0f224eaaa7f706",
+      "category": "flutter_source"
+    },
+    {
+      "path": "frontend/lib/features/me/me_widgets.dart",
+      "sha256": "6473d480810ae29598ddf3ec4440c42a8a3616e661aec7022c3d3159b6bd2926",
+      "category": "flutter_source"
+    },
+    {
+      "path": "frontend/lib/features/me/notifications_screen.dart",
+      "sha256": "438d6677bd2d0e8ae843c9cc2853966d1e84ae7231e3e3e4ee11be7ff2e6f480",
+      "category": "flutter_source"
+    },
+    {
+      "path": "frontend/lib/features/me/privacy_screen.dart",
+      "sha256": "734b6e87689a3620f84d5fc6e3a8df7c18d457a457060e15e53188b082e7a6d0",
+      "category": "flutter_source"
+    },
+    {
+      "path": "frontend/lib/features/me/saved_items_screen.dart",
+      "sha256": "a0b09807de2c7b17ea8e26830f9e491d6504cfd93ce032b07c686bea45eee398",
+      "category": "flutter_source"
+    },
+    {
+      "path": "frontend/lib/features/me/settings_screen.dart",
+      "sha256": "beffa88352c0a44e2ee3f0aef32fde3c86af75533d32c0423f127b4c484634cb",
+      "category": "flutter_source"
+    },
+    {
+      "path": "frontend/lib/features/records/appointment_detail_screen.dart",
+      "sha256": "302ae04a0e2dad07ea6acf30e2476375bcc9f97581e72d77fcacb91810960671",
+      "category": "flutter_source"
+    },
+    {
+      "path": "frontend/lib/features/records/appointments_screen.dart",
+      "sha256": "d042eeb4af6b80c3dae1de6fa46898c2584f0224876a5bad071d7edb1b30948e",
+      "category": "flutter_source"
+    },
+    {
+      "path": "frontend/lib/features/records/exam_result_screen.dart",
+      "sha256": "1e9dd3f0aad4f3493b436cb7b28ac3142ef1cb696eedba201d000b50646bd561",
+      "category": "flutter_source"
+    },
+    {
+      "path": "frontend/lib/features/records/followup_screen.dart",
+      "sha256": "b11d0a12b697ba7f066f4d22170b52f495fa06d3e956e37a0ca77389c07c07ee",
+      "category": "flutter_source"
+    },
+    {
+      "path": "frontend/lib/features/records/payment_receipt_screen.dart",
+      "sha256": "54e14c261a3b76fce0f4feec7171fb8af769357acfef2b47606b658c9a1487c6",
+      "category": "flutter_source"
+    },
+    {
+      "path": "frontend/lib/features/records/prescription_screen.dart",
+      "sha256": "fa691665651aa6fba7685d30847284a2b7fc37b87d9e34e8fc9f81ea5210e199",
+      "category": "flutter_source"
+    },
+    {
+      "path": "frontend/lib/features/records/records_home_screen.dart",
+      "sha256": "a0adb642668962b797e83295e90d1f6041c8e78193287593152367e28f2604b2",
+      "category": "flutter_source"
+    },
+    {
+      "path": "frontend/lib/features/records/records_widgets.dart",
+      "sha256": "8a94283d4049fadaf20ef524b79eb98fa30ddf2fcfa604fed1ec087fa4896990",
+      "category": "flutter_source"
+    },
+    {
+      "path": "frontend/lib/features/records/treatment_detail_screen.dart",
+      "sha256": "1b0be3d21d7137a2fa17c77e664e39caf4560b26d1aed7bd0679730727e9e7b1",
+      "category": "flutter_source"
+    },
+    {
+      "path": "frontend/lib/features/records/treatment_list_screen.dart",
+      "sha256": "0223e07f239f33b0a88bd51028247b98e7c9940f5737f9963826cc0bddaee3aa",
+      "category": "flutter_source"
+    },
+    {
+      "path": "frontend/lib/features/records/treatment_photos_screen.dart",
+      "sha256": "d9d3ea266b9166b78395f15e1bcbe8e1af3b198eaac657ae3983105daffe5fc6",
+      "category": "flutter_source"
+    },
+    {
+      "path": "frontend/lib/features/records/visit_detail_screen.dart",
+      "sha256": "e7e190b380fb12808155ab14c70fef380e370454d9adb3f4da4d52e90f77cd1c",
+      "category": "flutter_source"
+    },
+    {
+      "path": "frontend/lib/features/records/visit_history_screen.dart",
+      "sha256": "2b3a48cfd411e2efa967b6ca69f16bea650eab92e153a26c962226b8a5dd0b8c",
+      "category": "flutter_source"
+    },
+    {
+      "path": "frontend/lib/features/services/service_detail_screen.dart",
+      "sha256": "dedd6fd1d1e58251d6a7d3641abfc656ff6e5fa2165ec54ed210edd5fc08f56e",
+      "category": "flutter_source"
+    },
+    {
+      "path": "frontend/lib/features/services/service_list_screen.dart",
+      "sha256": "041cc9a6d1dfe338020db9567f1be89393f6df484196c6772d0003468ebe442a",
+      "category": "flutter_source"
+    },
+    {
+      "path": "frontend/lib/features/shared/article_card.dart",
+      "sha256": "b65c315da5fefdb54416893bda6cd8281aed5e7df286e8826c4cd7bc25c002b3",
+      "category": "flutter_source"
+    },
+    {
+      "path": "frontend/lib/features/shared/catalog_navigation.dart",
+      "sha256": "d7723d6a24735523bd878b7fa521e151a693ee70efb14347b0bf31d4338716e7",
+      "category": "flutter_source"
+    },
+    {
+      "path": "frontend/lib/features/shared/doctor_card.dart",
+      "sha256": "a3de2cadfcf48fbf4597362b2f09ef1ea8f352a2602e239334022ef61984f281",
+      "category": "flutter_source"
+    },
+    {
+      "path": "frontend/lib/features/shared/patient_avatar.dart",
+      "sha256": "f59af14ceefa5e27e5fd7f0ed706fa0da469ff661ff0bcbdb4e2b0bf7a4ed990",
+      "category": "flutter_source"
+    },
+    {
+      "path": "frontend/lib/features/shared/patient_detail_screen.dart",
+      "sha256": "e074dd323597870f6352844214703d5b92a14611279356575e9abef29c00c334",
+      "category": "flutter_source"
+    },
+    {
+      "path": "frontend/lib/features/shared/service_card.dart",
+      "sha256": "0a300de7d41c86be98cb706c947cc5b6eaa7b97cb0ba6d540305a5ec562cd850",
+      "category": "flutter_source"
+    },
+    {
+      "path": "frontend/lib/main.dart",
+      "sha256": "7691d5adcd7459c54c5a8fef580a4960230ba0c487fe7a57c7762084050b20a8",
+      "category": "flutter_source"
+    },
+    {
+      "path": "frontend/lib/providers/user_provider.dart",
+      "sha256": "d60b390d6f64aac83dde3964cdd2ad531efbbcc68e831be824d8dd558197eef0",
+      "category": "flutter_source"
+    },
+    {
+      "path": "frontend/lib/routes/app_routes.dart",
+      "sha256": "2d6d62bccb830981a89b62bedbd01e61f275083dab79a2891b0cdd37f3819385",
+      "category": "flutter_source"
+    },
+    {
+      "path": "frontend/lib/screens/home/home_screen.dart",
+      "sha256": "e6b955382a5e9fe561f495691b585f7cf2a87b7696e31642a59ef7b021a3384b",
+      "category": "flutter_source"
+    },
+    {
+      "path": "frontend/lib/screens/user/user_form_screen.dart",
+      "sha256": "5c0dd05c4ca747bbad396574ed9d6ad9ed1e223d6687acbeb0df3d92f4144537",
+      "category": "flutter_source"
+    },
+    {
+      "path": "frontend/lib/screens/user/user_list_screen.dart",
+      "sha256": "c0ecdb9167fab60410bbaebba69764457f02db949ffea3f19173ec10a615b721",
+      "category": "flutter_source"
+    },
+    {
+      "path": "frontend/lib/widgets/loading_view.dart",
+      "sha256": "a20d7c489cc2a5e089b1d5dcc4d8e9f9f436267702ac502ce88f80028d6e9fa5",
+      "category": "flutter_source"
+    },
+    {
+      "path": "frontend/pubspec.lock",
+      "sha256": "421bb7a30aaafab8799becf1cb65696c99cf99491446573bdbbfa113add3584d",
+      "category": "flutter_config_dependencies_assets"
+    },
+    {
+      "path": "frontend/pubspec.yaml",
+      "sha256": "177345e35b5e976b28ffb302e54df5a0062dbf1d5b384b44d3da8185ac6b55c0",
+      "category": "flutter_config_dependencies_assets"
+    },
+    {
+      "path": "frontend/test/api_foundation_test.dart",
+      "sha256": "65953f0685e149783224fb7e435947bd265a9196e67eade5517f6e792f6be5b3",
+      "category": "tests_and_drivers"
+    },
+    {
+      "path": "frontend/test/booking_test.dart",
+      "sha256": "2e885ef8053e892539171e9a55cfc75a5802ab8c4410df9aa0f21f95221f9677",
+      "category": "tests_and_drivers"
+    },
+    {
+      "path": "frontend/test/content_handover_test.dart",
+      "sha256": "4961c1d6eddb0d149e9c575ad05fbc192a8ee4b3efdb0670dc84e5a58bc68c0c",
+      "category": "tests_and_drivers"
+    },
+    {
+      "path": "frontend/test/final_qa_test.dart",
+      "sha256": "41e6e2033af8b8f53dd0903d048744eea1514c090864b4e99990a19bf1928fae",
+      "category": "tests_and_drivers"
+    },
+    {
+      "path": "frontend/test/me_test.dart",
+      "sha256": "72a4803c399d9ea52e2baa4e363a41b6b9fccdf2fc1f63560b0dc41edd834c79",
+      "category": "tests_and_drivers"
+    },
+    {
+      "path": "frontend/test/patient_data_test.dart",
+      "sha256": "83873e4f40af514f174482069df590b26de36311bf183cc16b10eb79dd92011d",
+      "category": "tests_and_drivers"
+    },
+    {
+      "path": "frontend/test/records_test.dart",
+      "sha256": "1060c4850aee9fad3189dd22bac60c16a10034dd6d8d5179e7736ea30d237b25",
+      "category": "tests_and_drivers"
+    },
+    {
+      "path": "frontend/test/scroll_behavior_test.dart",
+      "sha256": "0f04d3b109fcd8ea77d38ca83af99a0f2d8cd5037312aedd97b0217d4fa37e06",
+      "category": "tests_and_drivers"
+    },
+    {
+      "path": "frontend/test/widget_test.dart",
+      "sha256": "942a796009922c2c69ef69d3684624562d04740e390be41f7c7df4d4417f3769",
+      "category": "tests_and_drivers"
+    },
+    {
+      "path": "frontend/test_driver/api_foundation_driver.dart",
+      "sha256": "77d2259a009733e3db03d536f08588fb0da2f1887d5b5c1e096457f81bacfa30",
+      "category": "tests_and_drivers"
+    },
+    {
+      "path": "frontend/test_driver/final_qa_driver.dart",
+      "sha256": "75fea3f0a014f862c7b1086c1cd025cb9a60e8c7f2a759eff77a5246d689c7a0",
+      "category": "tests_and_drivers"
+    },
+    {
+      "path": "frontend/test_driver/handover_driver.dart",
+      "sha256": "46e5b0afbfe16e0cbb07d77a25a977eb2e21764963c9f98503f13393feca12e2",
+      "category": "tests_and_drivers"
+    },
+    {
+      "path": "frontend/test_driver/overscroll_driver.dart",
+      "sha256": "2c4ffd2ae04f84c3d2e72bd081605e8b9a84a14582a40e5aaa587de959636ea0",
+      "category": "tests_and_drivers"
+    },
+    {
+      "path": "frontend/test_driver/release_baseline_driver.dart",
+      "sha256": "7e5cbf89bdcc061592ca8d4f1af5c378c406bada83d11d0c1d260c880693498f",
+      "category": "tests_and_drivers"
+    }
+  ],
+  "excluded_platform_prefixes": [
+    "frontend/ios/",
+    "frontend/web/",
+    "frontend/macos/",
+    "frontend/linux/",
+    "frontend/windows/"
+  ],
+  "excluded_empty_scaffolds": [
+    "frontend/lib/features/booking/widgets/booking_calendar.dart",
+    "frontend/lib/features/booking/widgets/patient_selector.dart",
+    "frontend/lib/features/booking/widgets/service_selection_card.dart",
+    "frontend/lib/features/home/widgets/featured_articles.dart",
+    "frontend/lib/features/home/widgets/featured_doctors.dart",
+    "frontend/lib/features/home/widgets/featured_services.dart",
+    "frontend/lib/features/home/widgets/home_header.dart",
+    "frontend/lib/features/home/widgets/upcoming_appointment_card.dart"
+  ],
+  "excluded_other_prefixes": [
+    "backend/",
+    "frontend/qa_artifacts/",
+    "frontend/qa_screenshots/",
+    "frontend/build/",
+    "frontend/.dart_tool/"
+  ],
+  "qa_artifacts_delivery": "Separate QA bundle; not part of staged source. Historical artifact links require that bundle.",
+  "clean_clone_tested": false,
+  "commit_created": false,
+  "production_store_release_ready": false
+}
