@@ -70,7 +70,11 @@ class _UserListScreenState extends State<UserListScreen> {
             itemBuilder: (_, i) {
               final user = provider.users[i];
               return ListTile(
-                leading: CircleAvatar(child: Text(user.name[0].toUpperCase())),
+                leading: CircleAvatar(
+                  child: Text(
+                    user.name.isNotEmpty ? user.name[0].toUpperCase() : '?',
+                  ),
+                ),
                 title: Text(user.name),
                 subtitle: Text(user.email),
                 onTap: () => Navigator.pushNamed(
