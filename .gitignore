@@ -37,4 +37,5 @@ frontend/ios/Pods/
 frontend/ios/.symlinks/
 frontend/ios/Flutter/Flutter.framework
 frontend/ios/Flutter/Generated.xcconfig
-xcuserdata/
+xcuserdata/ 
+*.http
