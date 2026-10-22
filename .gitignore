@@ -6,7 +6,8 @@ Thumbs.db
 .env.*
 
 # ===== IDE =====
-.vscode/
+.vscode/*
+!.vscode/launch.json
 .idea/
 *.iml
 

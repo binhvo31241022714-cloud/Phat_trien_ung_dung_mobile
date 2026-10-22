@@ -17,8 +17,8 @@ class UserService {
   }
 
   User create(Map<String, dynamic> body) {
-    final name = (body['name'] as String?)?.trim() ?? '';
-    final email = (body['email'] as String?)?.trim() ?? '';
+    final name = _string(body, 'name')?.trim() ?? '';
+    final email = _string(body, 'email')?.trim() ?? '';
     _validate(name, email);
 
     if (_repository.findByEmail(email) != null) {
@@ -29,8 +29,8 @@ class UserService {
 
   User update(int id, Map<String, dynamic> body) {
     final current = getById(id);
-    final name = (body['name'] as String?)?.trim() ?? current.name;
-    final email = (body['email'] as String?)?.trim() ?? current.email;
+    final name = _string(body, 'name')?.trim() ?? current.name;
+    final email = _string(body, 'email')?.trim() ?? current.email;
     _validate(name, email);
 
     final existing = _repository.findByEmail(email);
@@ -44,6 +44,14 @@ class UserService {
     if (!_repository.delete(id)) {
       throw AppException.notFound('Không tìm thấy user $id');
     }
+  }
+
+  String? _string(Map<String, dynamic> body, String key) {
+    final value = body[key];
+    if (value != null && value is! String) {
+      throw AppException.badRequest('$key phải là chuỗi');
+    }
+    return value as String?;
   }
 
   void _validate(String name, String email) {

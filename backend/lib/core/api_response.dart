@@ -4,7 +4,9 @@ import 'package:shelf/shelf.dart';
 
 /// Chuẩn hoá format JSON trả về: { success, message, data }.
 class ApiResponse {
-  static const _headers = {'content-type': 'application/json; charset=utf-8'};
+  static const Map<String, String> _headers = {
+    'Content-Type': 'application/json; charset=utf-8',
+  };
 
   static Response ok(Object? data, {String message = 'OK'}) =>
       _build(200, true, message, data);
@@ -25,6 +27,7 @@ class ApiResponse {
       statusCode,
       body: jsonEncode({'success': success, 'message': message, 'data': data}),
       headers: _headers,
+      encoding: utf8,
     );
   }
 }

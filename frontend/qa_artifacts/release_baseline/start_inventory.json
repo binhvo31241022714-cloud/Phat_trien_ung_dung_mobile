@@ -1,0 +1,1632 @@
+[
+  {
+    "path": ".gitignore",
+    "status": " M",
+    "sha256": "eb3111cff578b1bd55678396d4df1925eb35a384ee26812b234fb0a988b47350"
+  },
+  {
+    "path": "backend/bin/server.dart",
+    "status": " M",
+    "sha256": "ba82cef24ba71ceaaca9bbb16b0e4b5fafaffd78eb3325eeb4d4f7445118292f"
+  },
+  {
+    "path": "backend/lib/core/api_response.dart",
+    "status": " M",
+    "sha256": "a040035a22365175fcc82321a38e3d800fe5cefb0676d4fb2b55f77b3a1df774"
+  },
+  {
+    "path": "backend/lib/services/user_service.dart",
+    "status": " M",
+    "sha256": "6e8a48859a102cc0478b8ba024d55fdf939a424efd050e340b120bd5ead8e232"
+  },
+  {
+    "path": "frontend/analysis_options.yaml",
+    "status": " M",
+    "sha256": "f57abb82d8e4a5e5a8bf34849e4049a1d84eb25ec2f294c31c5410c426dde7c0"
+  },
+  {
+    "path": "frontend/lib/app.dart",
+    "status": " M",
+    "sha256": "7b46658dad8b4886afddcfdbd05f46ecb1004bf3d279b1ed7ed4d472956d6ee5"
+  },
+  {
+    "path": "frontend/lib/core/constants/api_constants.dart",
+    "status": " M",
+    "sha256": "1ae477eae6a218fd367f44e034ac2e576ceb3a21f8ea761dac710187aadd717c"
+  },
+  {
+    "path": "frontend/lib/core/constants/app_colors.dart",
+    "status": " M",
+    "sha256": "6e5d505f1b28b01f5745b30223ee0639cef16d0acd655e5678458fcb0527210a"
+  },
+  {
+    "path": "frontend/lib/core/network/api_client.dart",
+    "status": " M",
+    "sha256": "677c660b36e770d75de76dcc290bc3d97d24c9590ca29bdf1268f2df3adc3929"
+  },
+  {
+    "path": "frontend/lib/core/theme/app_theme.dart",
+    "status": " M",
+    "sha256": "ace1eeb08eb29ccc581199fc57011d433fd1f2a868550879b86932d6c3eb6343"
+  },
+  {
+    "path": "frontend/lib/core/utils/validators.dart",
+    "status": " M",
+    "sha256": "1dde585fe3066c1125eff91b15945c70324180fa083c1cc9f6900c3a417c1468"
+  },
+  {
+    "path": "frontend/lib/data/models/user_model.dart",
+    "status": " M",
+    "sha256": "3ca506d0bf8c12e13fb69b076d3049c57059be0c80a74d3d2f3bef353c011066"
+  },
+  {
+    "path": "frontend/lib/data/services/user_service.dart",
+    "status": " M",
+    "sha256": "5a7aadb207b86f919eed2769a68545a95a6ce9a9faffefe26d4c812e2d757c93"
+  },
+  {
+    "path": "frontend/lib/main.dart",
+    "status": " M",
+    "sha256": "7691d5adcd7459c54c5a8fef580a4960230ba0c487fe7a57c7762084050b20a8"
+  },
+  {
+    "path": "frontend/lib/providers/user_provider.dart",
+    "status": " M",
+    "sha256": "d60b390d6f64aac83dde3964cdd2ad531efbbcc68e831be824d8dd558197eef0"
+  },
+  {
+    "path": "frontend/lib/routes/app_routes.dart",
+    "status": " M",
+    "sha256": "2d6d62bccb830981a89b62bedbd01e61f275083dab79a2891b0cdd37f3819385"
+  },
+  {
+    "path": "frontend/lib/screens/home/home_screen.dart",
+    "status": " M",
+    "sha256": "e6b955382a5e9fe561f495691b585f7cf2a87b7696e31642a59ef7b021a3384b"
+  },
+  {
+    "path": "frontend/lib/screens/user/user_form_screen.dart",
+    "status": " M",
+    "sha256": "5c0dd05c4ca747bbad396574ed9d6ad9ed1e223d6687acbeb0df3d92f4144537"
+  },
+  {
+    "path": "frontend/lib/screens/user/user_list_screen.dart",
+    "status": " M",
+    "sha256": "c0ecdb9167fab60410bbaebba69764457f02db949ffea3f19173ec10a615b721"
+  },
+  {
+    "path": "frontend/lib/widgets/loading_view.dart",
+    "status": " M",
+    "sha256": "a20d7c489cc2a5e089b1d5dcc4d8e9f9f436267702ac502ce88f80028d6e9fa5"
+  },
+  {
+    "path": "frontend/pubspec.yaml",
+    "status": " M",
+    "sha256": "177345e35b5e976b28ffb302e54df5a0062dbf1d5b384b44d3da8185ac6b55c0"
+  },
+  {
+    "path": ".vscode/launch.json",
+    "status": "??",
+    "sha256": "f8e8d3cba44e9665b87f2b023f50a10d81ca8268acc7639ddf0595ef56d03c6b"
+  },
+  {
+    "path": "backend/test/http_contract_test.dart",
+    "status": "??",
+    "sha256": "6057c1b5a5c50ec2710af28471f28a855d9077bc464df30ecf5abbb98fede4e2"
+  },
+  {
+    "path": "frontend/.gitignore",
+    "status": "??",
+    "sha256": "441eaa1de5b3db9fae056e7503567e9f8dd94173e1389c60f76956abf729015a"
+  },
+  {
+    "path": "frontend/.metadata",
+    "status": "??",
+    "sha256": "adf9465f630921e9859fe74f17580635c6d1c0f24934bca95637506430077099"
+  },
+  {
+    "path": "frontend/FINAL_QA_REPORT.md",
+    "status": "??",
+    "sha256": "425c9266708647d1114829998137df6aa019d45bf9295246f6a78674f37ae460"
+  },
+  {
+    "path": "frontend/ME_IMPLEMENTATION.md",
+    "status": "??",
+    "sha256": "68d696e75a3705c22bd93fc17594c7b7cf43ee1e67f7213d49b192e9685be493"
+  },
+  {
+    "path": "frontend/RECORDS_IMPLEMENTATION.md",
+    "status": "??",
+    "sha256": "e6841c1418f317f2f3ebefd990ce35f1793a2ca5ce036c6a3a23a07ab9983924"
+  },
+  {
+    "path": "frontend/android/.gitignore",
+    "status": "??",
+    "sha256": "b027c9de1011765c015e5819bf857c0d75bfcd0886fb01721c091159012e50f1"
+  },
+  {
+    "path": "frontend/android/app/build.gradle.kts",
+    "status": "??",
+    "sha256": "6b3f9bd5ad1b7a20134cd4ff24b04844f1285ed8ffdd83bb9786f1eabf57cd73"
+  },
+  {
+    "path": "frontend/android/app/src/debug/AndroidManifest.xml",
+    "status": "??",
+    "sha256": "30b0832ed8b92dfbd6ae2abfa939ccf26333d37600056b1572bd4a397a18a74b"
+  },
+  {
+    "path": "frontend/android/app/src/main/AndroidManifest.xml",
+    "status": "??",
+    "sha256": "43790bededb217942dfdab84db336161d56b703f3a906a6a4e4f9d1019deaf89"
+  },
+  {
+    "path": "frontend/android/app/src/main/kotlin/com/example/frontend/MainActivity.kt",
+    "status": "??",
+    "sha256": "5064a9524403524a65a773f3672b2c7b16fbf288d8437327dc26958a8f68b9d0"
+  },
+  {
+    "path": "frontend/android/app/src/main/res/drawable-v21/launch_background.xml",
+    "status": "??",
+    "sha256": "7ca6d5cec2169c5a98661a119db23a6f3399c8fef2256ff04f3a642831282478"
+  },
+  {
+    "path": "frontend/android/app/src/main/res/drawable/launch_background.xml",
+    "status": "??",
+    "sha256": "94433756fe10005ddd6fc55cc5c0b1e9f3c10b66a08ceac795ece6713d34e28a"
+  },
+  {
+    "path": "frontend/android/app/src/main/res/mipmap-hdpi/ic_launcher.png",
+    "status": "??",
+    "sha256": "6a7c8f0d703e3682108f9662f813302236240d3f8f638bb391e32bfb96055fef"
+  },
+  {
+    "path": "frontend/android/app/src/main/res/mipmap-mdpi/ic_launcher.png",
+    "status": "??",
+    "sha256": "c7c0c0189145e4e32a401c61c9bdc615754b0264e7afae24e834bb81049eaf81"
+  },
+  {
+    "path": "frontend/android/app/src/main/res/mipmap-xhdpi/ic_launcher.png",
+    "status": "??",
+    "sha256": "e14aa40904929bf313fded22cf7e7ffcbf1d1aac4263b5ef1be8bfce650397aa"
+  },
+  {
+    "path": "frontend/android/app/src/main/res/mipmap-xxhdpi/ic_launcher.png",
+    "status": "??",
+    "sha256": "4d470bf22d5c17d84edc5f82516d1ba8a1c09559cd761cefb792f86d9f52b540"
+  },
+  {
+    "path": "frontend/android/app/src/main/res/mipmap-xxxhdpi/ic_launcher.png",
+    "status": "??",
+    "sha256": "3c34e1f298d0c9ea3455d46db6b7759c8211a49e9ec6e44b635fc5c87dfb4180"
+  },
+  {
+    "path": "frontend/android/app/src/main/res/values-night/styles.xml",
+    "status": "??",
+    "sha256": "8c5bad5152f217e837519f9c15211d19f39bd45f5f67faf6dd81cb4b299e518f"
+  },
+  {
+    "path": "frontend/android/app/src/main/res/values/styles.xml",
+    "status": "??",
+    "sha256": "937d7c82f539c72eb94fd3a3773f29b3d3fef1997213c92cb632298cedf4bda9"
+  },
+  {
+    "path": "frontend/android/app/src/profile/AndroidManifest.xml",
+    "status": "??",
+    "sha256": "30b0832ed8b92dfbd6ae2abfa939ccf26333d37600056b1572bd4a397a18a74b"
+  },
+  {
+    "path": "frontend/android/build.gradle.kts",
+    "status": "??",
+    "sha256": "6a26dba2cb8dfba1e74f540b0d17a89d96c1301d3c3bfda14348bed257fddcba"
+  },
+  {
+    "path": "frontend/android/gradle.properties",
+    "status": "??",
+    "sha256": "0f82b18017fba6bb5ce3aa4b2d1a00c9382fc8aae7b1d9326e44b18abd66d80b"
+  },
+  {
+    "path": "frontend/android/gradle/wrapper/gradle-wrapper.properties",
+    "status": "??",
+    "sha256": "b690d26223576fe4e63889fad9a00df81945cb870b9476cc5a563152a1a88a74"
+  },
+  {
+    "path": "frontend/android/settings.gradle.kts",
+    "status": "??",
+    "sha256": "016759283e88ade6eba92910583feeef88b962839b957aa414296afd2952d122"
+  },
+  {
+    "path": "frontend/assets/icons/.gitkeep",
+    "status": "??",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "path": "frontend/assets/images/articles/.gitkeep",
+    "status": "??",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "path": "frontend/assets/images/doctors/.gitkeep",
+    "status": "??",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "path": "frontend/assets/images/logo/.gitkeep",
+    "status": "??",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "path": "frontend/assets/images/services/.gitkeep",
+    "status": "??",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "path": "frontend/docs/handover/API_INTEGRATION_MAP.md",
+    "status": "??",
+    "sha256": "5c83c22b102e99cde5377e98fcceb057723e785dcaf0a724e0614150a25f9c65"
+  },
+  {
+    "path": "frontend/docs/handover/CONTENT_MODULE_HANDOVER.md",
+    "status": "??",
+    "sha256": "e295e68a2b1e41bb6a85e0ccda14cf5ee34093788e3ca722302f21f2de16db04"
+  },
+  {
+    "path": "frontend/docs/handover/DEMO_RUN_GUIDE.md",
+    "status": "??",
+    "sha256": "04b070d54fb0de3f2b0ec09984aaa89ab5c22e4cb6ebf1d1156f47411c08fc20"
+  },
+  {
+    "path": "frontend/docs/handover/FRONTEND_OVERVIEW.md",
+    "status": "??",
+    "sha256": "4f0e5d3ce27451713d968f334f728b6f927acea33395fd7f559841584dc199d4"
+  },
+  {
+    "path": "frontend/docs/handover/PENDING_BACKEND_REVIEW.md",
+    "status": "??",
+    "sha256": "6f726416304275af2c0e234526a11c929d31603943916cb9d3ae39b0600a9d9a"
+  },
+  {
+    "path": "frontend/docs/handover/QA_RESULTS.md",
+    "status": "??",
+    "sha256": "efb001aa2b77d7c97fcec0bdf0d85d767892c8e692e1a8d91cca0cfe998dbba0"
+  },
+  {
+    "path": "frontend/docs/handover/TEAM_HANDOVER.md",
+    "status": "??",
+    "sha256": "cc7354974dc001b391ad6c85f6cbf98293663b5ee4c8423b75e4a749b385ca62"
+  },
+  {
+    "path": "frontend/integration_test/api_foundation_test.dart",
+    "status": "??",
+    "sha256": "5098bc10f4e892bb6ec44ff8138b623eee0e9d99557621eec3e16f5fe1a60269"
+  },
+  {
+    "path": "frontend/integration_test/content_handover_test.dart",
+    "status": "??",
+    "sha256": "ff6eac27bc700ef87a9e377b09b07cc262dd7b0c6de771d7a9f156bf492d7f0b"
+  },
+  {
+    "path": "frontend/integration_test/final_flow_test.dart",
+    "status": "??",
+    "sha256": "692a9d9790cfe203e2690aaf53574123a461b728fb20564a26891d53611e2bf6"
+  },
+  {
+    "path": "frontend/integration_test/overscroll_test.dart",
+    "status": "??",
+    "sha256": "c1369e2d6d972b61ecd95cb1a62c22a467ae314e3191e8158e3b98b5d0d4db2f"
+  },
+  {
+    "path": "frontend/ios/.gitignore",
+    "status": "??",
+    "sha256": "37380775aeb2499662b7aca80f4ac4c95ae827c3ba2bfa179aa3e9af4812c623"
+  },
+  {
+    "path": "frontend/ios/Flutter/AppFrameworkInfo.plist",
+    "status": "??",
+    "sha256": "da12038f9b2688a8a26160fea2609fa8fcb11421448c109f09c0f573efe7698d"
+  },
+  {
+    "path": "frontend/ios/Flutter/Debug.xcconfig",
+    "status": "??",
+    "sha256": "a82d7765b37116ee4821d2cd1d65942febf8032353757ffb0826eabde785b4a6"
+  },
+  {
+    "path": "frontend/ios/Flutter/Release.xcconfig",
+    "status": "??",
+    "sha256": "a82d7765b37116ee4821d2cd1d65942febf8032353757ffb0826eabde785b4a6"
+  },
+  {
+    "path": "frontend/ios/Runner.xcodeproj/project.pbxproj",
+    "status": "??",
+    "sha256": "c0af887c9ee413dd826af67a630501a6b19fda40f4cb4d4b9e399f7fb839e62c"
+  },
+  {
+    "path": "frontend/ios/Runner.xcodeproj/project.xcworkspace/contents.xcworkspacedata",
+    "status": "??",
+    "sha256": "7f3b00b5c3fdb45242d7b87e1e5c4e25d1fa8129a16c94295ecc4e8ea2235c5f"
+  },
+  {
+    "path": "frontend/ios/Runner.xcodeproj/project.xcworkspace/xcshareddata/IDEWorkspaceChecks.plist",
+    "status": "??",
+    "sha256": "dfa0f9bb85b95ccba9c6811adadf8cb407fb5d52088e89db83ebc308ec448542"
+  },
+  {
+    "path": "frontend/ios/Runner.xcodeproj/project.xcworkspace/xcshareddata/WorkspaceSettings.xcsettings",
+    "status": "??",
+    "sha256": "11b247bc6796892d67c9a821d18604db4dd6a880981b34f38460b9866e6b247f"
+  },
+  {
+    "path": "frontend/ios/Runner.xcodeproj/xcshareddata/xcschemes/Runner.xcscheme",
+    "status": "??",
+    "sha256": "9fbce429f56243561dd437a527136c9f9ed77165e3b271b923faf236cfcd0484"
+  },
+  {
+    "path": "frontend/ios/Runner.xcworkspace/contents.xcworkspacedata",
+    "status": "??",
+    "sha256": "46c3c9702ff7c5584e11c954d943cfb6e07fb26e3fbd072ddbc0f388aa352de1"
+  },
+  {
+    "path": "frontend/ios/Runner.xcworkspace/xcshareddata/IDEWorkspaceChecks.plist",
+    "status": "??",
+    "sha256": "dfa0f9bb85b95ccba9c6811adadf8cb407fb5d52088e89db83ebc308ec448542"
+  },
+  {
+    "path": "frontend/ios/Runner.xcworkspace/xcshareddata/WorkspaceSettings.xcsettings",
+    "status": "??",
+    "sha256": "11b247bc6796892d67c9a821d18604db4dd6a880981b34f38460b9866e6b247f"
+  },
+  {
+    "path": "frontend/ios/Runner/AppDelegate.swift",
+    "status": "??",
+    "sha256": "451c6d9ba0a2b3ff43092ea349c60fa79a91f1158b915eb29dbdd357cb95d7b8"
+  },
+  {
+    "path": "frontend/ios/Runner/Assets.xcassets/AppIcon.appiconset/Contents.json",
+    "status": "??",
+    "sha256": "3b1e214f466ffedff74baa5598ad5c4421130eea6bc8d57b8fe23435e8280ae4"
+  },
+  {
+    "path": "frontend/ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-1024x1024@1x.png",
+    "status": "??",
+    "sha256": "7770183009e914112de7d8ef1d235a6a30c5834424858e0d2f8253f6b8d31926"
+  },
+  {
+    "path": "frontend/ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-20x20@1x.png",
+    "status": "??",
+    "sha256": "cab10a0d391ec5bc09ef50ce49e8ad401cee7ef03707ec0923a222c5c2b3d212"
+  },
+  {
+    "path": "frontend/ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-20x20@2x.png",
+    "status": "??",
+    "sha256": "b9ad02cf6576a04d1b6806ac02a2431481b448dd0c2e505ce25842d1f7c4730b"
+  },
+  {
+    "path": "frontend/ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-20x20@3x.png",
+    "status": "??",
+    "sha256": "c6e6d3b215ae744a9c391f4c4d44157eff5e739d6ad6c39f9bfa5df66dddd267"
+  },
+  {
+    "path": "frontend/ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-29x29@1x.png",
+    "status": "??",
+    "sha256": "5dee24dc104ac76dc162e42ae0beb163d426bf365562ee28ba7b3ad368559a60"
+  },
+  {
+    "path": "frontend/ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-29x29@2x.png",
+    "status": "??",
+    "sha256": "a9b21eb6f4271385655a8771f76e29eef8c1107d7879cbcfc567e6619d1f716a"
+  },
+  {
+    "path": "frontend/ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-29x29@3x.png",
+    "status": "??",
+    "sha256": "e677d701ffe4af7bc2935098d6b3984cc9ab7ace573e6900955a5535b12410cf"
+  },
+  {
+    "path": "frontend/ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-40x40@1x.png",
+    "status": "??",
+    "sha256": "b9ad02cf6576a04d1b6806ac02a2431481b448dd0c2e505ce25842d1f7c4730b"
+  },
+  {
+    "path": "frontend/ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-40x40@2x.png",
+    "status": "??",
+    "sha256": "7c61c42fc7b657d9cf314d32a4ec458f0647c3aaf360be1b9377857266ec2499"
+  },
+  {
+    "path": "frontend/ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-40x40@3x.png",
+    "status": "??",
+    "sha256": "19be171481dc71a0b2803ebcd01dd8b0c5fd5778dee34c0a3cabc948c225f24e"
+  },
+  {
+    "path": "frontend/ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-60x60@2x.png",
+    "status": "??",
+    "sha256": "19be171481dc71a0b2803ebcd01dd8b0c5fd5778dee34c0a3cabc948c225f24e"
+  },
+  {
+    "path": "frontend/ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-60x60@3x.png",
+    "status": "??",
+    "sha256": "4209a49e44a92ec40a327d3455eb1b1c153ee83d75de1c2be0a12ab18b2ff9de"
+  },
+  {
+    "path": "frontend/ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-76x76@1x.png",
+    "status": "??",
+    "sha256": "836c918cb613249eba0483a6b02fa3df3c1c0a89a315ee4d3b88509b83c7ab73"
+  },
+  {
+    "path": "frontend/ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-76x76@2x.png",
+    "status": "??",
+    "sha256": "41c7d42f6e61f8fe7f30b1ffa2256aecbc9682be06d18c4a3062043e1a2e547c"
+  },
+  {
+    "path": "frontend/ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-83.5x83.5@2x.png",
+    "status": "??",
+    "sha256": "5d7e5bdf01b93802bc973345b3a78c038907147625035952a08a115a563b7f81"
+  },
+  {
+    "path": "frontend/ios/Runner/Assets.xcassets/LaunchImage.imageset/Contents.json",
+    "status": "??",
+    "sha256": "ccc7950fd5f5b82067c85f667940a9d59189151460761ece8098ca78daa19469"
+  },
+  {
+    "path": "frontend/ios/Runner/Assets.xcassets/LaunchImage.imageset/LaunchImage.png",
+    "status": "??",
+    "sha256": "93ae7d494fad0fb30cbf3ae746a39c4bc7a0f8bbf87fbb587a3f3c01f3c5ce20"
+  },
+  {
+    "path": "frontend/ios/Runner/Assets.xcassets/LaunchImage.imageset/LaunchImage@2x.png",
+    "status": "??",
+    "sha256": "93ae7d494fad0fb30cbf3ae746a39c4bc7a0f8bbf87fbb587a3f3c01f3c5ce20"
+  },
+  {
+    "path": "frontend/ios/Runner/Assets.xcassets/LaunchImage.imageset/LaunchImage@3x.png",
+    "status": "??",
+    "sha256": "93ae7d494fad0fb30cbf3ae746a39c4bc7a0f8bbf87fbb587a3f3c01f3c5ce20"
+  },
+  {
+    "path": "frontend/ios/Runner/Assets.xcassets/LaunchImage.imageset/README.md",
+    "status": "??",
+    "sha256": "a985b626c4f7546a8ba392d135e9226c3547c8e2b46895f5f2bdf40d7b14ef9f"
+  },
+  {
+    "path": "frontend/ios/Runner/Base.lproj/LaunchScreen.storyboard",
+    "status": "??",
+    "sha256": "857e61203b3deafb05766d8fcda898b86a7cb6f3d5e385ecc9926c4d698215e9"
+  },
+  {
+    "path": "frontend/ios/Runner/Base.lproj/Main.storyboard",
+    "status": "??",
+    "sha256": "fd367b6c43006d61b730f674970dd48b9f662c8f2264e52ffc1558102a2c9f2d"
+  },
+  {
+    "path": "frontend/ios/Runner/Info.plist",
+    "status": "??",
+    "sha256": "39d568a20c7439b01a8316377cb263875b944b88dbe76a38c60ea6b8317a3a7e"
+  },
+  {
+    "path": "frontend/ios/Runner/Runner-Bridging-Header.h",
+    "status": "??",
+    "sha256": "1a8d11d01d1cc92c650c9c9ed35299240052d4683a15a719a2315ef44185e074"
+  },
+  {
+    "path": "frontend/ios/Runner/SceneDelegate.swift",
+    "status": "??",
+    "sha256": "add68b905971dedfcc0d0b5b7118030de5925ba8c081ad9815463699e3a444ad"
+  },
+  {
+    "path": "frontend/ios/RunnerTests/RunnerTests.swift",
+    "status": "??",
+    "sha256": "5e8f4908dacea6f29b2a790e4d38bf5fded69096063f9a27a2f21584d62b30c0"
+  },
+  {
+    "path": "frontend/lib/app/main_shell.dart",
+    "status": "??",
+    "sha256": "07145c5390f744479dd6f36bfd824ddb214303631d0c7ac3d548a534a0307152"
+  },
+  {
+    "path": "frontend/lib/app/patient_navigation.dart",
+    "status": "??",
+    "sha256": "e7c04b9fd930ede405657b60ec55d940db0fbee33c4718957ef9d3be1dd763bb"
+  },
+  {
+    "path": "frontend/lib/core/config/app_config.dart",
+    "status": "??",
+    "sha256": "3b126cd517e51fb8f12c12fb1222a4bf2dd40ffdf747cdbd3ad11b3452657b5e"
+  },
+  {
+    "path": "frontend/lib/core/theme/app_scroll_behavior.dart",
+    "status": "??",
+    "sha256": "6b88748a636ca46a6405e4f2a702a7d78325ad76077a8f5e959e5ef72797dd9a"
+  },
+  {
+    "path": "frontend/lib/core/theme/app_text_styles.dart",
+    "status": "??",
+    "sha256": "7e46e805992f7add45cdabf70ba532067ebb3a7426ce177cebd53b04d1a369b9"
+  },
+  {
+    "path": "frontend/lib/core/utils/formatters.dart",
+    "status": "??",
+    "sha256": "5781ba3cbb4cb9fb3b9656cbf962634331723ff7a99ddb796309a2f7a36b5879"
+  },
+  {
+    "path": "frontend/lib/core/widgets/app_card.dart",
+    "status": "??",
+    "sha256": "f5c557960fbc808e10734de708c33ba8fcc8f21a5c62d16f1bdba26ae5e9660b"
+  },
+  {
+    "path": "frontend/lib/core/widgets/app_text_field.dart",
+    "status": "??",
+    "sha256": "747f893b9d8664d3dd8a324b539f340ffc29a113e2411679ea4985efd0eec4d5"
+  },
+  {
+    "path": "frontend/lib/core/widgets/custom_text_field.dart",
+    "status": "??",
+    "sha256": "c1eb71ef8b8298213f8086627af22fe22f49ccd1c84e2dc2e0e8142525001840"
+  },
+  {
+    "path": "frontend/lib/core/widgets/empty_view.dart",
+    "status": "??",
+    "sha256": "82fe194884c3191d5ce3b10e8cc9351929673a6823a01eee53bb50b6189a2da1"
+  },
+  {
+    "path": "frontend/lib/core/widgets/error_state.dart",
+    "status": "??",
+    "sha256": "2acba4d712d23407011eca8c001cce630e66260dcf61244ba20f7e66c8ba6a45"
+  },
+  {
+    "path": "frontend/lib/core/widgets/loading_view.dart",
+    "status": "??",
+    "sha256": "d4f33865aa704779de0209b27aecaf9cedbe5b24886013480c200b083bcf15b4"
+  },
+  {
+    "path": "frontend/lib/core/widgets/page_header.dart",
+    "status": "??",
+    "sha256": "fd3564990f40ef72eb65442c66f278430de2821179d7272f106648812de42406"
+  },
+  {
+    "path": "frontend/lib/core/widgets/primary_button.dart",
+    "status": "??",
+    "sha256": "70f18caee6b385f1e29623c14e031e5bafcdf4625a74e1e754c0a1f39efd17e3"
+  },
+  {
+    "path": "frontend/lib/core/widgets/secondary_button.dart",
+    "status": "??",
+    "sha256": "df36f44957a7285820d96e73c6fcfdebba6433fa7ff66de51b6256b3e921ca84"
+  },
+  {
+    "path": "frontend/lib/core/widgets/section_header.dart",
+    "status": "??",
+    "sha256": "b5735c5130343cccd4dc1454541050c8e2d8a1ab353776e41cf29fd9bb3f6459"
+  },
+  {
+    "path": "frontend/lib/core/widgets/status_chip.dart",
+    "status": "??",
+    "sha256": "cbd0371b544ac01d636989ecb1ae08e93f4973d4e8f7b70d32b61c868bf6dbed"
+  },
+  {
+    "path": "frontend/lib/data/mock_data.dart",
+    "status": "??",
+    "sha256": "f4c980132a0187932e7492905cd1ae092858968463fccb29679da10ac6cce5f4"
+  },
+  {
+    "path": "frontend/lib/data/models/appointment.dart",
+    "status": "??",
+    "sha256": "83fdb935f8c664eff0cea931ba34d098b30cddaf49d7e49d388e141f3418317a"
+  },
+  {
+    "path": "frontend/lib/data/models/article.dart",
+    "status": "??",
+    "sha256": "a214edadd9ff0f01fc95fc444748006ef6a95fff7d5845f3d995755346b0c867"
+  },
+  {
+    "path": "frontend/lib/data/models/dental_service.dart",
+    "status": "??",
+    "sha256": "59dbdedaf945b7f578afc3c410c486f75611423cd6cdbe29fb0c2e68ff513e81"
+  },
+  {
+    "path": "frontend/lib/data/models/doctor.dart",
+    "status": "??",
+    "sha256": "19847cc9f89418c93c4165d0ad14d69aa4678886b647fc00ea5b5f0c3c3d2034"
+  },
+  {
+    "path": "frontend/lib/data/models/patient.dart",
+    "status": "??",
+    "sha256": "0ba3848b497a7ef5231e85e677ef095728fe0a330f068921b32d446cfb2fd8bf"
+  },
+  {
+    "path": "frontend/lib/data/models/patient_records.dart",
+    "status": "??",
+    "sha256": "77e8a1d3e5df5797ef15c5f2ee034d81b759d998c223ca30058db6f41852f24a"
+  },
+  {
+    "path": "frontend/lib/data/providers/patient_data_provider.dart",
+    "status": "??",
+    "sha256": "0ec0194ea09a8b0026f7ef7af46040315acf25a4474512d4ff238ad14bdcb4e3"
+  },
+  {
+    "path": "frontend/lib/data/repositories/user_read_repository.dart",
+    "status": "??",
+    "sha256": "27924768571cb46e9c0f97b260ac54119da3c6131b1b010d50e7565c01fdf9e3"
+  },
+  {
+    "path": "frontend/lib/features/articles/article_detail_screen.dart",
+    "status": "??",
+    "sha256": "51669dd126f659055521233cb21e1f76f6e1ad48d3d7786094df4a88adbcd853"
+  },
+  {
+    "path": "frontend/lib/features/articles/article_list_screen.dart",
+    "status": "??",
+    "sha256": "c770ce8a5db26f39db430abf6262b15d3abda42cbb2eeade842d2f2835571158"
+  },
+  {
+    "path": "frontend/lib/features/auth/forgot_password_screen.dart",
+    "status": "??",
+    "sha256": "4809cee191a2df1a4a9621d6dbb526229c7a485fc84428bf72d40bcdb76c34e1"
+  },
+  {
+    "path": "frontend/lib/features/auth/login_screen.dart",
+    "status": "??",
+    "sha256": "1299dbe6ff8cbac356a38e99655dcfbb90e825bb6f6efe860e1fb45884d04f9c"
+  },
+  {
+    "path": "frontend/lib/features/auth/register_screen.dart",
+    "status": "??",
+    "sha256": "5c9355c4332c2b69615935cc26110fa640d7a20accd226b02512711f91647834"
+  },
+  {
+    "path": "frontend/lib/features/auth/welcome_screen.dart",
+    "status": "??",
+    "sha256": "130b93cd29cd4c0f5e6c264807d532c5b1d27ff8aaaa9cdbbfcbf6d13e7b740e"
+  },
+  {
+    "path": "frontend/lib/features/booking/booking_controller.dart",
+    "status": "??",
+    "sha256": "1ddeca7c3fb9b2a0ee7ab9a690bdcae4997f7a1fe292a16bccdeaff48e7700b7"
+  },
+  {
+    "path": "frontend/lib/features/booking/booking_screen.dart",
+    "status": "??",
+    "sha256": "afb76538d7a11201b2f01dbd58f60422c44803d92d34376a58b78dd7cb728f9c"
+  },
+  {
+    "path": "frontend/lib/features/booking/booking_success_screen.dart",
+    "status": "??",
+    "sha256": "ed151e83337dc89a050c042902c629e4ed1eb8bdbaa9f9e2fb06b0b404ea7fc8"
+  },
+  {
+    "path": "frontend/lib/features/booking/steps/confirm_booking_step.dart",
+    "status": "??",
+    "sha256": "7b21bb8712669dde8e751fa2f83c856fa8252b5c9e35bf90329ef53ed048e0bb"
+  },
+  {
+    "path": "frontend/lib/features/booking/steps/select_datetime_step.dart",
+    "status": "??",
+    "sha256": "362a4e101922c0f05e58fd499450de05f2c6ef57405b186c93c90eed2a6bdfdd"
+  },
+  {
+    "path": "frontend/lib/features/booking/steps/select_doctor_step.dart",
+    "status": "??",
+    "sha256": "fbc945266793aaffbeeac5076ce3c88c9ecf1595a6a476c39ad14e98a43c913a"
+  },
+  {
+    "path": "frontend/lib/features/booking/steps/select_services_step.dart",
+    "status": "??",
+    "sha256": "0243f0f54b5150c73b358c664d4f92248f232a7e46387051e499cafede74dbf5"
+  },
+  {
+    "path": "frontend/lib/features/booking/widgets/booking_calendar.dart",
+    "status": "??",
+    "sha256": "c475cf18ef410074627a928c60de477d63b288e27a9487745e7adf85fb28db36"
+  },
+  {
+    "path": "frontend/lib/features/booking/widgets/booking_price_summary.dart",
+    "status": "??",
+    "sha256": "96f8b28bea334fd8e6735272b156f6e8f307fca082fdd938766550cec05ddf91"
+  },
+  {
+    "path": "frontend/lib/features/booking/widgets/booking_stepper.dart",
+    "status": "??",
+    "sha256": "abe00974b38197437f582f9d6b24152b483c0c2c072f5687bdec80a4c12394c5"
+  },
+  {
+    "path": "frontend/lib/features/booking/widgets/patient_selector.dart",
+    "status": "??",
+    "sha256": "003231b39eed1dc8e7594cf2ec733b9bc244e00d17961889e8f16bde9b0e0214"
+  },
+  {
+    "path": "frontend/lib/features/booking/widgets/service_selection_card.dart",
+    "status": "??",
+    "sha256": "50c9285984b8fd518e9255d45997bd8a10e90d5ba10389ad96d770ef60650a2d"
+  },
+  {
+    "path": "frontend/lib/features/doctors/doctor_detail_screen.dart",
+    "status": "??",
+    "sha256": "4704d80b6056a2b438e5a5a7abb1ee6a5f23ce5c0a7441fdd904bd6703359009"
+  },
+  {
+    "path": "frontend/lib/features/doctors/doctor_list_screen.dart",
+    "status": "??",
+    "sha256": "fbb7adff118d69cacc83114b1bee374804776e0024b27842046f62bbc2d23562"
+  },
+  {
+    "path": "frontend/lib/features/home/patient_home_screen.dart",
+    "status": "??",
+    "sha256": "2616d65c8b3dae575290657a58249637c9bf58b08939079e4052bb0ddb83d8b2"
+  },
+  {
+    "path": "frontend/lib/features/home/widgets/featured_articles.dart",
+    "status": "??",
+    "sha256": "5deb8bd511656ea27b427889dee4aec1d85d6132b817071c9be2f1770d31071f"
+  },
+  {
+    "path": "frontend/lib/features/home/widgets/featured_doctors.dart",
+    "status": "??",
+    "sha256": "2a44beff0b18e5c9a94cd2f5bd5c76685f26990e560a9aff93d59d1720152a06"
+  },
+  {
+    "path": "frontend/lib/features/home/widgets/featured_services.dart",
+    "status": "??",
+    "sha256": "a52aa60e78d667b8b32f285cf65747f08c8b233fd5017a9ae29db3f206fd2d16"
+  },
+  {
+    "path": "frontend/lib/features/home/widgets/home_header.dart",
+    "status": "??",
+    "sha256": "22cb9d4fc21561aa5581f7fb2aa168b464f4d9365c49b4fc8684f63d8daf3c8b"
+  },
+  {
+    "path": "frontend/lib/features/home/widgets/upcoming_appointment_card.dart",
+    "status": "??",
+    "sha256": "efc1831f748947fd96e6c003bc47ff857c34882cf7b1cacd4cec890a3872a7d5"
+  },
+  {
+    "path": "frontend/lib/features/me/change_password_screen.dart",
+    "status": "??",
+    "sha256": "36822250aea635cb879fecfe23d205fe0cebc9a20b30f281771b1aecff96f595"
+  },
+  {
+    "path": "frontend/lib/features/me/edit_profile_screen.dart",
+    "status": "??",
+    "sha256": "3ee55f8250bc09251cf20ae8e0d24c5e15893d23d1c1249069afa0c4272e4f39"
+  },
+  {
+    "path": "frontend/lib/features/me/family_form_screen.dart",
+    "status": "??",
+    "sha256": "e31e3268c52281116c5c7f04d9db7889b38917e85d9db5802c26c2321ae5b918"
+  },
+  {
+    "path": "frontend/lib/features/me/family_list_screen.dart",
+    "status": "??",
+    "sha256": "46bfdca40be54f351eaf63ae86195d918dd6e67d4c1eca3f9f656c3daac46f26"
+  },
+  {
+    "path": "frontend/lib/features/me/help_screen.dart",
+    "status": "??",
+    "sha256": "cde33fb9f7bc852b17a89a15460b43e14d4eded25e27cdbdb75fc07995aa243b"
+  },
+  {
+    "path": "frontend/lib/features/me/language_screen.dart",
+    "status": "??",
+    "sha256": "9ce7201b73518dea33611baae74fd6dfe0e9ebc96269e254a11be7fe0918c540"
+  },
+  {
+    "path": "frontend/lib/features/me/me_screen.dart",
+    "status": "??",
+    "sha256": "a389d3be95e54ab21e5d06e731b8a99935368e823352ebfc2a0f224eaaa7f706"
+  },
+  {
+    "path": "frontend/lib/features/me/me_widgets.dart",
+    "status": "??",
+    "sha256": "6473d480810ae29598ddf3ec4440c42a8a3616e661aec7022c3d3159b6bd2926"
+  },
+  {
+    "path": "frontend/lib/features/me/notifications_screen.dart",
+    "status": "??",
+    "sha256": "438d6677bd2d0e8ae843c9cc2853966d1e84ae7231e3e3e4ee11be7ff2e6f480"
+  },
+  {
+    "path": "frontend/lib/features/me/privacy_screen.dart",
+    "status": "??",
+    "sha256": "734b6e87689a3620f84d5fc6e3a8df7c18d457a457060e15e53188b082e7a6d0"
+  },
+  {
+    "path": "frontend/lib/features/me/saved_items_screen.dart",
+    "status": "??",
+    "sha256": "a0b09807de2c7b17ea8e26830f9e491d6504cfd93ce032b07c686bea45eee398"
+  },
+  {
+    "path": "frontend/lib/features/me/settings_screen.dart",
+    "status": "??",
+    "sha256": "beffa88352c0a44e2ee3f0aef32fde3c86af75533d32c0423f127b4c484634cb"
+  },
+  {
+    "path": "frontend/lib/features/records/appointment_detail_screen.dart",
+    "status": "??",
+    "sha256": "302ae04a0e2dad07ea6acf30e2476375bcc9f97581e72d77fcacb91810960671"
+  },
+  {
+    "path": "frontend/lib/features/records/appointments_screen.dart",
+    "status": "??",
+    "sha256": "d042eeb4af6b80c3dae1de6fa46898c2584f0224876a5bad071d7edb1b30948e"
+  },
+  {
+    "path": "frontend/lib/features/records/exam_result_screen.dart",
+    "status": "??",
+    "sha256": "1e9dd3f0aad4f3493b436cb7b28ac3142ef1cb696eedba201d000b50646bd561"
+  },
+  {
+    "path": "frontend/lib/features/records/followup_screen.dart",
+    "status": "??",
+    "sha256": "b11d0a12b697ba7f066f4d22170b52f495fa06d3e956e37a0ca77389c07c07ee"
+  },
+  {
+    "path": "frontend/lib/features/records/payment_receipt_screen.dart",
+    "status": "??",
+    "sha256": "54e14c261a3b76fce0f4feec7171fb8af769357acfef2b47606b658c9a1487c6"
+  },
+  {
+    "path": "frontend/lib/features/records/prescription_screen.dart",
+    "status": "??",
+    "sha256": "fa691665651aa6fba7685d30847284a2b7fc37b87d9e34e8fc9f81ea5210e199"
+  },
+  {
+    "path": "frontend/lib/features/records/records_home_screen.dart",
+    "status": "??",
+    "sha256": "a0adb642668962b797e83295e90d1f6041c8e78193287593152367e28f2604b2"
+  },
+  {
+    "path": "frontend/lib/features/records/records_widgets.dart",
+    "status": "??",
+    "sha256": "8a94283d4049fadaf20ef524b79eb98fa30ddf2fcfa604fed1ec087fa4896990"
+  },
+  {
+    "path": "frontend/lib/features/records/treatment_detail_screen.dart",
+    "status": "??",
+    "sha256": "1b0be3d21d7137a2fa17c77e664e39caf4560b26d1aed7bd0679730727e9e7b1"
+  },
+  {
+    "path": "frontend/lib/features/records/treatment_list_screen.dart",
+    "status": "??",
+    "sha256": "0223e07f239f33b0a88bd51028247b98e7c9940f5737f9963826cc0bddaee3aa"
+  },
+  {
+    "path": "frontend/lib/features/records/treatment_photos_screen.dart",
+    "status": "??",
+    "sha256": "d9d3ea266b9166b78395f15e1bcbe8e1af3b198eaac657ae3983105daffe5fc6"
+  },
+  {
+    "path": "frontend/lib/features/records/visit_detail_screen.dart",
+    "status": "??",
+    "sha256": "e7e190b380fb12808155ab14c70fef380e370454d9adb3f4da4d52e90f77cd1c"
+  },
+  {
+    "path": "frontend/lib/features/records/visit_history_screen.dart",
+    "status": "??",
+    "sha256": "2b3a48cfd411e2efa967b6ca69f16bea650eab92e153a26c962226b8a5dd0b8c"
+  },
+  {
+    "path": "frontend/lib/features/services/service_detail_screen.dart",
+    "status": "??",
+    "sha256": "dedd6fd1d1e58251d6a7d3641abfc656ff6e5fa2165ec54ed210edd5fc08f56e"
+  },
+  {
+    "path": "frontend/lib/features/services/service_list_screen.dart",
+    "status": "??",
+    "sha256": "041cc9a6d1dfe338020db9567f1be89393f6df484196c6772d0003468ebe442a"
+  },
+  {
+    "path": "frontend/lib/features/shared/article_card.dart",
+    "status": "??",
+    "sha256": "b65c315da5fefdb54416893bda6cd8281aed5e7df286e8826c4cd7bc25c002b3"
+  },
+  {
+    "path": "frontend/lib/features/shared/catalog_navigation.dart",
+    "status": "??",
+    "sha256": "d7723d6a24735523bd878b7fa521e151a693ee70efb14347b0bf31d4338716e7"
+  },
+  {
+    "path": "frontend/lib/features/shared/doctor_card.dart",
+    "status": "??",
+    "sha256": "a3de2cadfcf48fbf4597362b2f09ef1ea8f352a2602e239334022ef61984f281"
+  },
+  {
+    "path": "frontend/lib/features/shared/patient_avatar.dart",
+    "status": "??",
+    "sha256": "f59af14ceefa5e27e5fd7f0ed706fa0da469ff661ff0bcbdb4e2b0bf7a4ed990"
+  },
+  {
+    "path": "frontend/lib/features/shared/patient_detail_screen.dart",
+    "status": "??",
+    "sha256": "e074dd323597870f6352844214703d5b92a14611279356575e9abef29c00c334"
+  },
+  {
+    "path": "frontend/lib/features/shared/service_card.dart",
+    "status": "??",
+    "sha256": "0a300de7d41c86be98cb706c947cc5b6eaa7b97cb0ba6d540305a5ec562cd850"
+  },
+  {
+    "path": "frontend/linux/.gitignore",
+    "status": "??",
+    "sha256": "5ded4f1a9d10d34bf6ee5beb0711d88ee2ef07b0f07ace9ed77935a246e8eb82"
+  },
+  {
+    "path": "frontend/linux/CMakeLists.txt",
+    "status": "??",
+    "sha256": "e3d98df6335619763f91f6157c0f6fbf9259155b69d6ea05d542d0045d1b1b48"
+  },
+  {
+    "path": "frontend/linux/flutter/CMakeLists.txt",
+    "status": "??",
+    "sha256": "787189e2623313cfee590a0b553338eb9fc68b3af922ddd77c5d39c75f989aeb"
+  },
+  {
+    "path": "frontend/linux/flutter/generated_plugin_registrant.cc",
+    "status": "??",
+    "sha256": "7861b227b10a10cc1d7643f82a246b7db35b503f2d9ff1d3c906136e6c260dce"
+  },
+  {
+    "path": "frontend/linux/flutter/generated_plugin_registrant.h",
+    "status": "??",
+    "sha256": "00f93bb5b1faefdede8f6065df327522900fb0b8efee86bacf424fd947ed14bb"
+  },
+  {
+    "path": "frontend/linux/flutter/generated_plugins.cmake",
+    "status": "??",
+    "sha256": "d5aaa52ef8594d3128b35b6619c6a353e1be5f3c5a63a9c29c0a32b424e91952"
+  },
+  {
+    "path": "frontend/linux/runner/CMakeLists.txt",
+    "status": "??",
+    "sha256": "8cdcfd911e770fd7d511c97c7bce6559486a815352a47c953f7ef632e236d2cc"
+  },
+  {
+    "path": "frontend/linux/runner/main.cc",
+    "status": "??",
+    "sha256": "ea23f7cdf74091d63bba29ef60486370b766157b848f0cfe62bd8b1c1695a0c1"
+  },
+  {
+    "path": "frontend/linux/runner/my_application.cc",
+    "status": "??",
+    "sha256": "caf1e8fc54ab95e874cbccac1b7e4dbdc30efd6c16b0116b3ea61737b03866dc"
+  },
+  {
+    "path": "frontend/linux/runner/my_application.h",
+    "status": "??",
+    "sha256": "a4218d7ac0db8a9a6716daf216b2d4fc6bdc7ac647e3183078b2c962ebdfcf70"
+  },
+  {
+    "path": "frontend/macos/.gitignore",
+    "status": "??",
+    "sha256": "ffec1a0bbd70547186b82ad4e49089bafab2de309b89de97c776d70debb179fa"
+  },
+  {
+    "path": "frontend/macos/Flutter/Flutter-Debug.xcconfig",
+    "status": "??",
+    "sha256": "62290ad8e938bf410206d8c7e131262696b58a6df110d39faf3399396ffe61b1"
+  },
+  {
+    "path": "frontend/macos/Flutter/Flutter-Release.xcconfig",
+    "status": "??",
+    "sha256": "62290ad8e938bf410206d8c7e131262696b58a6df110d39faf3399396ffe61b1"
+  },
+  {
+    "path": "frontend/macos/Flutter/GeneratedPluginRegistrant.swift",
+    "status": "??",
+    "sha256": "9ebc54b4d21464b875d1289b3dd5e44cd7e68930dbd6e8c7f954e438eb6ad499"
+  },
+  {
+    "path": "frontend/macos/Runner.xcodeproj/project.pbxproj",
+    "status": "??",
+    "sha256": "a168f3f14998b06b3931401395a8515f27fe472392d3f82b09c0e9d76ec5abc6"
+  },
+  {
+    "path": "frontend/macos/Runner.xcodeproj/project.xcworkspace/xcshareddata/IDEWorkspaceChecks.plist",
+    "status": "??",
+    "sha256": "dfa0f9bb85b95ccba9c6811adadf8cb407fb5d52088e89db83ebc308ec448542"
+  },
+  {
+    "path": "frontend/macos/Runner.xcodeproj/xcshareddata/xcschemes/Runner.xcscheme",
+    "status": "??",
+    "sha256": "2535d9cb0a0e0a83769a012d3e37caa9b41fb092d1fd8927cddf6232716c74ec"
+  },
+  {
+    "path": "frontend/macos/Runner.xcworkspace/contents.xcworkspacedata",
+    "status": "??",
+    "sha256": "46c3c9702ff7c5584e11c954d943cfb6e07fb26e3fbd072ddbc0f388aa352de1"
+  },
+  {
+    "path": "frontend/macos/Runner.xcworkspace/xcshareddata/IDEWorkspaceChecks.plist",
+    "status": "??",
+    "sha256": "dfa0f9bb85b95ccba9c6811adadf8cb407fb5d52088e89db83ebc308ec448542"
+  },
+  {
+    "path": "frontend/macos/Runner/AppDelegate.swift",
+    "status": "??",
+    "sha256": "ce9dbe45a57c59e85519da50a26c471615b9c8cdd85a8f4a39d2e480e62a4af4"
+  },
+  {
+    "path": "frontend/macos/Runner/Assets.xcassets/AppIcon.appiconset/Contents.json",
+    "status": "??",
+    "sha256": "bc6ba8105ca69651aeeb77358851590de295dca04681a1d58c0f449641c242f3"
+  },
+  {
+    "path": "frontend/macos/Runner/Assets.xcassets/AppIcon.appiconset/app_icon_1024.png",
+    "status": "??",
+    "sha256": "6232e5815af17e25e0268b2fec7aea9e068cc92ec709e9605c2b31df4ff2a313"
+  },
+  {
+    "path": "frontend/macos/Runner/Assets.xcassets/AppIcon.appiconset/app_icon_128.png",
+    "status": "??",
+    "sha256": "15591f03f31313af6fd644ed0512106cc04365130b8b73244f1cfa6dddfb4400"
+  },
+  {
+    "path": "frontend/macos/Runner/Assets.xcassets/AppIcon.appiconset/app_icon_16.png",
+    "status": "??",
+    "sha256": "cc6928b5adfc00dbf526192e2705dd9af641cdf20ab4c6c7ca7cd4936dca59f0"
+  },
+  {
+    "path": "frontend/macos/Runner/Assets.xcassets/AppIcon.appiconset/app_icon_256.png",
+    "status": "??",
+    "sha256": "416efd77cde932d42ef34168da24dd428a495b1f4f34bbbd125a18d2add186a2"
+  },
+  {
+    "path": "frontend/macos/Runner/Assets.xcassets/AppIcon.appiconset/app_icon_32.png",
+    "status": "??",
+    "sha256": "ae8c4458e41f1e28b1e851ed87d3268d4a0351ceea427fa2a84cc94ddfb6d4c5"
+  },
+  {
+    "path": "frontend/macos/Runner/Assets.xcassets/AppIcon.appiconset/app_icon_512.png",
+    "status": "??",
+    "sha256": "0a91c6c1bf242e54ee179e34629e9ef3e8a6d286c0fce01e302280a8be9277e6"
+  },
+  {
+    "path": "frontend/macos/Runner/Assets.xcassets/AppIcon.appiconset/app_icon_64.png",
+    "status": "??",
+    "sha256": "6ad229623498e5f1277800db3ab7cb11faf85eb2569e1213f7d8e55003c07b42"
+  },
+  {
+    "path": "frontend/macos/Runner/Base.lproj/MainMenu.xib",
+    "status": "??",
+    "sha256": "be9e9ef8469d3262370e0f0b855ed163cbf9c8362c59e330b2ffe63b86fa42f4"
+  },
+  {
+    "path": "frontend/macos/Runner/Configs/AppInfo.xcconfig",
+    "status": "??",
+    "sha256": "0ea03d547a2bda8574b1dffaadb4dbc327e7a749520c70565410a520a34d63f1"
+  },
+  {
+    "path": "frontend/macos/Runner/Configs/Debug.xcconfig",
+    "status": "??",
+    "sha256": "8067d533ef6593760baad9a9855a786a7a77470fcc3f0925ec04fe43bc1ac4b0"
+  },
+  {
+    "path": "frontend/macos/Runner/Configs/Release.xcconfig",
+    "status": "??",
+    "sha256": "7a6a4b4d973a23052fa0a0388dd261e32d311d7b66ba1bfc3b914b361808ac61"
+  },
+  {
+    "path": "frontend/macos/Runner/Configs/Warnings.xcconfig",
+    "status": "??",
+    "sha256": "0e341a392b16ad302d12890aa3dac9257a6c10ece685437604259a85341645a3"
+  },
+  {
+    "path": "frontend/macos/Runner/DebugProfile.entitlements",
+    "status": "??",
+    "sha256": "ebaab2b9992173de422c33e1fbab7f6e31acaa2213956097ac8cefd894a91ac8"
+  },
+  {
+    "path": "frontend/macos/Runner/Info.plist",
+    "status": "??",
+    "sha256": "f253e89c512b3a9a81bc5cdd7a14bf932470f835f261654a808ea4549cd94aad"
+  },
+  {
+    "path": "frontend/macos/Runner/MainFlutterWindow.swift",
+    "status": "??",
+    "sha256": "65c9613c11bcedfa51416b16c975d8ba6ff12b405fc19d60db8755d92e86d9fe"
+  },
+  {
+    "path": "frontend/macos/Runner/Release.entitlements",
+    "status": "??",
+    "sha256": "b746c74b201e6af4e0864fbd1f4f629f96156a7ec4b7208bc995d0a5089bb592"
+  },
+  {
+    "path": "frontend/macos/RunnerTests/RunnerTests.swift",
+    "status": "??",
+    "sha256": "6bc180bc77c7def7a21d197233e25dff42cc493ab9d294632edafc18fdf0ac44"
+  },
+  {
+    "path": "frontend/pubspec.lock",
+    "status": "??",
+    "sha256": "421bb7a30aaafab8799becf1cb65696c99cf99491446573bdbbfa113add3584d"
+  },
+  {
+    "path": "frontend/qa_artifacts/README.md",
+    "status": "??",
+    "sha256": "4d3cb6dc1389b2bbbbf2c99580432fe3e45f0035a6b39812c99a3676b02813ba"
+  },
+  {
+    "path": "frontend/qa_artifacts/handover/screenshots/01_home.png",
+    "status": "??",
+    "sha256": "531be6545ba65c9c5e904653dd8ca2a4bd3667e5f395618a18b22c49f89c2cea"
+  },
+  {
+    "path": "frontend/qa_artifacts/handover/screenshots/02_booking_services.png",
+    "status": "??",
+    "sha256": "536627a3c1fa5344faa45fa59c6dec1f5d4bc78276034e6fd739d445e05ade39"
+  },
+  {
+    "path": "frontend/qa_artifacts/handover/screenshots/03_booking_doctor.png",
+    "status": "??",
+    "sha256": "fe88c6ff98b015ed2d9957f6a4fee443f0d9303973d9649bd8db6f673fe31627"
+  },
+  {
+    "path": "frontend/qa_artifacts/handover/screenshots/04_booking_datetime.png",
+    "status": "??",
+    "sha256": "d44676e2e343bbd95327496c0a8bf06ccae3bb23a199b9e629a9d1d64054bf3e"
+  },
+  {
+    "path": "frontend/qa_artifacts/handover/screenshots/05_booking_confirm.png",
+    "status": "??",
+    "sha256": "402e8c99ea1714651dc1e521e24f771717b8316f24a6207d613522f30d968859"
+  },
+  {
+    "path": "frontend/qa_artifacts/handover/screenshots/06_booking_success.png",
+    "status": "??",
+    "sha256": "ec1285419bfdad6b07c93d48866e221e9b17ce1b16b4ab8bdf787aaa3f97ad9c"
+  },
+  {
+    "path": "frontend/qa_artifacts/handover/screenshots/07_records_overview.png",
+    "status": "??",
+    "sha256": "ce75f6b391066b8aa9226abba9fa119057dcb12fa6879f9f85abc0a357bc00f8"
+  },
+  {
+    "path": "frontend/qa_artifacts/handover/screenshots/08_records_relative.png",
+    "status": "??",
+    "sha256": "07aefd657d57a6c27378459c2bd21a90ce77acd5cdb344d1713fddd90a180e99"
+  },
+  {
+    "path": "frontend/qa_artifacts/handover/screenshots/09_account.png",
+    "status": "??",
+    "sha256": "2e9a23a7ff67c515772138c80ae17008c0de473aed0ef942a762b9c281889b3b"
+  },
+  {
+    "path": "frontend/qa_artifacts/handover/screenshots/10_family.png",
+    "status": "??",
+    "sha256": "6de54871097ffa2970cb9eb7089b5318efa41bcf6a4daa7dec8fd239981651a5"
+  },
+  {
+    "path": "frontend/qa_artifacts/handover/screenshots/11_saved.png",
+    "status": "??",
+    "sha256": "dd7f6716bc9079ecbba7048283a2ead4c798e853d4be44611796c8ce41e91bd2"
+  },
+  {
+    "path": "frontend/qa_artifacts/handover/screenshots/12_settings.png",
+    "status": "??",
+    "sha256": "ad07f4c58026cef6bc51b1bd9a855b4244b94166f013228065122bd7f2644dc1"
+  },
+  {
+    "path": "frontend/qa_artifacts/handover/screenshots/13_logged_out.png",
+    "status": "??",
+    "sha256": "42e5b8382af19f225a83cb1d6798273ab8b50e961039c7dc9cd49602668cd54c"
+  },
+  {
+    "path": "frontend/qa_artifacts/handover/screenshots/content_notifications.png",
+    "status": "??",
+    "sha256": "b6c7a80a9505a76cb0359219b90715fb6f218c6fa40203689a42678302c08ccb"
+  },
+  {
+    "path": "frontend/qa_artifacts/overscroll/README.md",
+    "status": "??",
+    "sha256": "9109e4197b68b89add44a7724630f8e49cebf0202ff019ea26ee6655a13e2148"
+  },
+  {
+    "path": "frontend/qa_artifacts/overscroll/screenshots/01_home.png",
+    "status": "??",
+    "sha256": "531be6545ba65c9c5e904653dd8ca2a4bd3667e5f395618a18b22c49f89c2cea"
+  },
+  {
+    "path": "frontend/qa_artifacts/overscroll/screenshots/02_booking_services.png",
+    "status": "??",
+    "sha256": "536627a3c1fa5344faa45fa59c6dec1f5d4bc78276034e6fd739d445e05ade39"
+  },
+  {
+    "path": "frontend/qa_artifacts/overscroll/screenshots/03_booking_doctor.png",
+    "status": "??",
+    "sha256": "fe88c6ff98b015ed2d9957f6a4fee443f0d9303973d9649bd8db6f673fe31627"
+  },
+  {
+    "path": "frontend/qa_artifacts/overscroll/screenshots/04_booking_datetime.png",
+    "status": "??",
+    "sha256": "d44676e2e343bbd95327496c0a8bf06ccae3bb23a199b9e629a9d1d64054bf3e"
+  },
+  {
+    "path": "frontend/qa_artifacts/overscroll/screenshots/05_booking_confirm.png",
+    "status": "??",
+    "sha256": "402e8c99ea1714651dc1e521e24f771717b8316f24a6207d613522f30d968859"
+  },
+  {
+    "path": "frontend/qa_artifacts/overscroll/screenshots/06_booking_success.png",
+    "status": "??",
+    "sha256": "ec1285419bfdad6b07c93d48866e221e9b17ce1b16b4ab8bdf787aaa3f97ad9c"
+  },
+  {
+    "path": "frontend/qa_artifacts/overscroll/screenshots/07_records_overview.png",
+    "status": "??",
+    "sha256": "ce75f6b391066b8aa9226abba9fa119057dcb12fa6879f9f85abc0a357bc00f8"
+  },
+  {
+    "path": "frontend/qa_artifacts/overscroll/screenshots/08_records_relative.png",
+    "status": "??",
+    "sha256": "07aefd657d57a6c27378459c2bd21a90ce77acd5cdb344d1713fddd90a180e99"
+  },
+  {
+    "path": "frontend/qa_artifacts/overscroll/screenshots/09_account.png",
+    "status": "??",
+    "sha256": "2e9a23a7ff67c515772138c80ae17008c0de473aed0ef942a762b9c281889b3b"
+  },
+  {
+    "path": "frontend/qa_artifacts/overscroll/screenshots/10_family.png",
+    "status": "??",
+    "sha256": "6de54871097ffa2970cb9eb7089b5318efa41bcf6a4daa7dec8fd239981651a5"
+  },
+  {
+    "path": "frontend/qa_artifacts/overscroll/screenshots/11_saved.png",
+    "status": "??",
+    "sha256": "dd7f6716bc9079ecbba7048283a2ead4c798e853d4be44611796c8ce41e91bd2"
+  },
+  {
+    "path": "frontend/qa_artifacts/overscroll/screenshots/12_settings.png",
+    "status": "??",
+    "sha256": "ad07f4c58026cef6bc51b1bd9a855b4244b94166f013228065122bd7f2644dc1"
+  },
+  {
+    "path": "frontend/qa_artifacts/overscroll/screenshots/13_logged_out.png",
+    "status": "??",
+    "sha256": "42e5b8382af19f225a83cb1d6798273ab8b50e961039c7dc9cd49602668cd54c"
+  },
+  {
+    "path": "frontend/qa_artifacts/overscroll/screenshots/14_overscroll_account.png",
+    "status": "??",
+    "sha256": "2e9a23a7ff67c515772138c80ae17008c0de473aed0ef942a762b9c281889b3b"
+  },
+  {
+    "path": "frontend/qa_artifacts/prompt10/android_screenshots/01_home.png",
+    "status": "??",
+    "sha256": "531be6545ba65c9c5e904653dd8ca2a4bd3667e5f395618a18b22c49f89c2cea"
+  },
+  {
+    "path": "frontend/qa_artifacts/prompt10/android_screenshots/02_booking_services.png",
+    "status": "??",
+    "sha256": "536627a3c1fa5344faa45fa59c6dec1f5d4bc78276034e6fd739d445e05ade39"
+  },
+  {
+    "path": "frontend/qa_artifacts/prompt10/android_screenshots/03_booking_doctor.png",
+    "status": "??",
+    "sha256": "fe88c6ff98b015ed2d9957f6a4fee443f0d9303973d9649bd8db6f673fe31627"
+  },
+  {
+    "path": "frontend/qa_artifacts/prompt10/android_screenshots/04_booking_datetime.png",
+    "status": "??",
+    "sha256": "d44676e2e343bbd95327496c0a8bf06ccae3bb23a199b9e629a9d1d64054bf3e"
+  },
+  {
+    "path": "frontend/qa_artifacts/prompt10/android_screenshots/05_booking_confirm.png",
+    "status": "??",
+    "sha256": "402e8c99ea1714651dc1e521e24f771717b8316f24a6207d613522f30d968859"
+  },
+  {
+    "path": "frontend/qa_artifacts/prompt10/android_screenshots/06_booking_success.png",
+    "status": "??",
+    "sha256": "ec1285419bfdad6b07c93d48866e221e9b17ce1b16b4ab8bdf787aaa3f97ad9c"
+  },
+  {
+    "path": "frontend/qa_artifacts/prompt10/android_screenshots/07_records_overview.png",
+    "status": "??",
+    "sha256": "ce75f6b391066b8aa9226abba9fa119057dcb12fa6879f9f85abc0a357bc00f8"
+  },
+  {
+    "path": "frontend/qa_artifacts/prompt10/android_screenshots/08_records_relative.png",
+    "status": "??",
+    "sha256": "07aefd657d57a6c27378459c2bd21a90ce77acd5cdb344d1713fddd90a180e99"
+  },
+  {
+    "path": "frontend/qa_artifacts/prompt10/android_screenshots/09_account.png",
+    "status": "??",
+    "sha256": "2e9a23a7ff67c515772138c80ae17008c0de473aed0ef942a762b9c281889b3b"
+  },
+  {
+    "path": "frontend/qa_artifacts/prompt10/android_screenshots/10_family.png",
+    "status": "??",
+    "sha256": "6de54871097ffa2970cb9eb7089b5318efa41bcf6a4daa7dec8fd239981651a5"
+  },
+  {
+    "path": "frontend/qa_artifacts/prompt10/android_screenshots/11_saved.png",
+    "status": "??",
+    "sha256": "dd7f6716bc9079ecbba7048283a2ead4c798e853d4be44611796c8ce41e91bd2"
+  },
+  {
+    "path": "frontend/qa_artifacts/prompt10/android_screenshots/12_settings.png",
+    "status": "??",
+    "sha256": "ad07f4c58026cef6bc51b1bd9a855b4244b94166f013228065122bd7f2644dc1"
+  },
+  {
+    "path": "frontend/qa_artifacts/prompt10/android_screenshots/13_logged_out.png",
+    "status": "??",
+    "sha256": "42e5b8382af19f225a83cb1d6798273ab8b50e961039c7dc9cd49602668cd54c"
+  },
+  {
+    "path": "frontend/qa_artifacts/prompt10/android_screenshots/api_unavailable.png",
+    "status": "??",
+    "sha256": "8ca292dcf1c7a4ef4a6e61453640d82b10a17523511bea1c2b9af081b09822df"
+  },
+  {
+    "path": "frontend/qa_artifacts/prompt10/android_screenshots/api_users_live.png",
+    "status": "??",
+    "sha256": "c5a7e069d57bf6e88662be270c2ab4045ef1f507c6d6a72bed032316216b311c"
+  },
+  {
+    "path": "frontend/qa_artifacts/prompt10/http_read_probe.json",
+    "status": "??",
+    "sha256": "68d5bdebfb7df2ec3711d874329853be9a8ea25fbb03bb72febb8af46ac68659"
+  },
+  {
+    "path": "frontend/qa_artifacts/source_audit.json",
+    "status": "??",
+    "sha256": "dff1154b549614be9f48692bed943462f5aed4b942832f9f959b10449cc06d44"
+  },
+  {
+    "path": "frontend/qa_screenshots/01_home.png",
+    "status": "??",
+    "sha256": "531be6545ba65c9c5e904653dd8ca2a4bd3667e5f395618a18b22c49f89c2cea"
+  },
+  {
+    "path": "frontend/qa_screenshots/02_booking_services.png",
+    "status": "??",
+    "sha256": "536627a3c1fa5344faa45fa59c6dec1f5d4bc78276034e6fd739d445e05ade39"
+  },
+  {
+    "path": "frontend/qa_screenshots/03_booking_doctor.png",
+    "status": "??",
+    "sha256": "fe88c6ff98b015ed2d9957f6a4fee443f0d9303973d9649bd8db6f673fe31627"
+  },
+  {
+    "path": "frontend/qa_screenshots/04_booking_datetime.png",
+    "status": "??",
+    "sha256": "d44676e2e343bbd95327496c0a8bf06ccae3bb23a199b9e629a9d1d64054bf3e"
+  },
+  {
+    "path": "frontend/qa_screenshots/05_booking_confirm.png",
+    "status": "??",
+    "sha256": "402e8c99ea1714651dc1e521e24f771717b8316f24a6207d613522f30d968859"
+  },
+  {
+    "path": "frontend/qa_screenshots/06_booking_success.png",
+    "status": "??",
+    "sha256": "ec1285419bfdad6b07c93d48866e221e9b17ce1b16b4ab8bdf787aaa3f97ad9c"
+  },
+  {
+    "path": "frontend/qa_screenshots/07_records_overview.png",
+    "status": "??",
+    "sha256": "ce75f6b391066b8aa9226abba9fa119057dcb12fa6879f9f85abc0a357bc00f8"
+  },
+  {
+    "path": "frontend/qa_screenshots/08_records_relative.png",
+    "status": "??",
+    "sha256": "07aefd657d57a6c27378459c2bd21a90ce77acd5cdb344d1713fddd90a180e99"
+  },
+  {
+    "path": "frontend/qa_screenshots/09_account.png",
+    "status": "??",
+    "sha256": "2e9a23a7ff67c515772138c80ae17008c0de473aed0ef942a762b9c281889b3b"
+  },
+  {
+    "path": "frontend/qa_screenshots/10_family.png",
+    "status": "??",
+    "sha256": "6de54871097ffa2970cb9eb7089b5318efa41bcf6a4daa7dec8fd239981651a5"
+  },
+  {
+    "path": "frontend/qa_screenshots/11_saved.png",
+    "status": "??",
+    "sha256": "dd7f6716bc9079ecbba7048283a2ead4c798e853d4be44611796c8ce41e91bd2"
+  },
+  {
+    "path": "frontend/qa_screenshots/12_settings.png",
+    "status": "??",
+    "sha256": "ad07f4c58026cef6bc51b1bd9a855b4244b94166f013228065122bd7f2644dc1"
+  },
+  {
+    "path": "frontend/qa_screenshots/13_logged_out.png",
+    "status": "??",
+    "sha256": "42e5b8382af19f225a83cb1d6798273ab8b50e961039c7dc9cd49602668cd54c"
+  },
+  {
+    "path": "frontend/qa_screenshots/README.md",
+    "status": "??",
+    "sha256": "0958984450821145920ef17509278ad59ed2d1a6603dc217e8dc98e7acb7a1fe"
+  },
+  {
+    "path": "frontend/test/api_foundation_test.dart",
+    "status": "??",
+    "sha256": "65953f0685e149783224fb7e435947bd265a9196e67eade5517f6e792f6be5b3"
+  },
+  {
+    "path": "frontend/test/booking_test.dart",
+    "status": "??",
+    "sha256": "2e885ef8053e892539171e9a55cfc75a5802ab8c4410df9aa0f21f95221f9677"
+  },
+  {
+    "path": "frontend/test/content_handover_test.dart",
+    "status": "??",
+    "sha256": "4961c1d6eddb0d149e9c575ad05fbc192a8ee4b3efdb0670dc84e5a58bc68c0c"
+  },
+  {
+    "path": "frontend/test/final_qa_test.dart",
+    "status": "??",
+    "sha256": "41e6e2033af8b8f53dd0903d048744eea1514c090864b4e99990a19bf1928fae"
+  },
+  {
+    "path": "frontend/test/me_test.dart",
+    "status": "??",
+    "sha256": "72a4803c399d9ea52e2baa4e363a41b6b9fccdf2fc1f63560b0dc41edd834c79"
+  },
+  {
+    "path": "frontend/test/patient_data_test.dart",
+    "status": "??",
+    "sha256": "83873e4f40af514f174482069df590b26de36311bf183cc16b10eb79dd92011d"
+  },
+  {
+    "path": "frontend/test/records_test.dart",
+    "status": "??",
+    "sha256": "1060c4850aee9fad3189dd22bac60c16a10034dd6d8d5179e7736ea30d237b25"
+  },
+  {
+    "path": "frontend/test/scroll_behavior_test.dart",
+    "status": "??",
+    "sha256": "0f04d3b109fcd8ea77d38ca83af99a0f2d8cd5037312aedd97b0217d4fa37e06"
+  },
+  {
+    "path": "frontend/test/widget_test.dart",
+    "status": "??",
+    "sha256": "942a796009922c2c69ef69d3684624562d04740e390be41f7c7df4d4417f3769"
+  },
+  {
+    "path": "frontend/test_driver/api_foundation_driver.dart",
+    "status": "??",
+    "sha256": "77d2259a009733e3db03d536f08588fb0da2f1887d5b5c1e096457f81bacfa30"
+  },
+  {
+    "path": "frontend/test_driver/final_qa_driver.dart",
+    "status": "??",
+    "sha256": "75fea3f0a014f862c7b1086c1cd025cb9a60e8c7f2a759eff77a5246d689c7a0"
+  },
+  {
+    "path": "frontend/test_driver/handover_driver.dart",
+    "status": "??",
+    "sha256": "46e5b0afbfe16e0cbb07d77a25a977eb2e21764963c9f98503f13393feca12e2"
+  },
+  {
+    "path": "frontend/test_driver/overscroll_driver.dart",
+    "status": "??",
+    "sha256": "2c4ffd2ae04f84c3d2e72bd081605e8b9a84a14582a40e5aaa587de959636ea0"
+  },
+  {
+    "path": "frontend/web/favicon.png",
+    "status": "??",
+    "sha256": "7ab2525f4b86b65d3e4c70358a17e5a1aaf6f437f99cbcc046dad73d59bb9015"
+  },
+  {
+    "path": "frontend/web/icons/Icon-192.png",
+    "status": "??",
+    "sha256": "3dce99077602f70421c1c6b2a240bc9b83d64d86681d45f2154143310c980be3"
+  },
+  {
+    "path": "frontend/web/icons/Icon-512.png",
+    "status": "??",
+    "sha256": "baccb205ae45f0b421be1657259b4943ac40c95094ab877f3bcbe12cd544dcbe"
+  },
+  {
+    "path": "frontend/web/icons/Icon-maskable-192.png",
+    "status": "??",
+    "sha256": "d2c842e22a9f4ec9d996b23373a905c88d9a203b220c5c151885ad621f974b5c"
+  },
+  {
+    "path": "frontend/web/icons/Icon-maskable-512.png",
+    "status": "??",
+    "sha256": "6aee06cdcab6b2aef74b1734c4778f4421d2da100b0ff9e52b21b55240202929"
+  },
+  {
+    "path": "frontend/web/index.html",
+    "status": "??",
+    "sha256": "76c63c289ed2e69c595bb21155f87bd9f9b20edc938ad80c9edd836eb92df4a0"
+  },
+  {
+    "path": "frontend/web/manifest.json",
+    "status": "??",
+    "sha256": "afc671331e0803aa745beb42dcedf05f0f8f201515afb10128f36a80534da1f1"
+  },
+  {
+    "path": "frontend/windows/.gitignore",
+    "status": "??",
+    "sha256": "96345475f1a3c66bd32d28178fba151ab1506b35b1f7857b8f7651863093ea11"
+  },
+  {
+    "path": "frontend/windows/CMakeLists.txt",
+    "status": "??",
+    "sha256": "127bfb7bfcda550624d66a9aed903638bfa88826db30dad657c17d1f0cba77b7"
+  },
+  {
+    "path": "frontend/windows/flutter/CMakeLists.txt",
+    "status": "??",
+    "sha256": "1fe418971b6f41bb35ceb3d64113a835f3f6f171ecaa707bf232492b57a588d6"
+  },
+  {
+    "path": "frontend/windows/flutter/generated_plugin_registrant.cc",
+    "status": "??",
+    "sha256": "82e02567f2faf5e732dc92a2fb0d01104f7ba8c48973f8cfd41a860b4fac3f3b"
+  },
+  {
+    "path": "frontend/windows/flutter/generated_plugin_registrant.h",
+    "status": "??",
+    "sha256": "dbc11635d7b1ba1887adf40df5b83d634e9c3ab0bee34510c71528bb4d73602a"
+  },
+  {
+    "path": "frontend/windows/flutter/generated_plugins.cmake",
+    "status": "??",
+    "sha256": "286346b0d5303dc6b41072f9582d4c52bca35255b85b27b310f858e264dfdc56"
+  },
+  {
+    "path": "frontend/windows/runner/CMakeLists.txt",
+    "status": "??",
+    "sha256": "34119ec122e36940235ef4bc245fcfb43b6960ed443e28af1a8d833a81209b9e"
+  },
+  {
+    "path": "frontend/windows/runner/Runner.rc",
+    "status": "??",
+    "sha256": "9d766798fc9278c1f664afe454e1d4b96bc21c77a6351607608bae428518b763"
+  },
+  {
+    "path": "frontend/windows/runner/flutter_window.cpp",
+    "status": "??",
+    "sha256": "dd185884c0b5301d400b58f12ebb36b1c8b326531597e531b40e44a6eeb0e943"
+  },
+  {
+    "path": "frontend/windows/runner/flutter_window.h",
+    "status": "??",
+    "sha256": "38e0fcd3a0b83895852ec295cb70d90179c0dcd40d58f065eb5232a4ecd84898"
+  },
+  {
+    "path": "frontend/windows/runner/main.cpp",
+    "status": "??",
+    "sha256": "bfe3dd878aac67ac7e208335d8fda245ed5e3a915e30f197d8ed1bdbe339b339"
+  },
+  {
+    "path": "frontend/windows/runner/resource.h",
+    "status": "??",
+    "sha256": "1fa98588b04561590ba1cf0521ab86a9db4a878312f21c9d5861d965ddd8d1ae"
+  },
+  {
+    "path": "frontend/windows/runner/resources/app_icon.ico",
+    "status": "??",
+    "sha256": "c098d3fc85cacff98b8e69811b48e9f0d852fcee278132d794411d978869cbf8"
+  },
+  {
+    "path": "frontend/windows/runner/runner.exe.manifest",
+    "status": "??",
+    "sha256": "825d243e9fa1542619909c1b72d09b3ed7c1f3b225bb8367c125835e5dc3f8aa"
+  },
+  {
+    "path": "frontend/windows/runner/utils.cpp",
+    "status": "??",
+    "sha256": "6c2c87106b4b29d534c7edcafb3b7f7b9079caa3cdafa7e56671ad2adf5a2543"
+  },
+  {
+    "path": "frontend/windows/runner/utils.h",
+    "status": "??",
+    "sha256": "95a7f7dddb832997cefa937a96f89472332277e75734a5de553610760b744b03"
+  },
+  {
+    "path": "frontend/windows/runner/win32_window.cpp",
+    "status": "??",
+    "sha256": "9065f31ccf746cf8b390121f958f9e959033af864aed779597066625ed56bc36"
+  },
+  {
+    "path": "frontend/windows/runner/win32_window.h",
+    "status": "??",
+    "sha256": "7dd03746b19dcf3542829b2f6e8ed40a2714ce5f2cb3b0e23f0118a2fcf62d62"
+  }
+]

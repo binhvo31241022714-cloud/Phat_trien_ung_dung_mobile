@@ -17,5 +17,6 @@ Future<void> main() async {
       .addHandler(AppRouter().handler);
 
   final server = await io.serve(handler, env.host, env.port);
-  stdout.writeln('Server chạy tại http://${server.address.host}:${server.port}');
+  stdout
+      .writeln('Server chạy tại http://${server.address.host}:${server.port}');
 }
