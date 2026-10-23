@@ -3,15 +3,16 @@
 Thumbs.db
 *.log
 .env
-.env.*
-
-# ===== IDE =====
-.vscode/*
-!.vscode/launch.json
+.vscode/
 .idea/
 *.iml
 
-# ===== Flutter / Dart =====
+# ===== Backend (Node.js) =====
+node_modules/
+serviceAccountKey.json
+*-firebase-adminsdk-*.json
+
+# ===== Frontend (Flutter) =====
 .dart_tool/
 .flutter-plugins
 .flutter-plugins-dependencies
@@ -23,23 +24,18 @@ build/
 # ===== Android =====
 .gradle/
 local.properties
-/android/app/debug/
-/android/app/profile/
-/android/app/release/
+frontend/android/app/debug/
+frontend/android/app/profile/
+frontend/android/app/release/
 *.apk
 *.aab
 *.keystore
 *.jks
 
 # ===== iOS =====
-/ios/Pods/
-/ios/.symlinks/
-/ios/Flutter/Flutter.framework
-/ios/Flutter/Generated.xcconfig
-xcuserdata/
-
-# ===== React Native / Node =====
-node_modules/
-.expo/
-npm-debug.log*
-yarn-error.log*
+frontend/ios/Pods/
+frontend/ios/.symlinks/
+frontend/ios/Flutter/Flutter.framework
+frontend/ios/Flutter/Generated.xcconfig
+xcuserdata/ 
+*.http
