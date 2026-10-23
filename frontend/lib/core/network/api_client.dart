@@ -1,53 +1,124 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:http/http.dart' as http;
 
 import '../constants/api_constants.dart';
 
+enum ApiErrorKind {
+  connection,
+  timeout,
+  unauthorized,
+  forbidden,
+  notFound,
+  validation,
+  server,
+  invalidResponse,
+  http,
+}
+
 class ApiException implements Exception {
   final String message;
-  const ApiException(this.message);
-
+  final ApiErrorKind kind;
+  final int? statusCode;
+  const ApiException(this.message,
+      {this.kind = ApiErrorKind.invalidResponse, this.statusCode});
   @override
   String toString() => message;
 }
 
-/// Wrapper quanh package http. Backend trả về { success, message, data },
-/// hàm nào cũng trả về phần `data` hoặc ném ApiException.
+/// Shared transport. Understands Shelf's {success,message,data} envelope and
+/// plain JSON. No request/response bodies or credentials are logged.
 class ApiClient {
   final http.Client _client;
+  final bool _ownsClient;
+  final String baseUrl;
+  final Duration timeout;
+  final String? Function()? tokenProvider;
 
-  ApiClient({http.Client? client}) : _client = client ?? http.Client();
+  ApiClient(
+      {http.Client? client,
+      String? baseUrl,
+      this.timeout = ApiConstants.timeout,
+      this.tokenProvider})
+      : _client = client ?? http.Client(),
+        _ownsClient = client == null,
+        baseUrl =
+            (baseUrl ?? ApiConstants.baseUrl).replaceFirst(RegExp(r'/+$'), '');
 
-  static const _headers = {'Content-Type': 'application/json'};
-
-  Uri _uri(String path) => Uri.parse('${ApiConstants.baseUrl}$path');
+  Uri _uri(String path) =>
+      Uri.parse('$baseUrl/${path.replaceFirst(RegExp(r'^/+'), '')}');
+  Map<String, String> get _headers {
+    final token = tokenProvider?.call();
+    return {
+      'Accept': 'application/json',
+      'Content-Type': 'application/json',
+      if (token != null && token.isNotEmpty) 'Authorization': 'Bearer $token',
+    };
+  }
 
   Future<dynamic> get(String path) =>
       _send(() => _client.get(_uri(path), headers: _headers));
-
   Future<dynamic> post(String path, Map<String, dynamic> body) => _send(() =>
       _client.post(_uri(path), headers: _headers, body: jsonEncode(body)));
-
-  Future<dynamic> put(String path, Map<String, dynamic> body) => _send(() =>
-      _client.put(_uri(path), headers: _headers, body: jsonEncode(body)));
-
+  Future<dynamic> put(String path, Map<String, dynamic> body) => _send(
+      () => _client.put(_uri(path), headers: _headers, body: jsonEncode(body)));
   Future<dynamic> delete(String path) =>
       _send(() => _client.delete(_uri(path), headers: _headers));
 
   Future<dynamic> _send(Future<http.Response> Function() request) async {
     final http.Response response;
     try {
-      response = await request().timeout(ApiConstants.timeout);
-    } catch (_) {
-      throw const ApiException('Không kết nối được tới máy chủ');
+      response = await request().timeout(timeout);
+    } on TimeoutException {
+      throw const ApiException('Máy chủ phản hồi quá thời gian chờ.',
+          kind: ApiErrorKind.timeout);
+    } on Exception {
+      throw const ApiException('Không kết nối được tới máy chủ.',
+          kind: ApiErrorKind.connection);
     }
+    final status = response.statusCode;
+    dynamic decoded;
+    var malformed = false;
+    try {
+      if (response.bodyBytes.isNotEmpty) {
+        decoded = jsonDecode(utf8.decode(response.bodyBytes));
+      }
+    } on FormatException {
+      malformed = true;
+    }
+    if (status < 200 || status >= 300) {
+      final kind = switch (status) {
+        400 || 422 => ApiErrorKind.validation,
+        401 => ApiErrorKind.unauthorized,
+        403 => ApiErrorKind.forbidden,
+        404 => ApiErrorKind.notFound,
+        >= 500 => ApiErrorKind.server,
+        _ => ApiErrorKind.http,
+      };
+      // Untrusted server errors can include internal details; keep 5xx generic.
+      final message =
+          status < 500 && decoded is Map && decoded['message'] is String
+              ? decoded['message'] as String
+              : 'Yêu cầu thất bại (HTTP $status).';
+      throw ApiException(message, kind: kind, statusCode: status);
+    }
+    if (malformed) {
+      throw ApiException('Phản hồi máy chủ không phải JSON hợp lệ.',
+          statusCode: status);
+    }
+    if (decoded is Map && decoded.containsKey('success')) {
+      if (decoded['success'] != true || !decoded.containsKey('data')) {
+        throw ApiException('Phản hồi máy chủ không đúng hợp đồng dữ liệu.',
+            statusCode: status);
+      }
+      return decoded['data'];
+    }
+    return decoded;
+  }
 
-    final json = jsonDecode(utf8.decode(response.bodyBytes));
-    if (json is Map<String, dynamic> && json['success'] == true) {
-      return json['data'];
-    }
-    final message = json is Map<String, dynamic> ? json['message'] : null;
-    throw ApiException(message?.toString() ?? 'Lỗi ${response.statusCode}');
+  // Injected clients are owned by their caller.
+  void close() {
+    if (_ownsClient) _client.close();
   }
 }

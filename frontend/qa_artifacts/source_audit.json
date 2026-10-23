@@ -1,0 +1,42 @@
+{
+  "dart_files": 98,
+  "reachable_from_main": 84,
+  "not_reachable_from_main": [
+    "core/widgets/empty_view.dart",
+    "core/widgets/error_state.dart",
+    "core/widgets/page_header.dart",
+    "core/widgets/section_header.dart",
+    "features/booking/widgets/booking_calendar.dart",
+    "features/booking/widgets/patient_selector.dart",
+    "features/booking/widgets/service_selection_card.dart",
+    "features/home/patient_home_screen.dart",
+    "features/home/widgets/featured_articles.dart",
+    "features/home/widgets/featured_doctors.dart",
+    "features/home/widgets/featured_services.dart",
+    "features/home/widgets/home_header.dart",
+    "features/home/widgets/upcoming_appointment_card.dart",
+    "features/shared/patient_avatar.dart"
+  ],
+  "comment_only_scaffolds": [
+    "features/booking/widgets/booking_calendar.dart",
+    "features/booking/widgets/patient_selector.dart",
+    "features/booking/widgets/service_selection_card.dart",
+    "features/home/widgets/featured_articles.dart",
+    "features/home/widgets/featured_doctors.dart",
+    "features/home/widgets/featured_services.dart",
+    "features/home/widgets/home_header.dart",
+    "features/home/widgets/upcoming_appointment_card.dart"
+  ],
+  "duplicate_class_names": {},
+  "providers": [
+    "data/providers/patient_data_provider.dart",
+    "providers/user_provider.dart"
+  ],
+  "secondary_text_contrast": {
+    "background": "#F7F7F7",
+    "before": "#9E9E9E",
+    "before_ratio": 2.5,
+    "after": "#666666",
+    "after_ratio": 5.36
+  }
+}

@@ -1,0 +1,22 @@
+ .gitignore                                      |   3 +-
+ backend/bin/server.dart                         |   3 +-
+ backend/lib/core/api_response.dart              |   5 +-
+ backend/lib/services/user_service.dart          |  16 +-
+ frontend/analysis_options.yaml                  |   9 +
+ frontend/lib/app.dart                           |   6 +-
+ frontend/lib/core/constants/api_constants.dart  |  15 +-
+ frontend/lib/core/constants/app_colors.dart     |  16 +-
+ frontend/lib/core/network/api_client.dart       | 115 +++-
+ frontend/lib/core/theme/app_theme.dart          |  90 ++-
+ frontend/lib/core/utils/validators.dart         |  14 +-
+ frontend/lib/data/models/user_model.dart        |  27 +-
+ frontend/lib/data/services/user_service.dart    |  34 +-
+ frontend/lib/main.dart                          |   8 +
+ frontend/lib/providers/user_provider.dart       |  82 ++-
+ frontend/lib/routes/app_routes.dart             |  96 ++-
+ frontend/lib/screens/home/home_screen.dart      | 798 +++++++++++++++++++++++-
+ frontend/lib/screens/user/user_form_screen.dart |   6 +-
+ frontend/lib/screens/user/user_list_screen.dart |  15 +-
+ frontend/lib/widgets/loading_view.dart          |  11 +-
+ frontend/pubspec.yaml                           |   2 +
+ 21 files changed, 1266 insertions(+), 105 deletions(-)

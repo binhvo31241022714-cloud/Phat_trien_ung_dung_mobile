@@ -1,0 +1,94 @@
+[
+  {
+    "method": "GET",
+    "path": "/api/health",
+    "status": 200,
+    "success": true,
+    "data_type": "dict",
+    "count": null,
+    "data_keys": [
+      "status"
+    ]
+  },
+  {
+    "method": "GET",
+    "path": "/api/users",
+    "status": 200,
+    "success": true,
+    "data_type": "list",
+    "count": 0,
+    "data_keys": null
+  },
+  {
+    "method": "GET",
+    "path": "/api/users/2147483647",
+    "status": 404,
+    "success": false,
+    "data_type": "NoneType",
+    "count": null,
+    "data_keys": null
+  },
+  {
+    "method": "GET",
+    "path": "/api/users/invalid",
+    "status": 400,
+    "success": false,
+    "data_type": "NoneType",
+    "count": null,
+    "data_keys": null
+  },
+  {
+    "method": "GET",
+    "path": "/api/services",
+    "status": 404,
+    "success": false,
+    "data_type": "NoneType",
+    "count": null,
+    "data_keys": null
+  },
+  {
+    "method": "GET",
+    "path": "/api/doctors",
+    "status": 404,
+    "success": false,
+    "data_type": "NoneType",
+    "count": null,
+    "data_keys": null
+  },
+  {
+    "method": "GET",
+    "path": "/api/articles",
+    "status": 404,
+    "success": false,
+    "data_type": "NoneType",
+    "count": null,
+    "data_keys": null
+  },
+  {
+    "method": "GET",
+    "path": "/api/patients",
+    "status": 404,
+    "success": false,
+    "data_type": "NoneType",
+    "count": null,
+    "data_keys": null
+  },
+  {
+    "method": "GET",
+    "path": "/api/appointments",
+    "status": 404,
+    "success": false,
+    "data_type": "NoneType",
+    "count": null,
+    "data_keys": null
+  },
+  {
+    "method": "GET",
+    "path": "/api/auth/login",
+    "status": 404,
+    "success": false,
+    "data_type": "NoneType",
+    "count": null,
+    "data_keys": null
+  }
+]

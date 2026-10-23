@@ -43,7 +43,8 @@ class _UserFormScreenState extends State<UserFormScreen> {
     setState(() => _saving = false);
 
     if (error != null) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(error)));
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(error)));
     } else {
       Navigator.pop(context);
     }
@@ -52,7 +53,8 @@ class _UserFormScreenState extends State<UserFormScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text(_isEdit ? 'Sửa người dùng' : 'Thêm người dùng')),
+      appBar:
+          AppBar(title: Text(_isEdit ? 'Sửa người dùng' : 'Thêm người dùng')),
       body: Form(
         key: _formKey,
         child: ListView(
