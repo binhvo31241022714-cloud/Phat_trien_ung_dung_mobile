@@ -371,6 +371,62 @@ void main() {
     expect(d.savedArticles, isEmpty);
     expect(tester.takeException(), isNull);
   });
+  testWidgets('saved tabs filter, show counts and update after removal',
+      (tester) async {
+    final u = demoUsers(), d = PatientDataProvider();
+    final backend = FakeCatalogBackend();
+    backend.favorites.addAll([
+      {'id': 'service_svc_01', 'type': 'service', 'itemId': 'svc_01'},
+      {'id': 'combo_combo_01', 'type': 'combo', 'itemId': 'combo_01'},
+      {'id': 'doctor_doc_01', 'type': 'doctor', 'itemId': 'doc_01'},
+    ]);
+    await pumpMe(tester, u, d, catalog: backend.provider());
+    await openMe(tester, 'Đã lưu');
+    // Chưa có bài viết đã lưu thì không có tab Bài viết.
+    expect(find.text('Tất cả (3)'), findsOneWidget);
+    expect(find.text('Dịch vụ (2)'), findsOneWidget);
+    expect(find.text('Bác sĩ (1)'), findsOneWidget);
+    expect(find.textContaining('Bài viết ('), findsNothing);
+
+    await openMe(tester, 'Dịch vụ (2)');
+    expect(find.text('Khám răng tổng quát'), findsOneWidget);
+    expect(find.text('Combo chăm sóc răng miệng cơ bản'), findsOneWidget);
+    expect(find.text('BS. Nguyễn Văn API'), findsNothing);
+
+    await openMe(tester, 'Bác sĩ (1)');
+    expect(find.text('BS. Nguyễn Văn API'), findsOneWidget);
+    expect(find.text('Khám răng tổng quát'), findsNothing);
+    // Bỏ lưu ở tab Bác sĩ: số lượng mọi tab đổi ngay, hiện trạng thái trống.
+    await tester.tap(find.byTooltip('Bỏ lưu BS. Nguyễn Văn API'));
+    await tester.pumpAndSettle();
+    expect(backend.favorites.any((f) => f['id'] == 'doctor_doc_01'), isFalse);
+    expect(find.text('Bác sĩ (0)'), findsOneWidget);
+    expect(find.text('Tất cả (2)'), findsOneWidget);
+    expect(find.text('Bạn chưa lưu bác sĩ nào.'), findsOneWidget);
+
+    await openMe(tester, 'Dịch vụ (2)');
+    await tester.tap(find.byTooltip('Bỏ lưu Khám răng tổng quát'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byTooltip('Bỏ lưu Combo chăm sóc răng miệng cơ bản'));
+    await tester.pumpAndSettle();
+    expect(find.text('Dịch vụ (0)'), findsOneWidget);
+    expect(find.text('Bạn chưa lưu dịch vụ nào.'), findsOneWidget);
+
+    // Có bài viết đã lưu thì tab Bài viết xuất hiện kèm số lượng.
+    d.toggleSavedArticle(d.articles.first.id);
+    await tester.pumpAndSettle();
+    expect(find.text('Bài viết (1)'), findsOneWidget);
+    expect(find.text('Tất cả (1)'), findsOneWidget);
+    await openMe(tester, 'Bài viết (1)');
+    expect(find.text(d.articles.first.title), findsOneWidget);
+    // Bỏ lưu bài viết cuối cùng: tab Bài viết biến mất, quay về Tất cả.
+    await tester.tap(find.byTooltip('Bỏ lưu ${d.articles.first.title}'));
+    await tester.pumpAndSettle();
+    expect(find.textContaining('Bài viết ('), findsNothing);
+    expect(find.text('Tất cả (0)'), findsOneWidget);
+    expect(find.text('Chưa có nội dung đã lưu.'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
   testWidgets(
       'logout cancellation, confirmed session clearing, no Back to shell and login again',
       (tester) async {
