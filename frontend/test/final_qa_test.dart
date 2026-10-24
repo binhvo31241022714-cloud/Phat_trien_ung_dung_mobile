@@ -7,6 +7,7 @@ import 'package:frontend/core/theme/app_theme.dart';
 import 'package:frontend/data/providers/patient_data_provider.dart';
 import 'package:frontend/providers/user_provider.dart';
 
+import 'support/fake_catalog_backend.dart';
 import 'support/fake_profile_backend.dart';
 
 Future<void> qaPump(WidgetTester tester, PatientDataProvider d,
@@ -27,6 +28,7 @@ Future<void> qaPump(WidgetTester tester, PatientDataProvider d,
         ChangeNotifierProvider(
             create: (_) => UserProvider()..signInDemo('qa@example.com')),
         ChangeNotifierProvider(create: (_) => FakeProfileBackend().provider()),
+        ChangeNotifierProvider(create: (_) => FakeCatalogBackend().provider()),
       ],
       child: MaterialApp(
           theme: AppTheme.light,

@@ -27,8 +27,8 @@ void main() {
     expect(UserProfile.fromJson({'birthday': '2000-05-31'}).birthday,
         DateTime(2000, 5, 31));
     expect(UserProfile.fromJson({'birthday': ''}).birthday, isNull);
-    expect(UserProfile.fromJson({'birthday': 'không phải ngày'}).birthday,
-        isNull);
+    expect(
+        UserProfile.fromJson({'birthday': 'không phải ngày'}).birthday, isNull);
     expect(writeDate(DateTime(2001, 2, 3)), '2001-02-03');
   });
 

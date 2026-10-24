@@ -38,9 +38,8 @@ class FirebaseAuthService implements AuthService {
   }
 
   @override
-  Future<void> signIn(String email, String password) =>
-      _guard(() => _auth.signInWithEmailAndPassword(
-          email: email.trim(), password: password));
+  Future<void> signIn(String email, String password) => _guard(() => _auth
+      .signInWithEmailAndPassword(email: email.trim(), password: password));
 
   @override
   Future<void> register(String fullName, String email, String password) =>

@@ -109,6 +109,7 @@ class PatientDataProvider extends ChangeNotifier {
         isPrimary: true,
         avatarAsset: p.avatarAsset));
   }
+
   int _familySequence = 0;
   Patient addRelative(
       {required String name,

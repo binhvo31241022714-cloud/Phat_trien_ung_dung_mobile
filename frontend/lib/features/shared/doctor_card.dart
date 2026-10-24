@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../core/constants/app_colors.dart';
 import '../../core/widgets/app_card.dart';
+import '../../core/widgets/network_image_or_icon.dart';
 import '../../data/models/doctor.dart';
 
 class DoctorCard extends StatelessWidget {
@@ -25,7 +26,15 @@ class DoctorCard extends StatelessWidget {
             backgroundColor: AppColors.accent,
             foregroundColor: AppColors.primaryDark,
             child: doctor.avatarAsset == null
-                ? const Icon(Icons.person_outline_rounded, size: 30)
+                ? ClipOval(
+                    child: NetworkImageOrIcon(
+                      url: doctor.avatarUrl,
+                      icon: Icons.person_outline_rounded,
+                      iconSize: 30,
+                      width: 56,
+                      height: 56,
+                    ),
+                  )
                 : ClipOval(
                     child: Image.asset(
                       doctor.avatarAsset!,
@@ -60,11 +69,13 @@ class DoctorCard extends StatelessWidget {
                   spacing: 12,
                   runSpacing: 4,
                   children: [
-                    _DoctorFact(
-                      icon: Icons.star_rounded,
-                      text: doctor.rating.toStringAsFixed(1),
-                      color: AppColors.warning,
-                    ),
+                    // Bác sĩ từ API chưa có điểm đánh giá thì ẩn.
+                    if (doctor.hasRating)
+                      _DoctorFact(
+                        icon: Icons.star_rounded,
+                        text: doctor.rating.toStringAsFixed(1),
+                        color: AppColors.warning,
+                      ),
                     _DoctorFact(
                       icon: Icons.work_outline_rounded,
                       text: '${doctor.experienceYears} năm kinh nghiệm',

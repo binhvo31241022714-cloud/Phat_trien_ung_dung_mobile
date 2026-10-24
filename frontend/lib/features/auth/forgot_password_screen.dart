@@ -34,9 +34,8 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
     });
 
     final messenger = ScaffoldMessenger.of(context);
-    final error = await context
-        .read<UserProvider>()
-        .resetPassword(_emailController.text);
+    final error =
+        await context.read<UserProvider>().resetPassword(_emailController.text);
 
     if (!mounted) return;
 

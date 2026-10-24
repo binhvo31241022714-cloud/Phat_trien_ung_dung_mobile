@@ -6,6 +6,7 @@ import 'package:frontend/app/main_shell.dart';
 import 'package:frontend/data/providers/patient_data_provider.dart';
 import 'package:frontend/providers/user_provider.dart';
 
+import 'support/fake_catalog_backend.dart';
 import 'support/fake_profile_backend.dart';
 
 import 'support/fake_auth_service.dart';
@@ -17,6 +18,7 @@ Widget _withProviders(Widget child) {
           create: (_) => UserProvider(auth: FakeAuthService())),
       ChangeNotifierProvider(create: (_) => PatientDataProvider()),
       ChangeNotifierProvider(create: (_) => FakeProfileBackend().provider()),
+      ChangeNotifierProvider(create: (_) => FakeCatalogBackend().provider()),
     ],
     child: child,
   );

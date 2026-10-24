@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import 'package:frontend/main.dart' as app;
 
 import '../test/support/fake_auth_service.dart';
+import '../test/support/fake_catalog_backend.dart';
 import '../test/support/fake_profile_backend.dart';
 import 'package:frontend/app/main_shell.dart';
 import 'package:frontend/data/providers/patient_data_provider.dart';
@@ -18,7 +19,8 @@ void main() {
       (tester) async {
     // AuthService giả: test luồng giao diện, không gọi Firebase thật.
     await app.startApp(FakeAuthService(),
-        profileService: FakeProfileBackend().service());
+        profileService: FakeProfileBackend().service(),
+        catalogService: FakeCatalogBackend().service());
     await tester.pumpAndSettle();
     Future<void> tap(String text) async {
       final finder = find.text(text).last;

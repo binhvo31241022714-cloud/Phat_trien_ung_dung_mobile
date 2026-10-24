@@ -8,6 +8,7 @@ import 'package:frontend/features/booking/booking_screen.dart';
 import 'package:frontend/app/main_shell.dart';
 import 'package:frontend/providers/user_provider.dart';
 
+import 'support/fake_catalog_backend.dart';
 import 'support/fake_profile_backend.dart';
 
 void main() {
@@ -68,12 +69,16 @@ void main() {
       final d = PatientDataProvider();
       await tester.pumpWidget(ChangeNotifierProvider.value(
           value: d,
-          child: MaterialApp(
-              theme: AppTheme.light,
-              home: const Scaffold(body: BookingScreen()))));
+          child: ChangeNotifierProvider(
+              create: (_) => FakeCatalogBackend().provider(),
+              child: MaterialApp(
+                  theme: AppTheme.light,
+                  home: const Scaffold(body: BookingScreen())))));
       await tester.tap(find.text('Chi tiết').first);
       await tester.pumpAndSettle();
       expect(find.text('Chi tiết dịch vụ'), findsOneWidget);
+      // Dịch vụ mock của đặt lịch không có trên máy chủ nên không có nút lưu.
+      expect(find.text('Lưu để xem sau'), findsNothing);
       await tester.tap(find.byIcon(Icons.arrow_back));
       await tester.pumpAndSettle();
       await tester.tap(find.text(d.services.first.name));
@@ -101,6 +106,8 @@ void main() {
                 ChangeNotifierProvider(create: (_) => UserProvider()),
                 ChangeNotifierProvider(
                     create: (_) => FakeProfileBackend().provider()),
+                ChangeNotifierProvider(
+                    create: (_) => FakeCatalogBackend().provider()),
               ],
               child: MaterialApp(
                   theme: AppTheme.light, home: const MainShell()))));

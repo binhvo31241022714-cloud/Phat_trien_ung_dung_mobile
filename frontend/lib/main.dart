@@ -6,8 +6,10 @@ import 'app.dart';
 import 'core/config/app_config.dart';
 import 'data/providers/patient_data_provider.dart';
 import 'data/services/auth_service.dart';
+import 'data/services/catalog_service.dart';
 import 'data/services/profile_service.dart';
 import 'firebase_options.dart';
+import 'providers/catalog_provider.dart';
 import 'providers/profile_provider.dart';
 import 'providers/user_provider.dart';
 
@@ -17,10 +19,10 @@ Future<void> main() async {
   await startApp(FirebaseAuthService());
 }
 
-/// Tách khỏi main() để integration test chạy app với AuthService và
-/// ProfileService giả.
+/// Tách khỏi main() để integration test chạy app với AuthService,
+/// ProfileService và CatalogService giả.
 Future<void> startApp(AuthService auth,
-    {ProfileService? profileService}) async {
+    {ProfileService? profileService, CatalogService? catalogService}) async {
   assert(() {
     debugPrint('DATA_SOURCE=${AppConfig.current.dataSource.name}; '
         'API_BASE_URL=${AppConfig.current.apiBaseUrl}; '
@@ -37,6 +39,8 @@ Future<void> startApp(AuthService auth,
         ChangeNotifierProvider(create: (_) => PatientDataProvider()),
         ChangeNotifierProvider(
             create: (_) => ProfileProvider(service: profileService)),
+        ChangeNotifierProvider(
+            create: (_) => CatalogProvider(service: catalogService)),
       ],
       child: App(signedIn: users.isAuthenticated),
     ),

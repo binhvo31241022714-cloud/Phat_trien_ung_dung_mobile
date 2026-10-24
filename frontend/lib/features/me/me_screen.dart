@@ -152,8 +152,7 @@ class _AccountOverview extends StatelessWidget {
             child: Row(children: [
           const Icon(Icons.error_outline, color: Colors.red),
           const SizedBox(width: 12),
-          Expanded(
-              child: Text('Chưa tải được hồ sơ: ${profile.profileError}')),
+          Expanded(child: Text('Chưa tải được hồ sơ: ${profile.profileError}')),
           TextButton(
               onPressed: profile.loadProfile, child: const Text('Thử lại')),
         ])),

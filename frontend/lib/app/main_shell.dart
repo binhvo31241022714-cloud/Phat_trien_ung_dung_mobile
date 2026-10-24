@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 
 import '../data/models/user_profile.dart';
 import '../data/providers/patient_data_provider.dart';
+import '../providers/catalog_provider.dart';
 import '../providers/profile_provider.dart';
 
 import 'patient_navigation.dart';
@@ -25,9 +26,12 @@ class _MainShellState extends State<MainShell> {
   @override
   void initState() {
     super.initState();
-    // Vào trang chính thì tải hồ sơ từ /api/users/me.
+    // Vào trang chính thì tải hồ sơ và danh mục từ API.
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) context.read<ProfileProvider>().ensureLoaded();
+      if (!mounted) return;
+      context.read<ProfileProvider>().ensureLoaded();
+      // Dịch vụ, combo, bác sĩ và mục yêu thích.
+      context.read<CatalogProvider>().ensureLoaded();
     });
   }
 

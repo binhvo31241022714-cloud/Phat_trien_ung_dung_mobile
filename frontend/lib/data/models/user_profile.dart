@@ -1,3 +1,7 @@
+import 'json_read.dart';
+
+export 'json_read.dart' show writeDate;
+
 /// Hồ sơ tài khoản từ GET /api/users/me.
 class UserProfile {
   final String id;
@@ -29,18 +33,3 @@ class UserProfile {
         address: readString(json['address']),
       );
 }
-
-String readString(Object? value) => value is String ? value.trim() : '';
-
-/// Đọc ngày dạng "2000-05-31" (hoặc ISO đầy đủ). Rỗng hoặc sai thì trả null.
-DateTime? readDate(Object? value) {
-  if (value is! String || value.trim().isEmpty) return null;
-  final date = DateTime.tryParse(value.trim());
-  return date == null ? null : DateTime(date.year, date.month, date.day);
-}
-
-/// Ghi ngày gửi lên backend dạng "2000-05-31".
-String writeDate(DateTime date) =>
-    '${date.year.toString().padLeft(4, '0')}-'
-    '${date.month.toString().padLeft(2, '0')}-'
-    '${date.day.toString().padLeft(2, '0')}';

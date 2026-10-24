@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/utils/formatters.dart';
 import '../../core/widgets/app_card.dart';
+import '../../core/widgets/network_image_or_icon.dart';
 import '../../core/widgets/status_chip.dart';
 import '../../data/models/dental_service.dart';
 
@@ -26,11 +27,18 @@ class ServiceCard extends StatelessWidget {
           Container(
             width: 48,
             height: 48,
+            clipBehavior: Clip.antiAlias,
             decoration: BoxDecoration(
               color: AppColors.accent,
               borderRadius: BorderRadius.circular(14),
             ),
-            child: Icon(service.icon, color: AppColors.primary),
+            child: NetworkImageOrIcon(
+              url: service.imageUrl,
+              icon: service.icon,
+              color: AppColors.primary,
+              width: 48,
+              height: 48,
+            ),
           ),
           const SizedBox(width: 12),
           Expanded(

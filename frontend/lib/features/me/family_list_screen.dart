@@ -32,8 +32,7 @@ class _FamilyListScreenState extends State<FamilyListScreen> {
     final birthday = profile.profile?.birthday;
     return MePage(title: 'Quản lý người thân', children: [
       // Bản thân luôn ở đầu, bấm Sửa mở màn hình thông tin cá nhân.
-      _row(
-          context,
+      _row(context,
           name: profile.displayName(email),
           subtitle: 'Bản thân · ${_date(birthday)}',
           onEdit: () => MeRoutes.open(context, MeRoutes.profile)),
@@ -44,7 +43,8 @@ class _FamilyListScreenState extends State<FamilyListScreen> {
       else if (profile.family.isEmpty)
         const EmptyState(
             title: 'Chưa có người thân',
-            message: 'Thêm người thân để đặt lịch và theo dõi hồ sơ cho cả gia đình.',
+            message:
+                'Thêm người thân để đặt lịch và theo dõi hồ sơ cho cả gia đình.',
             icon: Icons.people_outline)
       else
         for (final p in profile.family)
@@ -74,8 +74,11 @@ class _FamilyListScreenState extends State<FamilyListScreen> {
                 if (confirmed != true || !context.mounted) return;
                 final error = await profile.deleteFamily(p.id);
                 if (!context.mounted) return;
-                meMessage(context,
-                    error == null ? 'Đã xóa người thân.' : 'Chưa xóa được: $error');
+                meMessage(
+                    context,
+                    error == null
+                        ? 'Đã xóa người thân.'
+                        : 'Chưa xóa được: $error');
               }),
       SecondaryButton(
           label: 'Thêm người thân',

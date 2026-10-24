@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import 'package:frontend/app/main_shell.dart';
 import 'package:frontend/providers/user_provider.dart';
 
+import 'support/fake_catalog_backend.dart';
 import 'support/fake_profile_backend.dart';
 import 'package:frontend/core/theme/app_theme.dart';
 import 'package:frontend/data/models/appointment.dart';
@@ -25,6 +26,7 @@ Future<void> pumpShell(WidgetTester tester, PatientDataProvider data,
       child: MultiProvider(providers: [
         ChangeNotifierProvider(create: (_) => UserProvider()),
         ChangeNotifierProvider(create: (_) => FakeProfileBackend().provider()),
+        ChangeNotifierProvider(create: (_) => FakeCatalogBackend().provider()),
       ], child: MaterialApp(theme: AppTheme.light, home: const MainShell()))));
   await tester.tap(find.text('Hồ sơ').last);
   await tester.pumpAndSettle();

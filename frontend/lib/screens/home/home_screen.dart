@@ -11,11 +11,13 @@ import '../../features/articles/article_list_screen.dart';
 import '../../features/articles/article_detail_screen.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/utils/formatters.dart';
+import '../../core/widgets/network_image_or_icon.dart';
 import '../../data/models/appointment.dart';
 import '../../data/models/article.dart';
 import '../../data/models/dental_service.dart';
 import '../../data/models/doctor.dart';
 import '../../data/providers/patient_data_provider.dart';
+import '../../providers/catalog_provider.dart';
 import '../../providers/profile_provider.dart';
 import '../../providers/user_provider.dart';
 
@@ -66,8 +68,11 @@ class _HomeOverview extends StatelessWidget {
         .toList()
       ..sort((a, b) => a.scheduledAt.compareTo(b.scheduledAt));
 
-    final featuredServices =
-        data.services.where((service) => service.isPopular).take(6).toList();
+    // Dịch vụ và bác sĩ lấy từ API. API chưa có cờ "nổi bật" nên lấy 6 dịch
+    // vụ đầu tiên.
+    final catalog = context.watch<CatalogProvider>();
+    final featuredServices = catalog.services.take(6).toList();
+    final doctors = catalog.doctors;
 
     return Scaffold(
       backgroundColor: const Color(0xFFF1F5FB),
@@ -172,24 +177,26 @@ class _HomeOverview extends StatelessWidget {
                   const SizedBox(height: 12),
                   SizedBox(
                     height: 182 + 140 * extraScale,
-                    child: featuredServices.isEmpty
-                        ? const Center(child: Text('Chưa có dịch vụ nổi bật.'))
-                        : ListView.separated(
-                            scrollDirection: Axis.horizontal,
-                            itemCount: featuredServices.length,
-                            separatorBuilder: (_, __) =>
-                                const SizedBox(width: 12),
-                            itemBuilder: (context, index) {
-                              final service = featuredServices[index];
-                              return _ServiceTile(
-                                service: service,
-                                onTap: () => CatalogNavigation.open(
-                                    context,
-                                    'Chi tiết dịch vụ',
-                                    ServiceDetailScreen(service: service)),
-                              );
-                            },
-                          ),
+                    child: _catalogState(catalog) ??
+                        (featuredServices.isEmpty
+                            ? const Center(
+                                child: Text('Chưa có dịch vụ nổi bật.'))
+                            : ListView.separated(
+                                scrollDirection: Axis.horizontal,
+                                itemCount: featuredServices.length,
+                                separatorBuilder: (_, __) =>
+                                    const SizedBox(width: 12),
+                                itemBuilder: (context, index) {
+                                  final service = featuredServices[index];
+                                  return _ServiceTile(
+                                    service: service,
+                                    onTap: () => CatalogNavigation.open(
+                                        context,
+                                        'Chi tiết dịch vụ',
+                                        ServiceDetailScreen(service: service)),
+                                  );
+                                },
+                              )),
                   ),
                   const SizedBox(height: 24),
                   _buildSectionHeader(
@@ -202,24 +209,26 @@ class _HomeOverview extends StatelessWidget {
                   const SizedBox(height: 12),
                   SizedBox(
                     height: 156 + 90 * extraScale,
-                    child: data.doctors.isEmpty
-                        ? const Center(child: Text('Chưa có thông tin bác sĩ.'))
-                        : ListView.separated(
-                            scrollDirection: Axis.horizontal,
-                            itemCount: data.doctors.length,
-                            separatorBuilder: (_, __) =>
-                                const SizedBox(width: 12),
-                            itemBuilder: (context, index) {
-                              final doctor = data.doctors[index];
-                              return _DoctorTile(
-                                doctor: doctor,
-                                onTap: () => CatalogNavigation.open(
-                                    context,
-                                    'Chi tiết bác sĩ',
-                                    DoctorDetailScreen(doctor: doctor)),
-                              );
-                            },
-                          ),
+                    child: _catalogState(catalog) ??
+                        (doctors.isEmpty
+                            ? const Center(
+                                child: Text('Chưa có thông tin bác sĩ.'))
+                            : ListView.separated(
+                                scrollDirection: Axis.horizontal,
+                                itemCount: doctors.length,
+                                separatorBuilder: (_, __) =>
+                                    const SizedBox(width: 12),
+                                itemBuilder: (context, index) {
+                                  final doctor = doctors[index];
+                                  return _DoctorTile(
+                                    doctor: doctor,
+                                    onTap: () => CatalogNavigation.open(
+                                        context,
+                                        'Chi tiết bác sĩ',
+                                        DoctorDetailScreen(doctor: doctor)),
+                                  );
+                                },
+                              )),
                   ),
                   const SizedBox(height: 24),
                   _buildSectionHeader(
@@ -258,6 +267,25 @@ class _HomeOverview extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  /// Đang tải hoặc lỗi thì trả về widget tương ứng; có dữ liệu thì null.
+  Widget? _catalogState(CatalogProvider catalog) {
+    if (catalog.firstLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+    if (!catalog.loaded && catalog.error != null) {
+      return Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(catalog.error!, textAlign: TextAlign.center),
+            TextButton(onPressed: catalog.load, child: const Text('Thử lại')),
+          ],
+        ),
+      );
+    }
+    return null;
   }
 
   Widget _buildSectionHeader({
@@ -623,14 +651,18 @@ class _ServiceTile extends StatelessWidget {
             Container(
               height: 62,
               width: double.infinity,
+              clipBehavior: Clip.antiAlias,
               decoration: BoxDecoration(
                 color: const Color(0xFFEAF1F8),
                 borderRadius: BorderRadius.circular(14),
               ),
-              child: Icon(
-                service.icon,
-                size: 28,
+              child: NetworkImageOrIcon(
+                url: service.imageUrl,
+                icon: service.icon,
+                iconSize: 28,
                 color: AppColors.primary,
+                width: double.infinity,
+                height: 62,
               ),
             ),
             const SizedBox(height: 8),
@@ -692,14 +724,18 @@ class _DoctorTile extends StatelessWidget {
             Container(
               width: 84,
               height: 84,
+              clipBehavior: Clip.antiAlias,
               decoration: BoxDecoration(
                 color: const Color(0xFFDAEBFF),
                 borderRadius: BorderRadius.circular(42),
               ),
-              child: const Icon(
-                Icons.person_rounded,
-                size: 40,
+              child: NetworkImageOrIcon(
+                url: doctor.avatarUrl,
+                icon: Icons.person_rounded,
+                iconSize: 40,
                 color: AppColors.primary,
+                width: 84,
+                height: 84,
               ),
             ),
             const SizedBox(height: 8),

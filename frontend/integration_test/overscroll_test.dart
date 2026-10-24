@@ -5,10 +5,12 @@ import 'package:provider/provider.dart';
 import 'package:frontend/main.dart' as app;
 
 import '../test/support/fake_auth_service.dart';
+import '../test/support/fake_catalog_backend.dart';
 import '../test/support/fake_profile_backend.dart';
 import 'package:frontend/app/main_shell.dart';
 import 'package:frontend/core/theme/app_scroll_behavior.dart';
 import 'package:frontend/data/providers/patient_data_provider.dart';
+import 'package:frontend/providers/catalog_provider.dart';
 import 'package:frontend/providers/user_provider.dart';
 import 'package:frontend/features/me/me_widgets.dart';
 import 'package:frontend/features/records/records_widgets.dart';
@@ -20,7 +22,8 @@ void main() {
       (tester) async {
     // AuthService giả: test luồng giao diện, không gọi Firebase thật.
     await app.startApp(FakeAuthService(),
-        profileService: FakeProfileBackend().service());
+        profileService: FakeProfileBackend().service(),
+        catalogService: FakeCatalogBackend().service());
     await tester.pumpAndSettle();
     final root = tester.state<NavigatorState>(find.byType(Navigator).first);
     Future<void> sweep(String page) async {
@@ -97,9 +100,12 @@ void main() {
       await tester.tap(all);
       await tester.pumpAndSettle();
       await sweep('Catalog $index list');
+      // Dịch vụ, bác sĩ trên trang chủ lấy từ API (backend giả).
+      final catalog =
+          tester.element(find.byType(MainShell)).read<CatalogProvider>();
       final name = [
-        data.services.first.name,
-        data.doctors.first.fullName,
+        catalog.services.first.name,
+        catalog.doctors.first.fullName,
         data.articles.first.title
       ][index];
       final item = find.text(name).first;

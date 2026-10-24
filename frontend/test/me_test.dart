@@ -8,32 +8,38 @@ import 'package:frontend/core/utils/validators.dart';
 import 'package:frontend/data/models/patient.dart';
 import 'package:frontend/data/models/patient_records.dart';
 import 'package:frontend/data/providers/patient_data_provider.dart';
+import 'package:frontend/providers/catalog_provider.dart';
 import 'package:frontend/providers/profile_provider.dart';
 import 'package:frontend/providers/user_provider.dart';
 
+import 'support/fake_catalog_backend.dart';
 import 'support/fake_profile_backend.dart';
 import 'package:frontend/features/me/me_widgets.dart';
 
 import 'support/fake_auth_service.dart';
 
 Widget providers(UserProvider users, PatientDataProvider data, Widget child,
-        {ProfileProvider? profile}) =>
+        {ProfileProvider? profile, CatalogProvider? catalog}) =>
     MultiProvider(providers: [
       ChangeNotifierProvider.value(value: users),
       ChangeNotifierProvider.value(value: data),
       ChangeNotifierProvider.value(
           value: profile ?? FakeProfileBackend().provider()),
+      ChangeNotifierProvider.value(
+          value: catalog ?? FakeCatalogBackend().provider()),
     ], child: child);
 Future<void> pumpMe(
     WidgetTester tester, UserProvider users, PatientDataProvider data,
-    {double width = 390, ProfileProvider? profile}) async {
+    {double width = 390,
+    ProfileProvider? profile,
+    CatalogProvider? catalog}) async {
   tester.view.physicalSize = Size(width, 900);
   tester.view.devicePixelRatio = 1;
   addTearDown(tester.view.resetPhysicalSize);
   addTearDown(tester.view.resetDevicePixelRatio);
   await tester.pumpWidget(providers(
       users, data, MaterialApp(theme: AppTheme.light, home: const MainShell()),
-      profile: profile));
+      profile: profile, catalog: catalog));
   await tester.tap(find.text('Tôi').last);
   await tester.pumpAndSettle();
 }
@@ -314,38 +320,55 @@ void main() {
     expect(find.byType(NavigationBar), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
-  testWidgets(
-      'all supported bookmarks are shared with detail views and removal',
+  testWidgets('saved items load from /api/favorites, open details and remove',
       (tester) async {
     final u = demoUsers(), d = PatientDataProvider();
-    await pumpMe(tester, u, d);
+    final backend = FakeCatalogBackend();
+    await pumpMe(tester, u, d, catalog: backend.provider());
     await openMe(tester, 'Đã lưu');
     expect(find.text('Chưa có nội dung đã lưu.'), findsOneWidget);
+    await backMe(tester);
+
+    backend.favorites.addAll([
+      {'id': 'service_svc_01', 'type': 'service', 'itemId': 'svc_01'},
+      {'id': 'combo_combo_01', 'type': 'combo', 'itemId': 'combo_01'},
+      {'id': 'doctor_doc_01', 'type': 'doctor', 'itemId': 'doc_01'},
+      // Mục đã bị xóa khỏi máy chủ: bỏ qua, không làm lỗi màn hình.
+      {'id': 'service_svc_99', 'type': 'service', 'itemId': 'svc_99'},
+    ]);
+    // Bài viết vẫn lưu theo dữ liệu mock của module Nội dung.
     d.toggleSavedArticle(d.articles.first.id);
-    d.toggleSavedService(d.services.first.id);
-    d.toggleSavedDoctor(d.doctors.first.id);
-    await tester.pumpAndSettle();
+    await openMe(tester, 'Đã lưu');
     for (final name in [
       d.articles.first.title,
-      d.services.first.name,
-      d.doctors.first.fullName
+      'Khám răng tổng quát',
+      'Combo chăm sóc răng miệng cơ bản',
+      'BS. Nguyễn Văn API',
     ]) {
       expect(find.text(name), findsOneWidget);
     }
+
+    await openMe(tester, 'Khám răng tổng quát');
+    expect(find.text('Chi tiết dịch vụ'), findsOneWidget);
+    await openMe(tester, 'Đã lưu · Bỏ lưu');
+    expect(backend.favorites.any((f) => f['id'] == 'service_svc_01'), isFalse);
+    expect(find.text('Lưu để xem sau'), findsOneWidget);
+    await backMe(tester);
+    expect(find.text('Khám răng tổng quát'), findsNothing);
+
+    await openMe(tester, 'Combo chăm sóc răng miệng cơ bản');
+    expect(find.text('Gồm các dịch vụ'), findsOneWidget);
+    expect(find.text('• Lấy cao răng'), findsOneWidget);
+    await backMe(tester);
+
+    await tester.tap(find.byTooltip('Bỏ lưu BS. Nguyễn Văn API'));
+    await tester.pumpAndSettle();
+    expect(backend.favorites.any((f) => f['id'] == 'doctor_doc_01'), isFalse);
+    expect(find.text('BS. Nguyễn Văn API'), findsNothing);
+
     await openMe(tester, d.articles.first.title);
     await openMe(tester, 'Đã lưu · Bỏ lưu');
     expect(d.savedArticles, isEmpty);
-    await backMe(tester);
-    expect(find.text(d.articles.first.title), findsNothing);
-    await openMe(tester, d.services.first.name);
-    await openMe(tester, 'Đã lưu · Bỏ lưu');
-    expect(d.savedServiceIds, isEmpty);
-    await backMe(tester);
-    await openMe(tester, d.doctors.first.fullName);
-    await openMe(tester, 'Đã lưu · Bỏ lưu');
-    expect(d.savedDoctorIds, isEmpty);
-    await backMe(tester);
-    expect(find.text('Chưa có nội dung đã lưu.'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
   testWidgets(

@@ -68,8 +68,8 @@ class _FamilyFormScreenState extends State<FamilyFormScreen> {
       meMessage(context, 'Chưa lưu được người thân: $error');
       return;
     }
-    meMessage(context,
-        p == null ? 'Đã thêm người thân.' : 'Đã cập nhật người thân.');
+    meMessage(
+        context, p == null ? 'Đã thêm người thân.' : 'Đã cập nhật người thân.');
     Navigator.pop(context);
   }
 
