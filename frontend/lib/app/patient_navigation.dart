@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../providers/profile_provider.dart';
 import '../providers/user_provider.dart';
 
 import '../features/shared/patient_detail_screen.dart';
@@ -28,7 +29,9 @@ class PatientNavigation {
 
   static Future<void> logout(BuildContext context) async {
     final navigator = Navigator.of(context, rootNavigator: true);
+    final profile = context.read<ProfileProvider>();
     await context.read<UserProvider>().logout();
+    profile.clear();
     navigator.pushNamedAndRemoveUntil(
       AppRoutes.welcome,
       (_) => false,

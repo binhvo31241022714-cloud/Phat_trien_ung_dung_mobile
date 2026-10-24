@@ -3,13 +3,13 @@ import 'package:provider/provider.dart';
 import '../../core/utils/validators.dart';
 import '../../core/widgets/app_text_field.dart';
 import '../../core/widgets/primary_button.dart';
-import '../../data/models/patient.dart';
-import '../../data/providers/patient_data_provider.dart';
+import '../../data/models/family_member.dart';
+import '../../providers/profile_provider.dart';
 import 'me_widgets.dart';
 
 class FamilyFormScreen extends StatefulWidget {
-  const FamilyFormScreen({this.patient, super.key});
-  final Patient? patient;
+  const FamilyFormScreen({this.member, super.key});
+  final FamilyMember? member;
   @override
   State<FamilyFormScreen> createState() => _FamilyFormScreenState();
 }
@@ -31,10 +31,10 @@ class _FamilyFormScreenState extends State<FamilyFormScreen> {
   @override
   void initState() {
     super.initState();
-    final p = widget.patient;
+    final p = widget.member;
     _name = TextEditingController(text: p?.fullName);
     _phone = TextEditingController(text: p?.phone);
-    _birthday = p?.dateOfBirth;
+    _birthday = p?.birthday;
     if (p != null) {
       _relationship =
           relationships.contains(p.relationship) ? p.relationship : 'Khác';
@@ -48,44 +48,34 @@ class _FamilyFormScreenState extends State<FamilyFormScreen> {
     super.dispose();
   }
 
-  void _save() {
+  Future<void> _save() async {
     if (_saving || !_form.currentState!.validate()) return;
     setState(() => _saving = true);
-    final data = context.read<PatientDataProvider>();
-    final p = widget.patient;
-    try {
-      if (p == null) {
-        data.addRelative(
-            name: _name.text,
-            relationship: _relationship,
-            dateOfBirth: _birthday!,
-            phone: _phone.text);
-      } else {
-        data.updatePatient(Patient(
-            id: p.id,
-            fullName: _name.text.trim(),
-            phone: _phone.text.trim(),
-            dateOfBirth: _birthday!,
-            relationship: _relationship,
-            isPrimary: false,
-            avatarAsset: p.avatarAsset));
-      }
-      meMessage(
-          context,
-          p == null
-              ? 'Đã thêm người thân trong phiên demo.'
-              : 'Đã cập nhật người thân trong phiên demo.');
-      Navigator.pop(context);
-    } catch (_) {
+    final profile = context.read<ProfileProvider>();
+    final p = widget.member;
+    final member = FamilyMember(
+        id: p?.id ?? '',
+        fullName: _name.text.trim(),
+        relationship: _relationship,
+        birthday: _birthday,
+        phone: _phone.text.trim());
+    final error = p == null
+        ? await profile.addFamily(member)
+        : await profile.updateFamily(member);
+    if (!mounted) return;
+    if (error != null) {
       setState(() => _saving = false);
-      meMessage(
-          context, 'Chưa thể lưu người thân. Vui lòng kiểm tra lại hồ sơ.');
+      meMessage(context, 'Chưa lưu được người thân: $error');
+      return;
     }
+    meMessage(context,
+        p == null ? 'Đã thêm người thân.' : 'Đã cập nhật người thân.');
+    Navigator.pop(context);
   }
 
   @override
   Widget build(BuildContext context) => MePage(
-          title: widget.patient == null ? 'Thêm người thân' : 'Sửa người thân',
+          title: widget.member == null ? 'Thêm người thân' : 'Sửa người thân',
           children: [
             MeCard(
                 child: Form(
@@ -125,7 +115,5 @@ class _FamilyFormScreenState extends State<FamilyFormScreen> {
                           onPressed: _save,
                           isLoading: _saving),
                     ]))),
-            const Text(demoSessionNotice,
-                style: TextStyle(color: Color(0xFF666666), fontSize: 12))
           ]);
 }

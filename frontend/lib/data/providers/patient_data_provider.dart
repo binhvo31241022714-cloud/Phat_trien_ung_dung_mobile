@@ -89,6 +89,26 @@ class PatientDataProvider extends ChangeNotifier {
   }
 
   Patient get primaryPatient => patients.firstWhere((p) => p.isPrimary);
+
+  /// Đổi tên, SĐT, ngày sinh của "Bản thân" theo hồ sơ thật từ API.
+  /// Giữ nguyên id để lịch hẹn, hồ sơ khám mock vẫn trỏ đúng.
+  void applyAccountProfile(
+      {required String name, required String phone, DateTime? dateOfBirth}) {
+    final p = primaryPatient;
+    final newName = name.trim().isEmpty ? p.fullName : name.trim();
+    final newDob = dateOfBirth ?? p.dateOfBirth;
+    if (newName == p.fullName && phone == p.phone && newDob == p.dateOfBirth) {
+      return;
+    }
+    updatePatient(Patient(
+        id: p.id,
+        fullName: newName,
+        phone: phone,
+        dateOfBirth: newDob,
+        relationship: p.relationship,
+        isPrimary: true,
+        avatarAsset: p.avatarAsset));
+  }
   int _familySequence = 0;
   Patient addRelative(
       {required String name,

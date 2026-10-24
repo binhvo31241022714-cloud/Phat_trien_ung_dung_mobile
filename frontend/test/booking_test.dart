@@ -8,6 +8,8 @@ import 'package:frontend/features/booking/booking_screen.dart';
 import 'package:frontend/app/main_shell.dart';
 import 'package:frontend/providers/user_provider.dart';
 
+import 'support/fake_profile_backend.dart';
+
 void main() {
   test('services, total and steps preserve selections', () {
     final d = PatientDataProvider();
@@ -94,8 +96,12 @@ void main() {
       final count = d.appointments.length;
       await tester.pumpWidget(ChangeNotifierProvider.value(
           value: d,
-          child: ChangeNotifierProvider(
-              create: (_) => UserProvider(),
+          child: MultiProvider(
+              providers: [
+                ChangeNotifierProvider(create: (_) => UserProvider()),
+                ChangeNotifierProvider(
+                    create: (_) => FakeProfileBackend().provider()),
+              ],
               child: MaterialApp(
                   theme: AppTheme.light, home: const MainShell()))));
       await tester.tap(find.text('Đặt lịch').last);

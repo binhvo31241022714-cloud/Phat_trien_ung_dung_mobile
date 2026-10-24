@@ -7,10 +7,15 @@ import 'package:frontend/core/theme/app_theme.dart';
 import 'package:frontend/data/providers/patient_data_provider.dart';
 import 'package:frontend/providers/user_provider.dart';
 
+import 'support/fake_profile_backend.dart';
+
 Future<void> qaPump(WidgetTester tester, PatientDataProvider d,
     {double width = 360, double scale = 1.5, double height = 640}) async {
   final previousError = FlutterError.onError;
-  FlutterError.onError = (details) { FlutterError.dumpErrorToConsole(details); previousError?.call(details); };
+  FlutterError.onError = (details) {
+    FlutterError.dumpErrorToConsole(details);
+    previousError?.call(details);
+  };
   addTearDown(() => FlutterError.onError = previousError);
   tester.view.physicalSize = Size(width, height);
   tester.view.devicePixelRatio = 1;
@@ -20,7 +25,8 @@ Future<void> qaPump(WidgetTester tester, PatientDataProvider d,
       providers: [
         ChangeNotifierProvider.value(value: d),
         ChangeNotifierProvider(
-            create: (_) => UserProvider()..signInDemo('qa@example.com'))
+            create: (_) => UserProvider()..signInDemo('qa@example.com')),
+        ChangeNotifierProvider(create: (_) => FakeProfileBackend().provider()),
       ],
       child: MaterialApp(
           theme: AppTheme.light,

@@ -3,6 +3,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:provider/provider.dart';
 import 'package:frontend/app/main_shell.dart';
 import 'package:frontend/providers/user_provider.dart';
+
+import 'support/fake_profile_backend.dart';
 import 'package:frontend/core/theme/app_theme.dart';
 import 'package:frontend/data/models/appointment.dart';
 import 'package:frontend/data/models/patient.dart';
@@ -20,9 +22,10 @@ Future<void> pumpShell(WidgetTester tester, PatientDataProvider data,
   addTearDown(tester.view.resetDevicePixelRatio);
   await tester.pumpWidget(ChangeNotifierProvider.value(
       value: data,
-      child: ChangeNotifierProvider(
-          create: (_) => UserProvider(),
-          child: MaterialApp(theme: AppTheme.light, home: const MainShell()))));
+      child: MultiProvider(providers: [
+        ChangeNotifierProvider(create: (_) => UserProvider()),
+        ChangeNotifierProvider(create: (_) => FakeProfileBackend().provider()),
+      ], child: MaterialApp(theme: AppTheme.light, home: const MainShell()))));
   await tester.tap(find.text('Hồ sơ').last);
   await tester.pumpAndSettle();
 }

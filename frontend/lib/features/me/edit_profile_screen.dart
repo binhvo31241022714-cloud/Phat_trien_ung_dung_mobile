@@ -2,19 +2,42 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../core/utils/validators.dart';
 import '../../core/widgets/app_text_field.dart';
+import '../../core/widgets/error_state.dart';
+import '../../core/widgets/loading_view.dart';
 import '../../core/widgets/primary_button.dart';
-import '../../data/models/patient.dart';
-import '../../data/providers/patient_data_provider.dart';
+import '../../data/models/user_profile.dart';
+import '../../providers/profile_provider.dart';
 import '../../providers/user_provider.dart';
 import 'me_widgets.dart';
 
-class EditProfileScreen extends StatefulWidget {
+class EditProfileScreen extends StatelessWidget {
   const EditProfileScreen({super.key});
   @override
-  State<EditProfileScreen> createState() => _EditProfileScreenState();
+  Widget build(BuildContext context) {
+    final profile = context.watch<ProfileProvider>();
+    final data = profile.profile;
+    if (data == null) {
+      return MePage(title: 'Thông tin cá nhân', children: [
+        if (profile.profileError != null && !profile.profileLoading)
+          ErrorState(
+              message: profile.profileError!, onRetry: profile.loadProfile)
+        else
+          const Padding(
+              padding: EdgeInsets.only(top: 80), child: LoadingView()),
+      ]);
+    }
+    return _ProfileForm(profile: data);
+  }
 }
 
-class _EditProfileScreenState extends State<EditProfileScreen> {
+class _ProfileForm extends StatefulWidget {
+  const _ProfileForm({required this.profile});
+  final UserProfile profile;
+  @override
+  State<_ProfileForm> createState() => _ProfileFormState();
+}
+
+class _ProfileFormState extends State<_ProfileForm> {
   final _form = GlobalKey<FormState>();
   late final TextEditingController _name, _phone, _email;
   DateTime? _birthday;
@@ -22,11 +45,14 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   @override
   void initState() {
     super.initState();
-    final user = context.read<UserProvider>().account;
-    _name = TextEditingController(text: user.name);
-    _phone = TextEditingController(text: user.phone);
-    _email = TextEditingController(text: user.email);
-    _birthday = user.dateOfBirth;
+    final p = widget.profile;
+    _name = TextEditingController(text: p.fullName);
+    _phone = TextEditingController(text: p.phone);
+    _email = TextEditingController(
+        text: p.email.isNotEmpty
+            ? p.email
+            : context.read<UserProvider>().account.email);
+    _birthday = p.birthday;
   }
 
   @override
@@ -37,26 +63,18 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     super.dispose();
   }
 
-  void _save() {
+  Future<void> _save() async {
     if (_saving || !_form.currentState!.validate()) return;
     setState(() => _saving = true);
-    final users = context.read<UserProvider>();
-    final data = context.read<PatientDataProvider>();
-    final p = data.primaryPatient;
-    data.updatePatient(Patient(
-        id: p.id,
-        fullName: _name.text.trim(),
-        phone: _phone.text.trim(),
-        dateOfBirth: _birthday!,
-        relationship: p.relationship,
-        isPrimary: p.isPrimary,
-        avatarAsset: p.avatarAsset));
-    users.updateDemoAccount(
-        name: _name.text,
-        email: _email.text,
-        phone: _phone.text,
-        dateOfBirth: _birthday!);
-    meMessage(context, 'Đã lưu thông tin trong phiên demo.');
+    final error = await context.read<ProfileProvider>().saveProfile(
+        fullName: _name.text, phone: _phone.text, birthday: _birthday);
+    if (!mounted) return;
+    if (error != null) {
+      setState(() => _saving = false);
+      meMessage(context, 'Chưa lưu được: $error');
+      return;
+    }
+    meMessage(context, 'Đã lưu thông tin cá nhân.');
     Navigator.pop(context);
   }
 
@@ -93,18 +111,18 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                           keyboardType: TextInputType.phone,
                           validator: Validators.vietnamesePhone),
                       const SizedBox(height: 16),
+                      // Email là email đăng nhập Firebase, backend không cho
+                      // đổi qua API nên chỉ hiển thị.
                       AppTextField(
                           label: 'Email',
                           controller: _email,
-                          keyboardType: TextInputType.emailAddress,
-                          validator: Validators.optionalEmail),
+                          enabled: false,
+                          keyboardType: TextInputType.emailAddress),
                       const SizedBox(height: 16),
                       PrimaryButton(
                           label: 'Lưu thay đổi',
                           onPressed: _save,
                           isLoading: _saving),
                     ]))),
-        const Text(demoSessionNotice,
-            style: TextStyle(color: Color(0xFF666666), fontSize: 12))
       ]);
 }

@@ -21,7 +21,8 @@ void main() {
 
   test('login returns the error message and stays signed out on failure',
       () async {
-    final auth = FakeAuthService()..failWith = 'Email hoặc mật khẩu không đúng.';
+    final auth = FakeAuthService()
+      ..failWith = 'Email hoặc mật khẩu không đúng.';
     final users = UserProvider(auth: auth);
     expect(await users.login('a@example.com', 'sai'),
         'Email hoặc mật khẩu không đúng.');

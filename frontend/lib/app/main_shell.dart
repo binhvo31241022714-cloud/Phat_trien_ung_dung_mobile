@@ -1,4 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+
+import '../data/models/user_profile.dart';
+import '../data/providers/patient_data_provider.dart';
+import '../providers/profile_provider.dart';
 
 import 'patient_navigation.dart';
 import '../screens/home/home_screen.dart';
@@ -15,6 +20,33 @@ class MainShell extends StatefulWidget {
 
 class _MainShellState extends State<MainShell> {
   int _selectedIndex = 0;
+  UserProfile? _appliedProfile;
+
+  @override
+  void initState() {
+    super.initState();
+    // Vào trang chính thì tải hồ sơ từ /api/users/me.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) context.read<ProfileProvider>().ensureLoaded();
+    });
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Có hồ sơ mới thì đổi tên "Bản thân" trong dữ liệu đặt lịch/hồ sơ khám.
+    final profile = context.watch<ProfileProvider>().profile;
+    if (profile != null && !identical(profile, _appliedProfile)) {
+      _appliedProfile = profile;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        context.read<PatientDataProvider>().applyAccountProfile(
+            name: profile.fullName,
+            phone: profile.phone,
+            dateOfBirth: profile.birthday);
+      });
+    }
+  }
 
   void _onTabSelected(int index) {
     setState(() {

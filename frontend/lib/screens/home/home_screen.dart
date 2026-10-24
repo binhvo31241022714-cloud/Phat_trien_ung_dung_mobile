@@ -16,6 +16,8 @@ import '../../data/models/article.dart';
 import '../../data/models/dental_service.dart';
 import '../../data/models/doctor.dart';
 import '../../data/providers/patient_data_provider.dart';
+import '../../providers/profile_provider.dart';
+import '../../providers/user_provider.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -46,7 +48,10 @@ class _HomeOverview extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final data = context.watch<PatientDataProvider>();
-    final patient = data.primaryPatient;
+    // Tên lấy từ /api/users/me; chưa tải được thì hiện email đăng nhập.
+    final displayName = context
+        .watch<ProfileProvider>()
+        .displayName(context.watch<UserProvider>().account.email);
     final scale = MediaQuery.textScalerOf(context).scale(14) / 14;
     final extraScale = scale > 1 ? scale - 1 : 0.0;
     final now = DateTime.now();
@@ -140,7 +145,7 @@ class _HomeOverview extends StatelessWidget {
                               ),
                             ),
                             Text(
-                              patient.fullName,
+                              displayName,
                               style: const TextStyle(
                                 fontSize: 22,
                                 fontWeight: FontWeight.w700,

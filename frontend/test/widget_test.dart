@@ -6,6 +6,8 @@ import 'package:frontend/app/main_shell.dart';
 import 'package:frontend/data/providers/patient_data_provider.dart';
 import 'package:frontend/providers/user_provider.dart';
 
+import 'support/fake_profile_backend.dart';
+
 import 'support/fake_auth_service.dart';
 
 Widget _withProviders(Widget child) {
@@ -14,6 +16,7 @@ Widget _withProviders(Widget child) {
       ChangeNotifierProvider(
           create: (_) => UserProvider(auth: FakeAuthService())),
       ChangeNotifierProvider(create: (_) => PatientDataProvider()),
+      ChangeNotifierProvider(create: (_) => FakeProfileBackend().provider()),
     ],
     child: child,
   );
@@ -110,7 +113,8 @@ void main() {
     await tester.tap(find.text('Đặt lịch').last);
     await tester.pumpAndSettle();
     expect(find.text('Chọn dịch vụ nha khoa'), findsOneWidget);
-    expect(find.text('Nguyễn Minh Anh (Bản thân)'), findsOneWidget);
+    // Tên "Bản thân" lấy từ hồ sơ API (backend giả).
+    expect(find.text('Trần Thị Test (Bản thân)'), findsOneWidget);
 
     await tester.tap(find.text('Tôi').last);
     await tester.pumpAndSettle();

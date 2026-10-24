@@ -5,7 +5,8 @@ import '../../core/widgets/secondary_button.dart';
 import '../../data/models/article.dart';
 import '../../data/models/dental_service.dart';
 import '../../data/models/doctor.dart';
-import '../../data/models/patient.dart';
+import '../../data/models/family_member.dart';
+import '../../providers/profile_provider.dart';
 import '../../providers/user_provider.dart';
 import '../../data/providers/patient_data_provider.dart';
 import '../articles/article_detail_screen.dart';
@@ -52,7 +53,7 @@ class _MeScreenState extends State<MeScreen> {
     final page = switch (settings.name) {
       MeRoutes.profile => const EditProfileScreen(),
       MeRoutes.family => const FamilyListScreen(),
-      MeRoutes.familyForm => FamilyFormScreen(patient: arg as Patient?),
+      MeRoutes.familyForm => FamilyFormScreen(member: arg as FamilyMember?),
       MeRoutes.notifications => const NotificationsScreen(),
       MeRoutes.settings => const SettingsScreen(),
       MeRoutes.language => const LanguageScreen(),
@@ -133,10 +134,11 @@ class _AccountOverview extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final user = context.watch<UserProvider>().account;
+    final profile = context.watch<ProfileProvider>();
     return MePage(title: 'Tôi', children: [
       const Center(child: MeAvatar(radius: 42)),
       const SizedBox(height: 12),
-      Text(user.name,
+      Text(profile.displayName(user.email),
           textAlign: TextAlign.center,
           style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
       const SizedBox(height: 4),
@@ -144,6 +146,17 @@ class _AccountOverview extends StatelessWidget {
           textAlign: TextAlign.center,
           style: TextStyle(color: Color(0xFF666666))),
       const SizedBox(height: 20),
+      // Lỗi tải hồ sơ: báo lỗi nhưng vẫn để menu và nút Đăng xuất dùng được.
+      if (profile.profileError != null && !profile.profileLoading)
+        MeCard(
+            child: Row(children: [
+          const Icon(Icons.error_outline, color: Colors.red),
+          const SizedBox(width: 12),
+          Expanded(
+              child: Text('Chưa tải được hồ sơ: ${profile.profileError}')),
+          TextButton(
+              onPressed: profile.loadProfile, child: const Text('Thử lại')),
+        ])),
       for (final item in const [
         ('Thông tin cá nhân', Icons.person_outline, MeRoutes.profile),
         ('Quản lý người thân', Icons.people_outline, MeRoutes.family),

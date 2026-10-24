@@ -15,6 +15,8 @@ import 'package:frontend/features/shared/article_card.dart';
 import 'package:frontend/features/me/notifications_screen.dart';
 import 'package:frontend/providers/user_provider.dart';
 
+import 'support/fake_profile_backend.dart';
+
 class ContentFixture extends PatientDataProvider {
   ContentFixture(this.items);
   final List<Article> items;
@@ -51,6 +53,7 @@ Future<void> mount(WidgetTester tester, PatientDataProvider data, Widget page,
       providers: [
         ChangeNotifierProvider.value(value: data),
         ChangeNotifierProvider(create: (_) => UserProvider()),
+        ChangeNotifierProvider(create: (_) => FakeProfileBackend().provider()),
       ],
       child: MaterialApp(
           theme: AppTheme.light,

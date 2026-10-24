@@ -8,25 +8,32 @@ import 'package:frontend/core/utils/validators.dart';
 import 'package:frontend/data/models/patient.dart';
 import 'package:frontend/data/models/patient_records.dart';
 import 'package:frontend/data/providers/patient_data_provider.dart';
+import 'package:frontend/providers/profile_provider.dart';
 import 'package:frontend/providers/user_provider.dart';
+
+import 'support/fake_profile_backend.dart';
 import 'package:frontend/features/me/me_widgets.dart';
 
 import 'support/fake_auth_service.dart';
 
-Widget providers(UserProvider users, PatientDataProvider data, Widget child) =>
+Widget providers(UserProvider users, PatientDataProvider data, Widget child,
+        {ProfileProvider? profile}) =>
     MultiProvider(providers: [
       ChangeNotifierProvider.value(value: users),
-      ChangeNotifierProvider.value(value: data)
+      ChangeNotifierProvider.value(value: data),
+      ChangeNotifierProvider.value(
+          value: profile ?? FakeProfileBackend().provider()),
     ], child: child);
 Future<void> pumpMe(
     WidgetTester tester, UserProvider users, PatientDataProvider data,
-    {double width = 390}) async {
+    {double width = 390, ProfileProvider? profile}) async {
   tester.view.physicalSize = Size(width, 900);
   tester.view.devicePixelRatio = 1;
   addTearDown(tester.view.resetPhysicalSize);
   addTearDown(tester.view.resetDevicePixelRatio);
-  await tester.pumpWidget(providers(users, data,
-      MaterialApp(theme: AppTheme.light, home: const MainShell())));
+  await tester.pumpWidget(providers(
+      users, data, MaterialApp(theme: AppTheme.light, home: const MainShell()),
+      profile: profile));
   await tester.tap(find.text('Tôi').last);
   await tester.pumpAndSettle();
 }
@@ -115,16 +122,20 @@ void main() {
         'all six account destinations, settings, password and FAQ fit $width',
         (tester) async {
       final u = demoUsers(), d = PatientDataProvider();
-      await pumpMe(tester, u, d, width: width);
+      final backend = FakeProfileBackend(family: [
+        {'id': 'fam-1', 'fullName': 'Nguyễn Thị Mẹ', 'relationship': 'Mẹ'}
+      ]);
+      await pumpMe(tester, u, d, width: width, profile: backend.provider());
       d.focusAppointmentsFor(d.patients.last.id);
       await tester.pumpAndSettle();
-      expect(find.text(u.account.name), findsOneWidget);
+      expect(find.text('Trần Thị Test'), findsOneWidget);
       expect(find.byType(NavigationBar), findsOneWidget);
       await openMe(tester, 'Thông tin cá nhân');
       expect(find.text('Thay ảnh (demo)'), findsOneWidget);
       await backMe(tester);
       await openMe(tester, 'Quản lý người thân');
-      expect(find.text(d.patients.last.fullName), findsOneWidget);
+      expect(find.text('Nguyễn Thị Mẹ'), findsOneWidget);
+      expect(find.text('Mẹ · Chưa có ngày sinh'), findsOneWidget);
       await backMe(tester);
       await openMe(tester, 'Thông báo');
       expect(find.text('Tất cả'), findsOneWidget);
@@ -173,26 +184,28 @@ void main() {
       expect(tester.takeException(), isNull);
     });
     testWidgets(
-        'profile validation, keyboard and primary-only synchronization at $width',
+        'profile validation, keyboard and PATCH /api/users/me at $width',
         (tester) async {
       final u = demoUsers(), d = PatientDataProvider();
+      final backend = FakeProfileBackend();
       final relative = d.patients.last;
       final ids = d.appointments.map((a) => a.id).toList();
-      await pumpMe(tester, u, d, width: width);
+      await pumpMe(tester, u, d, width: width, profile: backend.provider());
+      // Tên "Bản thân" trong dữ liệu đặt lịch đổi theo hồ sơ API.
+      expect(d.primaryPatient.fullName, 'Trần Thị Test');
       await openMe(tester, 'Thông tin cá nhân');
+      expect(find.text('patient@example.com'), findsOneWidget);
       await tester.enterText(find.byType(TextFormField).at(0), '');
       await tester.enterText(find.byType(TextFormField).at(1), '123');
-      await tester.enterText(find.byType(TextFormField).at(2), 'bad');
       await openMe(tester, 'Lưu thay đổi');
       expect(find.text('Họ và tên không được để trống'), findsOneWidget);
-      expect(find.text('Email không hợp lệ'), findsOneWidget);
-      expect(u.account.name, isNotEmpty);
-      expect(d.primaryPatient.fullName, u.account.name);
+      expect(find.text('Số điện thoại Việt Nam không hợp lệ'), findsOneWidget);
+      expect(find.text('Vui lòng chọn ngày sinh'), findsOneWidget);
+      expect(backend.me['fullName'], 'Trần Thị Test');
       await tester.enterText(
           find.byType(TextFormField).at(0), 'Tên tài khoản mới');
       await tester.enterText(find.byType(TextFormField).at(1), '0901234567');
-      await tester.enterText(
-          find.byType(TextFormField).at(2), 'new@example.com');
+      await setBirthday(tester);
       tester.view.viewInsets = const FakeViewPadding(bottom: 280);
       await tester.pump();
       await tester.ensureVisible(find.text('Lưu thay đổi'));
@@ -201,83 +214,80 @@ void main() {
       FocusManager.instance.primaryFocus?.unfocus();
       await tester.pumpAndSettle();
       await openMe(tester, 'Lưu thay đổi');
-      expect(u.account.name, 'Tên tài khoản mới');
+      expect(backend.me['fullName'], 'Tên tài khoản mới');
+      expect(backend.me['phone'], '0901234567');
+      expect(backend.me['birthday'], matches(RegExp(r'^\d{4}-\d{2}-\d{2}$')));
       expect(find.text('Tên tài khoản mới'), findsOneWidget);
-      expect(d.primaryPatient.fullName, u.account.name);
+      expect(d.primaryPatient.fullName, 'Tên tài khoản mới');
       expect(d.primaryPatient.id, 'patient-001');
       expect(d.patients.last, same(relative));
       expect(d.appointments.map((a) => a.id).toList(), ids);
-      expect(u.account.email, 'new@example.com');
       expect(tester.takeException(), isNull);
     });
   }
-  testWidgets('family add/edit/delete dialogs and dropdown synchronization',
-      (tester) async {
+  testWidgets('family list states and add/edit/delete via API', (tester) async {
     final u = demoUsers(), d = PatientDataProvider();
-    await pumpMe(tester, u, d);
+    final backend = FakeProfileBackend();
+    final mockPatients = d.patients.length;
+    await pumpMe(tester, u, d, profile: backend.provider());
     await openMe(tester, 'Quản lý người thân');
-    expect(find.text('Xóa người thân'), findsOneWidget);
-    await openMe(tester, 'Xóa người thân');
-    expect(find.byType(AlertDialog), findsOneWidget);
-    await openMe(tester, 'Xác nhận xóa');
-    expect(find.textContaining('liên kết'), findsOneWidget);
-    expect(d.patients.length, 2);
+    expect(find.text('Chưa có người thân'), findsOneWidget);
+    expect(find.text('Xóa người thân'), findsNothing);
+
     await openMe(tester, 'Thêm người thân');
     await openMe(tester, 'Lưu người thân');
     expect(find.text('Vui lòng chọn ngày sinh'), findsOneWidget);
     await tester.enterText(find.byType(TextFormField).first, 'Người thân mới');
     await setBirthday(tester);
     await openMe(tester, 'Lưu người thân');
-    final p = d.patients.last;
-    expect(d.patients.length, 3);
-    expect(p.isPrimary, isFalse);
+    expect(backend.family.length, 1);
+    expect(backend.family.first['fullName'], 'Người thân mới');
+    expect(backend.family.first['relationship'], 'Con');
+    expect(find.text('Người thân mới'), findsOneWidget);
+
     final card = find
-        .ancestor(of: find.text(p.fullName), matching: find.byType(Card))
+        .ancestor(of: find.text('Người thân mới'), matching: find.byType(Card))
         .first;
     await tester.tap(find.descendant(of: card, matching: find.text('Sửa')));
     await tester.pumpAndSettle();
     await tester.enterText(
         find.byType(TextFormField).first, 'Người thân đã sửa');
     await openMe(tester, 'Lưu người thân');
-    expect(d.patients.last.id, p.id);
-    await tester.tap(find.text('Hồ sơ').last);
-    await tester.pumpAndSettle();
-    await tester.tap(find.byType(DropdownButtonFormField<String>));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('Người thân đã sửa (Con)').last);
-    await tester.pumpAndSettle();
-    expect(d.recordsPatient.id, p.id);
-    await openMe(tester, 'Lịch hẹn');
-    expect(find.text('Chưa có lịch hẹn.'), findsOneWidget);
-    await tester.tap(find.text('Đặt lịch').last);
-    await tester.pumpAndSettle();
-    await tester.tap(find.byType(DropdownButtonFormField<String>));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('Người thân đã sửa (Con)').last);
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('Tôi').last);
-    await tester.pumpAndSettle();
+    expect(backend.family.single['fullName'], 'Người thân đã sửa');
+    expect(find.text('Người thân đã sửa'), findsOneWidget);
+
     final editedCard = find
         .ancestor(
             of: find.text('Người thân đã sửa'), matching: find.byType(Card))
         .first;
-    await tester.ensureVisible(editedCard);
     await tester.tap(
         find.descendant(of: editedCard, matching: find.text('Xóa người thân')));
     await tester.pumpAndSettle();
     await openMe(tester, 'Hủy');
-    expect(d.patients.length, 3);
+    expect(backend.family.length, 1);
     await tester.tap(
         find.descendant(of: editedCard, matching: find.text('Xóa người thân')));
     await tester.pumpAndSettle();
     await openMe(tester, 'Xác nhận xóa');
-    expect(d.patients.length, 2);
-    expect(d.recordsPatient.id, d.primaryPatient.id);
-    await tester.tap(find.text('Đặt lịch').last);
-    await tester.pumpAndSettle();
-    expect(
-        find.text('${d.primaryPatient.fullName} (Bản thân)'), findsOneWidget);
-    expect(u.account.name, d.primaryPatient.fullName);
+    expect(backend.family, isEmpty);
+    expect(find.text('Chưa có người thân'), findsOneWidget);
+    // Người thân API không trộn vào dữ liệu mock của đặt lịch/hồ sơ khám.
+    expect(d.patients.length, mockPatients);
+    expect(tester.takeException(), isNull);
+  });
+  testWidgets('family and profile errors show retry', (tester) async {
+    final u = demoUsers(), d = PatientDataProvider();
+    final backend = FakeProfileBackend()..failStatus = 404;
+    await pumpMe(tester, u, d, profile: backend.provider());
+    expect(find.textContaining('Chưa tải được hồ sơ'), findsOneWidget);
+    expect(find.text('patient@example.com'), findsOneWidget);
+    await openMe(tester, 'Quản lý người thân');
+    expect(find.text('Lỗi giả lập'), findsOneWidget);
+    backend.failStatus = null;
+    backend.family
+        .add({'id': 'fam-9', 'fullName': 'Bé Na', 'relationship': 'Con'});
+    await openMe(tester, 'Thử lại');
+    expect(find.text('Bé Na'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
   testWidgets(
@@ -341,8 +351,7 @@ void main() {
   testWidgets(
       'logout cancellation, confirmed session clearing, no Back to shell and login again',
       (tester) async {
-    final u = UserProvider(auth: FakeAuthService()),
-        d = PatientDataProvider();
+    final u = UserProvider(auth: FakeAuthService()), d = PatientDataProvider();
     await tester.pumpWidget(providers(u, d, const App()));
     Future<void> login() async {
       await openMe(tester, 'Đăng nhập');

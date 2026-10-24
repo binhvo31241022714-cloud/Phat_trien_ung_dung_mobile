@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import 'package:frontend/main.dart' as app;
 
 import '../test/support/fake_auth_service.dart';
+import '../test/support/fake_profile_backend.dart';
 import 'package:frontend/app/main_shell.dart';
 import 'package:frontend/data/providers/patient_data_provider.dart';
 import 'package:frontend/data/models/appointment.dart';
@@ -17,7 +18,9 @@ void main() {
       'Android: login, Home, booking, records, family, bookmarks and logout',
       (tester) async {
     // AuthService giả: test luồng giao diện, không gọi Firebase thật.
-    await app.startApp(FakeAuthService());
+    final backend = FakeProfileBackend();
+    await app.startApp(FakeAuthService(),
+        profileService: backend.service());
     await tester.pumpAndSettle();
     Future<void> tapText(String label) async {
       final finder = find.text(label);
@@ -110,7 +113,8 @@ void main() {
         .tap(find.text('${relative.fullName} (${relative.relationship})').last);
     await tester.pumpAndSettle();
     expect(data.recordsPatient.id, relative.id);
-    expect(users.account.name, data.primaryPatient.fullName);
+    // Tên "Bản thân" lấy từ hồ sơ API (backend giả).
+    expect(data.primaryPatient.fullName, 'Trần Thị Test');
     await shot('08_records_relative');
     await tester.tap(find.text('Tôi').last);
     await tester.pumpAndSettle();
@@ -125,8 +129,8 @@ void main() {
     await tester.tap(find.text('OK'));
     await tester.pumpAndSettle();
     await tapText('Lưu người thân');
-    expect(data.patients.last.fullName, 'Người thân Android QA');
-    final newId = data.patients.last.id;
+    expect(backend.family.last['fullName'], 'Người thân Android QA');
+    final newId = backend.family.last['id'];
     await shot('10_family');
     final card = find
         .ancestor(
@@ -137,7 +141,8 @@ void main() {
     await tester.enterText(
         find.byType(TextFormField).first, 'Người thân QA đã sửa');
     await tapText('Lưu người thân');
-    expect(data.patients.last.id, newId);
+    expect(backend.family.single['id'], newId);
+    expect(backend.family.single['fullName'], 'Người thân QA đã sửa');
     await back();
     await tapText('Đã lưu');
     expect(find.text(data.articles.first.title), findsOneWidget);

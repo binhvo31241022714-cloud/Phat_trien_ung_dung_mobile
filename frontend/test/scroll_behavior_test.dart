@@ -5,6 +5,8 @@ import 'package:frontend/app.dart';
 import 'package:frontend/core/theme/app_scroll_behavior.dart';
 import 'package:frontend/data/providers/patient_data_provider.dart';
 import 'package:frontend/providers/user_provider.dart';
+
+import 'support/fake_profile_backend.dart';
 import 'package:frontend/routes/app_routes.dart';
 
 void main() {
@@ -60,6 +62,7 @@ void main() {
     await tester.pumpWidget(MultiProvider(providers: [
       ChangeNotifierProvider(create: (_) => UserProvider()),
       ChangeNotifierProvider(create: (_) => PatientDataProvider()),
+      ChangeNotifierProvider(create: (_) => FakeProfileBackend().provider()),
     ], child: const App()));
     await tester.pumpAndSettle();
     expect(tester.widget<MaterialApp>(find.byType(MaterialApp)).scrollBehavior,
