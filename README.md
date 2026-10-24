@@ -28,6 +28,7 @@ Hướng dẫn chi tiết cách viết API: [`backend/README.md`](backend/README
 | Tự đăng nhập khi mở lại app | ✅ | Không cần |
 | Hồ sơ cá nhân: xem, sửa. Trang chủ và tab "Tôi" hiện tên thật | ✅ | `/api/users/me` |
 | Người thân: xem, thêm, sửa, xóa | ✅ | `/api/family-members` |
+| Giới tính và thông tin sức khỏe (dị ứng thuốc, bệnh nền, thuốc đang dùng, mang thai, ghi chú) cho bản thân và người thân; nhãn "⚠ Có lưu ý sức khỏe" | ✅ | `/api/users/me`, `/api/family-members` |
 | Dịch vụ, combo, bác sĩ: trang chủ, danh sách, chi tiết | ✅ | `/api/services`, `/api/combos`, `/api/doctors` |
 | Lưu yêu thích, màn hình "Đã lưu" có tab lọc | ✅ | `/api/favorites` |
 | Đổi mật khẩu thật (xác thực lại bằng mật khẩu hiện tại) | ✅ | Không cần |

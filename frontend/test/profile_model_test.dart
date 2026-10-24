@@ -47,6 +47,13 @@ void main() {
       'relationship': 'Mẹ',
       'birthday': '',
       'phone': '0911111111',
+      // Dữ liệu cũ chưa có giới tính, sức khỏe: gửi giá trị mặc định.
+      'gender': '',
+      'allergies': '',
+      'medicalConditions': <String>[],
+      'currentMedications': '',
+      'isPregnant': false,
+      'healthNotes': '',
     });
     expect(FamilyMember.fromJson({'id': 'f2'}).relationship, '');
   });

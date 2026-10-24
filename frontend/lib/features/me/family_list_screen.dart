@@ -7,6 +7,7 @@ import '../../core/widgets/loading_view.dart';
 import '../../core/widgets/secondary_button.dart';
 import '../../providers/profile_provider.dart';
 import '../../providers/user_provider.dart';
+import 'health_info_section.dart';
 import 'me_widgets.dart';
 
 class FamilyListScreen extends StatefulWidget {
@@ -35,6 +36,7 @@ class _FamilyListScreenState extends State<FamilyListScreen> {
       _row(context,
           name: profile.displayName(email),
           subtitle: 'Bản thân · ${_date(birthday)}',
+          healthWarning: profile.profile?.health.hasWarning ?? false,
           onEdit: () => MeRoutes.open(context, MeRoutes.profile)),
       if (profile.familyLoading && !profile.familyLoaded)
         const Padding(padding: EdgeInsets.all(24), child: LoadingView())
@@ -52,6 +54,7 @@ class _FamilyListScreenState extends State<FamilyListScreen> {
               name: p.fullName,
               subtitle:
                   '${p.relationship.isEmpty ? 'Người thân' : p.relationship} · ${_date(p.birthday)}',
+              healthWarning: p.health.hasWarning,
               onEdit: () =>
                   MeRoutes.open(context, MeRoutes.familyForm, arguments: p),
               onDelete: () async {
@@ -93,6 +96,7 @@ class _FamilyListScreenState extends State<FamilyListScreen> {
   Widget _row(BuildContext context,
           {required String name,
           required String subtitle,
+          bool healthWarning = false,
           required VoidCallback onEdit,
           VoidCallback? onDelete}) =>
       MeCard(
@@ -106,7 +110,12 @@ class _FamilyListScreenState extends State<FamilyListScreen> {
                   children: [
                 Text(name, style: const TextStyle(fontWeight: FontWeight.w600)),
                 const SizedBox(height: 4),
-                Text(subtitle, style: const TextStyle(color: Color(0xFF666666)))
+                Text(subtitle,
+                    style: const TextStyle(color: Color(0xFF666666))),
+                if (healthWarning) ...[
+                  const SizedBox(height: 6),
+                  const HealthWarningBadge(),
+                ],
               ])),
           TextButton(onPressed: onEdit, child: const Text('Sửa'))
         ]),

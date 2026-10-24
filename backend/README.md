@@ -64,10 +64,10 @@ Khi test bằng `api-test.http`: bật server, bấm request **1. Đăng nhập*
 |--------|---------------------------|-----------|-------|
 | POST   | /api/users/sync           | Có  | Tạo hồ sơ nếu chưa có. Body: `{ fullName, phone }` |
 | GET    | /api/users/me             | Có  | Xem hồ sơ của mình |
-| PATCH  | /api/users/me             | Có  | Sửa `fullName`, `phone`, `birthday`, `gender`, `address` |
+| PATCH  | /api/users/me             | Có  | Sửa `fullName`, `phone`, `birthday`, `address`, giới tính và thông tin sức khỏe (xem bên dưới) |
 | GET    | /api/family-members       | Có  | Danh sách người thân |
-| POST   | /api/family-members       | Có  | Thêm người thân. Bắt buộc `fullName` |
-| PATCH  | /api/family-members/:id   | Có  | Sửa người thân |
+| POST   | /api/family-members       | Có  | Thêm người thân. Bắt buộc `fullName`; nhận thêm giới tính và thông tin sức khỏe |
+| PATCH  | /api/family-members/:id   | Có  | Sửa người thân (gồm cả giới tính và thông tin sức khỏe) |
 | DELETE | /api/family-members/:id   | Có  | Xóa người thân |
 | GET    | /api/services             | Không | Danh sách dịch vụ |
 | GET    | /api/services/:id         | Không | Chi tiết dịch vụ |
@@ -78,6 +78,28 @@ Khi test bằng `api-test.http`: bật server, bấm request **1. Đăng nhập*
 | GET    | /api/favorites            | Có  | Danh sách nội dung đã lưu |
 | POST   | /api/favorites            | Có  | Lưu nội dung. Body: `{ type, itemId }` |
 | DELETE | /api/favorites/:id        | Có  | Bỏ lưu một mục |
+
+### Dữ liệu `users/{uid}` và `users/{uid}/family_members/{id}`
+
+| Trường | Kiểu | Có ở | Ghi chú |
+|---|---|---|---|
+| `fullName` | chuỗi | cả hai | |
+| `phone` | chuỗi | cả hai | |
+| `birthday` | chuỗi `"YYYY-MM-DD"` | cả hai | `""` nếu chưa có |
+| `email` | chuỗi | users | Email đăng nhập Firebase, không sửa qua API |
+| `address` | chuỗi | users | |
+| `relationship` | chuỗi | family_members | Ví dụ "Mẹ", "Con" |
+| `gender` | `"male"` \| `"female"` \| `"other"` \| `""` | cả hai | `""` là chưa chọn. Giá trị khác trả 400 |
+| `allergies` | chuỗi, tối đa 500 ký tự | cả hai | Dị ứng thuốc, ví dụ `"Penicillin, Lidocaine"` |
+| `medicalConditions` | mảng chuỗi | cả hai | Chỉ nhận: `diabetes` (tiểu đường), `heart_disease` (bệnh tim mạch), `hypertension` (huyết áp cao), `bleeding_disorder` (rối loạn đông máu), `asthma` (hen suyễn), `hepatitis` (viêm gan), `other` (khác). Giá trị lạ trả 400 |
+| `currentMedications` | chuỗi, tối đa 500 ký tự | cả hai | Thuốc đang dùng |
+| `isPregnant` | `true` \| `false` | cả hai | Phải là boolean, chuỗi `"true"` trả 400 |
+| `healthNotes` | chuỗi, tối đa 500 ký tự | cả hai | Ghi chú khác |
+| `createdAt` | Timestamp | cả hai | |
+
+- Kiểm tra giới tính và sức khỏe dùng chung ở `src/utils/health.js` (`readHealth`).
+- Khi GET, trường còn thiếu (dữ liệu cũ) được trả giá trị mặc định: `""`, `[]` hoặc `false` (`withHealthDefaults`).
+- PATCH chỉ đổi những trường có gửi lên; POST người thân thiếu trường thì lưu mặc định.
 
 ### Ghi chú về isActive
 

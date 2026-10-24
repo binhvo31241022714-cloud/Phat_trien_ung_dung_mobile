@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 
 import '../data/api_client.dart';
 import '../data/models/family_member.dart';
+import '../data/models/health_info.dart';
 import '../data/models/user_profile.dart';
 import '../data/services/profile_service.dart';
 
@@ -72,12 +73,21 @@ class ProfileProvider extends ChangeNotifier {
     required String fullName,
     required String phone,
     DateTime? birthday,
+    String? gender,
+    HealthInfo? health,
   }) async {
     final current = _profile;
     if (current == null) return 'Chưa tải được hồ sơ.';
+    final newGender = gender ?? current.gender;
+    // Đổi sang giới tính khác Nữ thì "đang mang thai" tự về false.
+    final newHealth = (health ?? current.health).forGender(newGender);
     try {
       await _service.updateMe(
-          fullName: fullName.trim(), phone: phone.trim(), birthday: birthday);
+          fullName: fullName.trim(),
+          phone: phone.trim(),
+          birthday: birthday,
+          gender: newGender,
+          health: newHealth);
     } on ApiException catch (e) {
       return e.message;
     }
@@ -87,8 +97,9 @@ class ProfileProvider extends ChangeNotifier {
       fullName: fullName.trim(),
       phone: phone.trim(),
       birthday: birthday ?? current.birthday,
-      gender: current.gender,
+      gender: newGender,
       address: current.address,
+      health: newHealth,
     );
     notifyListeners();
     return null;

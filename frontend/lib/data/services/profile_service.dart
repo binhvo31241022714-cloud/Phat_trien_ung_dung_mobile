@@ -1,5 +1,6 @@
 import '../api_client.dart';
 import '../models/family_member.dart';
+import '../models/health_info.dart';
 import '../models/user_profile.dart';
 
 /// Gọi /api/users/me và /api/family-members. Lỗi ném ra [ApiException].
@@ -22,11 +23,15 @@ class ProfileService {
     required String fullName,
     required String phone,
     DateTime? birthday,
+    String? gender,
+    HealthInfo? health,
   }) =>
       _api.patch(_me, {
         'fullName': fullName,
         'phone': phone,
         if (birthday != null) 'birthday': writeDate(birthday),
+        if (gender != null) 'gender': gender,
+        if (health != null) ...health.forGender(gender ?? '').toJson(),
       });
 
   Future<List<FamilyMember>> getFamily() async {

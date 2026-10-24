@@ -8,6 +8,7 @@ import '../../core/widgets/primary_button.dart';
 import '../../data/models/user_profile.dart';
 import '../../providers/profile_provider.dart';
 import '../../providers/user_provider.dart';
+import 'health_info_section.dart';
 import 'me_widgets.dart';
 
 class EditProfileScreen extends StatelessWidget {
@@ -41,6 +42,7 @@ class _ProfileFormState extends State<_ProfileForm> {
   final _form = GlobalKey<FormState>();
   late final TextEditingController _name, _phone, _email;
   DateTime? _birthday;
+  late final HealthFormController _health;
   bool _saving = false;
   @override
   void initState() {
@@ -53,6 +55,7 @@ class _ProfileFormState extends State<_ProfileForm> {
             ? p.email
             : context.read<UserProvider>().account.email);
     _birthday = p.birthday;
+    _health = HealthFormController(initial: p.health, gender: p.gender);
   }
 
   @override
@@ -60,6 +63,7 @@ class _ProfileFormState extends State<_ProfileForm> {
     _name.dispose();
     _phone.dispose();
     _email.dispose();
+    _health.dispose();
     super.dispose();
   }
 
@@ -67,7 +71,11 @@ class _ProfileFormState extends State<_ProfileForm> {
     if (_saving || !_form.currentState!.validate()) return;
     setState(() => _saving = true);
     final error = await context.read<ProfileProvider>().saveProfile(
-        fullName: _name.text, phone: _phone.text, birthday: _birthday);
+        fullName: _name.text,
+        phone: _phone.text,
+        birthday: _birthday,
+        gender: _health.gender,
+        health: _health.build());
     if (!mounted) return;
     if (error != null) {
       setState(() => _saving = false);
@@ -105,6 +113,10 @@ class _ProfileFormState extends State<_ProfileForm> {
                           onChanged: (date) =>
                               setState(() => _birthday = date)),
                       const SizedBox(height: 16),
+                      GenderField(
+                          value: _health.gender,
+                          onChanged: (v) => setState(() => _health.gender = v)),
+                      const SizedBox(height: 16),
                       AppTextField(
                           label: 'Số điện thoại',
                           controller: _phone,
@@ -118,6 +130,10 @@ class _ProfileFormState extends State<_ProfileForm> {
                           controller: _email,
                           enabled: false,
                           keyboardType: TextInputType.emailAddress),
+                      const SizedBox(height: 24),
+                      HealthInfoSection(
+                          controller: _health,
+                          onChanged: () => setState(() {})),
                       const SizedBox(height: 16),
                       PrimaryButton(
                           label: 'Lưu thay đổi',

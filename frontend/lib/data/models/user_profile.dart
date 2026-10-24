@@ -1,3 +1,4 @@
+import 'health_info.dart';
 import 'json_read.dart';
 
 export 'json_read.dart' show writeDate;
@@ -11,6 +12,7 @@ class UserProfile {
   final DateTime? birthday;
   final String gender;
   final String address;
+  final HealthInfo health;
 
   const UserProfile({
     required this.id,
@@ -20,6 +22,7 @@ class UserProfile {
     this.birthday,
     this.gender = '',
     this.address = '',
+    this.health = const HealthInfo(),
   });
 
   /// Chịu được trường thiếu hoặc null: chuỗi thiếu thành '', ngày sai thành null.
@@ -29,7 +32,8 @@ class UserProfile {
         fullName: readString(json['fullName']),
         phone: readString(json['phone']),
         birthday: readDate(json['birthday']),
-        gender: readString(json['gender']),
+        gender: readGender(json['gender']),
         address: readString(json['address']),
+        health: HealthInfo.fromJson(json),
       );
 }

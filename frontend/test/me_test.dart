@@ -52,7 +52,13 @@ Future<void> openMe(WidgetTester tester, String text) async {
     await tester.scrollUntilVisible(find.text(text), 180,
         scrollable: find.byType(Scrollable).first);
   }
-  await tester.ensureVisible(base.last);
+  // Bỏ chọn ô đang nhập (như ẩn bàn phím), nếu không ô đó sẽ tự cuộn màn
+  // hình ngược lại. Sau đó cuộn phần tử vào giữa màn hình (tránh thanh tab
+  // dưới) và chờ vẽ lại rồi mới bấm.
+  FocusManager.instance.primaryFocus?.unfocus();
+  await tester.pumpAndSettle();
+  await Scrollable.ensureVisible(tester.element(base.last), alignment: 0.5);
+  await tester.pumpAndSettle();
   await tester.tap(base.last);
   await tester.pumpAndSettle();
 }
@@ -73,7 +79,11 @@ Future<void> tapChangePassword(WidgetTester tester) async {
 UserProvider demoUsers() =>
     UserProvider(auth: FakeAuthService())..signInDemo('patient@example.com');
 Future<void> setBirthday(WidgetTester tester) async {
-  await tester.ensureVisible(find.byType(BirthdayField));
+  FocusManager.instance.primaryFocus?.unfocus();
+  await tester.pumpAndSettle();
+  await Scrollable.ensureVisible(tester.element(find.byType(BirthdayField)),
+      alignment: 0.5);
+  await tester.pumpAndSettle();
   await tester.tap(find.byType(BirthdayField));
   await tester.pumpAndSettle();
   final picker =

@@ -1,3 +1,4 @@
+import 'health_info.dart';
 import 'json_read.dart';
 
 /// Người thân từ /api/family-members.
@@ -7,6 +8,8 @@ class FamilyMember {
   final String relationship;
   final DateTime? birthday;
   final String phone;
+  final String gender;
+  final HealthInfo health;
 
   const FamilyMember({
     required this.id,
@@ -14,6 +17,8 @@ class FamilyMember {
     this.relationship = '',
     this.birthday,
     this.phone = '',
+    this.gender = '',
+    this.health = const HealthInfo(),
   });
 
   factory FamilyMember.fromJson(Map<String, dynamic> json) => FamilyMember(
@@ -22,6 +27,8 @@ class FamilyMember {
         relationship: readString(json['relationship']),
         birthday: readDate(json['birthday']),
         phone: readString(json['phone']),
+        gender: readGender(json['gender']),
+        health: HealthInfo.fromJson(json),
       );
 
   /// Body gửi cho POST và PATCH.
@@ -30,5 +37,7 @@ class FamilyMember {
         'relationship': relationship,
         'birthday': birthday == null ? '' : writeDate(birthday!),
         'phone': phone,
+        'gender': gender,
+        ...health.forGender(gender).toJson(),
       };
 }
