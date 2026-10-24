@@ -19,6 +19,21 @@ void main() {
         'Có lỗi xảy ra, vui lòng thử lại.');
   });
 
+  test('password change errors use their own Vietnamese messages', () {
+    expect(FirebaseAuthService.passwordChangeMessageFor('invalid-credential'),
+        'Mật khẩu hiện tại không đúng.');
+    expect(FirebaseAuthService.passwordChangeMessageFor('weak-password'),
+        contains('Mật khẩu mới quá yếu'));
+    expect(
+        FirebaseAuthService.passwordChangeMessageFor('requires-recent-login'),
+        contains('đăng nhập lại'));
+    expect(FirebaseAuthService.passwordChangeMessageFor('too-many-requests'),
+        contains('thử quá nhiều lần'));
+    expect(
+        FirebaseAuthService.passwordChangeMessageFor('network-request-failed'),
+        contains('kết nối mạng'));
+  });
+
   test('login returns the error message and stays signed out on failure',
       () async {
     final auth = FakeAuthService()

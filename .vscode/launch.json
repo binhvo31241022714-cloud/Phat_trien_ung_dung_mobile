@@ -16,13 +16,6 @@
             ]
         },
         {
-            "name": "backend",
-            "cwd": "${workspaceFolder}/backend",
-            "request": "launch",
-            "type": "dart",
-            "program": "${workspaceFolder}/backend/bin/server.dart"
-        },
-        {
             "name": "frontend",
             "cwd": "${workspaceFolder}/frontend",
             "request": "launch",
@@ -36,7 +29,7 @@
             "type": "dart",
             "program": "${workspaceFolder}/frontend/lib/main.dart",
             "toolArgs": [
-                "--dart-define=API_URL=http://10.0.2.2:8080"
+                "--dart-define=API_URL=http://10.0.2.2:3000"
             ]
         },
         {
@@ -54,16 +47,6 @@
             "type": "dart",
             "program": "${workspaceFolder}/frontend/lib/main.dart",
             "flutterMode": "release"
-        }
-    ],
-    "compounds": [
-        {
-            "name": "Full stack (Android emulator)",
-            "configurations": [
-                "backend",
-                "frontend (Android emulator)"
-            ],
-            "stopAll": true
         }
     ]
 }

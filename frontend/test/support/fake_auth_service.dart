@@ -30,6 +30,19 @@ class FakeAuthService implements AuthService {
   @override
   Future<void> signOut() async => email = null;
 
+  /// Mật khẩu hiện tại của tài khoản giả.
+  String password = 'secret123';
+
+  @override
+  Future<void> changePassword(
+      String currentPassword, String newPassword) async {
+    if (failWith != null) throw AuthException(failWith!);
+    if (currentPassword != password) {
+      throw const AuthException('Mật khẩu hiện tại không đúng.');
+    }
+    password = newPassword;
+  }
+
   @override
   Future<void> syncProfile({String? fullName}) async => syncCalls++;
 }

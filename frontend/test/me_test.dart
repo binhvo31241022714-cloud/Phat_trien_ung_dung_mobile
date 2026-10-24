@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import 'package:frontend/app.dart';
 import 'package:frontend/app/main_shell.dart';
 import 'package:frontend/core/theme/app_theme.dart';
+import 'package:frontend/core/widgets/primary_button.dart';
 import 'package:frontend/core/utils/validators.dart';
 import 'package:frontend/data/models/patient.dart';
 import 'package:frontend/data/models/patient_records.dart';
@@ -11,6 +12,7 @@ import 'package:frontend/data/providers/patient_data_provider.dart';
 import 'package:frontend/providers/catalog_provider.dart';
 import 'package:frontend/providers/profile_provider.dart';
 import 'package:frontend/providers/user_provider.dart';
+import 'package:frontend/data/services/settings_store.dart';
 
 import 'support/fake_catalog_backend.dart';
 import 'support/fake_profile_backend.dart';
@@ -60,7 +62,16 @@ Future<void> backMe(WidgetTester tester) async {
   await tester.pumpAndSettle();
 }
 
-UserProvider demoUsers() => UserProvider()..signInDemo('patient@example.com');
+/// Bấm nút "Đổi mật khẩu" (tiêu đề màn hình cũng có chữ này nên tìm theo nút).
+Future<void> tapChangePassword(WidgetTester tester) async {
+  final button = find.widgetWithText(PrimaryButton, 'Đổi mật khẩu');
+  await tester.ensureVisible(button);
+  await tester.tap(button);
+  await tester.pumpAndSettle();
+}
+
+UserProvider demoUsers() =>
+    UserProvider(auth: FakeAuthService())..signInDemo('patient@example.com');
 Future<void> setBirthday(WidgetTester tester) async {
   await tester.ensureVisible(find.byType(BirthdayField));
   await tester.tap(find.byType(BirthdayField));
@@ -79,14 +90,34 @@ void main() {
     u.signInDemo('patient@example.com');
     final id = u.currentUser!.id;
     u.setReceiveNotifications(false);
-    u.setBiometricDemo(true);
     u.signOutDemo();
     expect(u.isAuthenticated, isFalse);
     expect(u.currentUser, isNull);
     u.signInDemo('patient@example.com');
     expect(u.currentUser!.id, id);
     expect(u.receiveNotifications, isFalse);
-    expect(u.biometricDemo, isTrue);
+  });
+  test('settings are saved to the device store and read back on start',
+      () async {
+    final store = MemorySettingsStore();
+    final first = UserProvider(settings: store);
+    await first.loadSettings();
+    expect(first.receiveNotifications, isTrue);
+    expect(first.languageCode, 'vi');
+    first.setReceiveNotifications(false);
+    first.setLanguage('en'); // Chưa hỗ trợ: bỏ qua.
+    await Future<void>.delayed(Duration.zero);
+    expect(store.values['settings.receiveNotifications'], isFalse);
+
+    final reopened = UserProvider(settings: store);
+    await reopened.loadSettings();
+    expect(reopened.receiveNotifications, isFalse);
+    expect(reopened.languageCode, 'vi');
+
+    final legacy = UserProvider(
+        settings: MemorySettingsStore({'settings.languageCode': 'en'}));
+    await legacy.loadSettings();
+    expect(legacy.languageName, 'Tiếng Việt');
   });
   test('family rules preserve records, ids and selection fallbacks', () {
     final d = PatientDataProvider();
@@ -149,25 +180,25 @@ void main() {
       await openMe(tester, 'Cài đặt');
       await openMe(tester, 'Nhận thông báo');
       expect(u.receiveNotifications, isFalse);
-      await openMe(tester, 'Đăng nhập sinh trắc học (mô phỏng)');
-      expect(u.biometricDemo, isTrue);
       await openMe(tester, 'Ngôn ngữ');
       expect(find.text('Tiếng Việt'), findsOneWidget);
       expect(find.text('English'), findsNothing);
+      expect(find.text('Sắp có thêm ngôn ngữ.'), findsOneWidget);
       await backMe(tester);
+      expect(find.textContaining('sinh trắc học'), findsNothing);
       await openMe(tester, 'Đổi mật khẩu');
-      for (var i = 0; i < 3; i++) {
-        await tester.enterText(find.byType(TextFormField).at(i), 'secret123');
-      }
-      await openMe(tester, 'Kiểm tra biểu mẫu (demo)');
-      expect(
-          find.text(
-              'Đổi mật khẩu chưa khả dụng trong chế độ demo. Không có mật khẩu nào được thay đổi.'),
-          findsOneWidget);
+      await tester.enterText(find.byType(TextFormField).at(0), 'secret123');
+      await tester.enterText(find.byType(TextFormField).at(1), 'newsecret1');
+      await tester.enterText(find.byType(TextFormField).at(2), 'newsecret1');
+      await tapChangePassword(tester);
+      // Thành công: báo và quay về Cài đặt.
+      expect(find.text('Đã đổi mật khẩu'), findsOneWidget);
+      expect(find.text('Nhận thông báo'), findsOneWidget);
       expect(u.isAuthenticated, isTrue);
-      await backMe(tester);
       await openMe(tester, 'Quyền riêng tư');
       expect(find.text('Ai có thể xem hồ sơ?'), findsOneWidget);
+      expect(find.textContaining('chỉ chủ tài khoản mới xem, sửa được'),
+          findsOneWidget);
       await backMe(tester);
       await backMe(tester);
       await openMe(tester, 'Trợ giúp');
@@ -461,26 +492,46 @@ void main() {
     expect(find.byType(MainShell), findsOneWidget);
     expect(find.byType(NavigationBar), findsOneWidget);
   });
-  testWidgets(
-      'password validation and visibility do not alter demo credentials',
+  testWidgets('change password validates, reports errors and succeeds',
       (tester) async {
-    final u = demoUsers(), d = PatientDataProvider();
+    final auth = FakeAuthService();
+    final u = UserProvider(auth: auth)..signInDemo('patient@example.com');
+    final d = PatientDataProvider();
     await pumpMe(tester, u, d);
     await openMe(tester, 'Cài đặt');
     await openMe(tester, 'Đổi mật khẩu');
-    await openMe(tester, 'Kiểm tra biểu mẫu (demo)');
+    expect(find.textContaining('demo'), findsNothing);
+    await tapChangePassword(tester);
     expect(find.text('Mật khẩu không được để trống'), findsNWidgets(3));
+
     await tester.enterText(find.byType(TextFormField).at(0), 'secret123');
-    await tester.enterText(find.byType(TextFormField).at(1), 'newsecret');
+    await tester.enterText(find.byType(TextFormField).at(1), 'secret123');
     await tester.enterText(find.byType(TextFormField).at(2), 'different');
-    await openMe(tester, 'Kiểm tra biểu mẫu (demo)');
+    await tapChangePassword(tester);
+    expect(
+        find.text('Mật khẩu mới phải khác mật khẩu hiện tại'), findsOneWidget);
     expect(find.text('Mật khẩu xác nhận không khớp'), findsOneWidget);
+
+    // Sai mật khẩu hiện tại: báo lỗi, vẫn ở lại màn hình.
+    await tester.enterText(find.byType(TextFormField).at(0), 'wrongpass');
+    await tester.enterText(find.byType(TextFormField).at(1), 'newsecret1');
+    await tester.enterText(find.byType(TextFormField).at(2), 'newsecret1');
+    await tapChangePassword(tester);
+    expect(find.text('Mật khẩu hiện tại không đúng.'), findsOneWidget);
+    expect(find.text('Mật khẩu hiện tại'), findsOneWidget);
+    expect(auth.password, 'secret123');
+
     await tester.ensureVisible(find.byTooltip('Hiện mật khẩu').first);
     await tester.tap(find.byTooltip('Hiện mật khẩu').first);
     await tester.pump();
     expect(tester.widget<TextField>(find.byType(TextField).first).obscureText,
         isFalse);
-    expect(u.account.email, 'patient@example.com');
+
+    await tester.enterText(find.byType(TextFormField).at(0), 'secret123');
+    await tapChangePassword(tester);
+    expect(auth.password, 'newsecret1');
+    expect(find.text('Đã đổi mật khẩu'), findsOneWidget);
+    expect(find.text('Mật khẩu hiện tại'), findsNothing);
     expect(u.isAuthenticated, isTrue);
   });
 }

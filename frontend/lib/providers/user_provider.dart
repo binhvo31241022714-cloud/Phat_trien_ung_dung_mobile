@@ -6,16 +6,22 @@ import '../data/api_client.dart';
 import '../data/models/user_model.dart';
 import '../data/mock_data.dart';
 import '../data/services/auth_service.dart';
+import '../data/services/settings_store.dart';
 import '../data/services/user_service.dart';
 
 /// Quản lý state danh sách user cho UI.
 class UserProvider extends ChangeNotifier {
   final UserService _service;
   final AuthService _auth;
+  final SettingsStore _settings;
 
-  UserProvider({UserService? service, AuthService? auth})
+  /// App truyền [SharedPrefsSettingsStore] để lưu tùy chọn xuống máy;
+  /// mặc định (dùng trong test) chỉ lưu trong bộ nhớ.
+  UserProvider(
+      {UserService? service, AuthService? auth, SettingsStore? settings})
       : _service = service ?? UserService(),
-        _auth = auth ?? FirebaseAuthService();
+        _auth = auth ?? FirebaseAuthService(),
+        _settings = settings ?? MemorySettingsStore();
 
   // The existing demo login uses one patient account. No password is retained.
   UserModel _account = UserModel(
@@ -30,18 +36,39 @@ class UserProvider extends ChangeNotifier {
   UserModel get account => _account;
   UserModel? get currentUser => _authenticated ? _account : null;
   bool get isAuthenticated => _authenticated;
+  // ===== Tùy chọn lưu trên máy =====
+  static const _keyNotifications = 'settings.receiveNotifications';
+  static const _keyLanguage = 'settings.languageCode';
+
+  /// Ngôn ngữ app hỗ trợ. Hiện chỉ có tiếng Việt.
+  static const supportedLanguages = {'vi': 'Tiếng Việt'};
+
   bool _receiveNotifications = true;
-  bool _biometricDemo = false;
+  String _languageCode = 'vi';
   bool get receiveNotifications => _receiveNotifications;
-  bool get biometricDemo => _biometricDemo;
-  void setReceiveNotifications(bool value) {
-    _receiveNotifications = value;
+  String get languageCode => _languageCode;
+  String get languageName => supportedLanguages[_languageCode]!;
+
+  /// Đọc tùy chọn đã lưu (gọi khi khởi động app).
+  Future<void> loadSettings() async {
+    _receiveNotifications = await _settings.getBool(_keyNotifications) ?? true;
+    final language = await _settings.getString(_keyLanguage);
+    // Mã ngôn ngữ lạ (ví dụ từ bản cũ) thì quay về tiếng Việt.
+    _languageCode = supportedLanguages.containsKey(language) ? language! : 'vi';
     notifyListeners();
   }
 
-  void setBiometricDemo(bool value) {
-    _biometricDemo = value;
+  void setReceiveNotifications(bool value) {
+    _receiveNotifications = value;
     notifyListeners();
+    unawaited(_settings.setBool(_keyNotifications, value));
+  }
+
+  void setLanguage(String code) {
+    if (!supportedLanguages.containsKey(code)) return;
+    _languageCode = code;
+    notifyListeners();
+    unawaited(_settings.setString(_keyLanguage, code));
   }
 
   void signInDemo(String email) {
@@ -88,6 +115,16 @@ class UserProvider extends ChangeNotifier {
   Future<String?> resetPassword(String email) async {
     try {
       await _auth.sendPasswordReset(email);
+      return null;
+    } on AuthException catch (e) {
+      return e.message;
+    }
+  }
+
+  Future<String?> changePassword(
+      String currentPassword, String newPassword) async {
+    try {
+      await _auth.changePassword(currentPassword, newPassword);
       return null;
     } on AuthException catch (e) {
       return e.message;

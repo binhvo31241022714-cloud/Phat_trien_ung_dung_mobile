@@ -21,6 +21,9 @@ abstract interface class AuthService {
   Future<void> sendPasswordReset(String email);
   Future<void> signOut();
 
+  /// Xác thực lại bằng mật khẩu hiện tại rồi đổi sang mật khẩu mới.
+  Future<void> changePassword(String currentPassword, String newPassword);
+
   /// Gọi POST /api/users/sync để backend tạo hồ sơ nếu chưa có.
   /// Ném [ApiException] nếu lỗi.
   Future<void> syncProfile({String? fullName});
@@ -55,6 +58,42 @@ class FirebaseAuthService implements AuthService {
 
   @override
   Future<void> signOut() => _auth.signOut();
+
+  @override
+  Future<void> changePassword(
+      String currentPassword, String newPassword) async {
+    final user = _auth.currentUser;
+    final email = user?.email;
+    if (user == null || email == null) {
+      throw AuthException(passwordChangeMessageFor('user-not-found'));
+    }
+    try {
+      // Firebase yêu cầu đăng nhập gần đây mới cho đổi mật khẩu, nên xác thực
+      // lại bằng mật khẩu hiện tại trước.
+      await user.reauthenticateWithCredential(EmailAuthProvider.credential(
+          email: email, password: currentPassword));
+      await user.updatePassword(newPassword);
+    } on FirebaseAuthException catch (e) {
+      throw AuthException(passwordChangeMessageFor(e.code));
+    }
+  }
+
+  /// Bảng lỗi riêng cho đổi mật khẩu: cùng mã "invalid-credential" nhưng ở
+  /// đây nghĩa là mật khẩu hiện tại sai, không phải email sai.
+  static String passwordChangeMessageFor(String code) => switch (code) {
+        'invalid-credential' ||
+        'wrong-password' ||
+        'INVALID_LOGIN_CREDENTIALS' =>
+          'Mật khẩu hiện tại không đúng.',
+        'weak-password' => 'Mật khẩu mới quá yếu, hãy dùng ít nhất 6 ký tự.',
+        'requires-recent-login' ||
+        'user-token-expired' ||
+        'user-mismatch' ||
+        'user-not-found' ||
+        'invalid-user-token' =>
+          'Phiên đăng nhập đã hết hạn. Vui lòng đăng xuất và đăng nhập lại.',
+        _ => messageFor(code),
+      };
 
   @override
   Future<void> syncProfile({String? fullName}) async {

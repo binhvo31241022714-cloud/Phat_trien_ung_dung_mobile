@@ -8,6 +8,7 @@ import 'data/providers/patient_data_provider.dart';
 import 'data/services/auth_service.dart';
 import 'data/services/catalog_service.dart';
 import 'data/services/profile_service.dart';
+import 'data/services/settings_store.dart';
 import 'firebase_options.dart';
 import 'providers/catalog_provider.dart';
 import 'providers/profile_provider.dart';
@@ -29,7 +30,9 @@ Future<void> startApp(AuthService auth,
         'authentication uses Firebase, patient flows remain demo.');
     return true;
   }());
-  final users = UserProvider(auth: auth);
+  final users = UserProvider(auth: auth, settings: SharedPrefsSettingsStore());
+  // Đọc tùy chọn đã lưu trên máy (ngôn ngữ, nhận thông báo).
+  await users.loadSettings();
   // Còn phiên đăng nhập cũ thì vào thẳng trang chính.
   await users.restoreSession();
   runApp(

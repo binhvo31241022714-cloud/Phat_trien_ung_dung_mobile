@@ -9,26 +9,26 @@ class PrivacyScreen extends StatelessWidget {
         MeCard(
             child:
                 Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Text('Dữ liệu trong bản demo',
+          Text('Tài khoản của bạn',
               style: TextStyle(fontWeight: FontWeight.w600)),
           SizedBox(height: 10),
           Text(
-              'Thông tin cá nhân, người thân, lịch hẹn, hồ sơ nha khoa, thông báo và bookmark chỉ dùng để minh họa. Thay đổi được giữ trong bộ nhớ và có thể mất khi khởi động lại ứng dụng.'),
+              'Đăng nhập được quản lý bằng Firebase Authentication của Google. Ứng dụng không lưu mật khẩu của bạn.'),
           SizedBox(height: 16),
           Text('Ai có thể xem hồ sơ?',
               style: TextStyle(fontWeight: FontWeight.w600)),
           SizedBox(height: 10),
           Text(
-              'Người đang sử dụng phiên demo trên thiết bị có thể xem hồ sơ bản thân và người thân được thêm. Bản demo chưa có cơ chế phân quyền và bảo vệ hồ sơ trên máy chủ.'),
+              'Thông tin cá nhân, người thân và nội dung đã lưu được lưu trên máy chủ. Dữ liệu chỉ truy cập được qua máy chủ của ứng dụng, và chỉ chủ tài khoản mới xem, sửa được thông tin của mình.'),
           SizedBox(height: 16),
-          Text('Giới hạn kết nối',
+          Text('Đang được hoàn thiện',
               style: TextStyle(fontWeight: FontWeight.w600)),
           SizedBox(height: 10),
           Text(
-              'Chưa kết nối backend thật cho tài khoản, bệnh án, push notification, sinh trắc học hoặc tải ảnh. Không có chức năng thanh toán trực tuyến.'),
+              'Lịch hẹn, hồ sơ nha khoa, thông báo và bài viết hiện là dữ liệu minh họa, chưa phải dữ liệu thật của bạn. Ứng dụng chưa hỗ trợ tải ảnh lên và thanh toán trực tuyến.'),
           SizedBox(height: 16),
           Text(
-              'Không nhập dữ liệu y tế thật hoặc thông tin nhạy cảm vào bản demo khi chưa có cơ chế bảo vệ phù hợp.'),
+              'Vui lòng chưa nhập thông tin bệnh án thật cho tới khi các phần trên hoàn thiện.'),
         ]))
       ]);
 }
