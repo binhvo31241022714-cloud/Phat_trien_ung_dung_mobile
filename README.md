@@ -58,7 +58,11 @@ Module 1 **không thay** các chỗ này vì màn hình của module khác đang
 - **Lịch hẹn, hồ sơ khám** lưu `accountId` (UID người đặt/chủ tài khoản) và `patientId` (UID bản thân hoặc id người thân).
 - **Thông báo** (`notifications`): Phương tạo khi đặt/hủy lịch, Nhi đọc ra. Cấu trúc thống nhất:
   `{ userId, title, body, type ("appointment_booked" | "appointment_cancelled" | "follow_up" | ...), refId, isRead: false, createdAt }`
-- Tên trường kiểu `camelCase`, tiền là số nguyên VND, ngày giờ là Timestamp, mục ẩn dùng `isActive: false`.
+- Tên trường kiểu `camelCase`, tiền là số nguyên VND, mục ẩn dùng `isActive: false`.
+- Ngày giờ:
+  - Thời điểm xảy ra (`createdAt`, `publishedAt`...) lưu **Timestamp**.
+  - Ngày không có giờ (`birthday`, `date` của lịch hẹn...) lưu chuỗi **`"YYYY-MM-DD"`**.
+  - Giờ trong ngày (`startTime`, `endTime` của lịch hẹn) lưu chuỗi **`"HH:mm"`**.
 
 ---
 
@@ -79,7 +83,7 @@ GIAI ĐOẠN 1: Backend, viết vào các file khung có sẵn trong backend/src
 - POST /api/bookings/quote: nhận danh sách serviceIds và/hoặc comboId, trả tổng tiền và tổng thời gian khám (cộng price, durationMinutes). Có voucherCode thì tính luôn giảm giá.
 - GET /api/availability?date=YYYY-MM-DD&doctorId=...&durationMinutes=...: trả các khung giờ còn trống, dựa trên doctor_schedules và các lịch hẹn đã có. Không truyền doctorId thì gộp tất cả bác sĩ.
 - POST /api/vouchers/validate: kiểm tra mã còn hạn, còn lượt, đủ điều kiện, trả số tiền giảm.
-- POST /api/appointments: tạo lịch hẹn. Cho phép đặt cho bản thân (patientId = UID) hoặc người thân (patientId phải là id trong users/{uid}/family_members của chính người đặt). Cho phép chọn bác sĩ hoặc để trống (chọn ngẫu nhiên bác sĩ còn trống). BẮT BUỘC dùng Firestore Transaction với cơ chế giữ slot để hai người không đặt trùng một bác sĩ một khung giờ. Lưu accountId, patientId, doctorId, serviceIds, comboId, date, startTime, endTime, totalPrice, discount, voucherCode, status "booked", createdAt. Tạo thêm 1 thông báo vào notifications theo cấu trúc trong README gốc.
+- POST /api/appointments: tạo lịch hẹn. Cho phép đặt cho bản thân (patientId = UID) hoặc người thân (patientId phải là id trong users/{uid}/family_members của chính người đặt). Cho phép chọn bác sĩ hoặc để trống (chọn ngẫu nhiên bác sĩ còn trống). BẮT BUỘC dùng Firestore Transaction với cơ chế giữ slot để hai người không đặt trùng một bác sĩ một khung giờ. Lưu accountId, patientId, doctorId, serviceIds, comboId, date (chuỗi "YYYY-MM-DD"), startTime, endTime (chuỗi "HH:mm"), totalPrice, discount, voucherCode, status "booked", createdAt (Timestamp). Tạo thêm 1 thông báo vào notifications theo cấu trúc trong README gốc.
 - GET /api/appointments (lịch của tài khoản đang đăng nhập, gồm cả lịch của người thân), GET /api/appointments/:id (chỉ chủ tài khoản xem được, người khác trả 403).
 - PATCH /api/appointments/:id/cancel: chỉ chủ tài khoản, chỉ hủy được lịch chưa diễn ra, giải phóng slot, tạo thông báo hủy.
 Trước khi viết: tạo script tạm CHỈ ĐỌC 1 document mẫu của doctor_schedules, vouchers, services, combos, doctors để biết đúng tên trường, chạy xong thì xóa script. Nếu dữ liệu mẫu thiếu trường cần thiết thì báo tôi, đừng tự sửa Firestore. Không sửa server.js, auth.js, firebase.js và file của module khác. Thêm request test (cả trường hợp đúng và lỗi: trùng giờ, voucher sai, xem lịch người khác) vào cuối backend/api-test.http.
