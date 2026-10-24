@@ -11,6 +11,8 @@ import 'package:frontend/data/providers/patient_data_provider.dart';
 import 'package:frontend/providers/user_provider.dart';
 import 'package:frontend/features/me/me_widgets.dart';
 
+import 'support/fake_auth_service.dart';
+
 Widget providers(UserProvider users, PatientDataProvider data, Widget child) =>
     MultiProvider(providers: [
       ChangeNotifierProvider.value(value: users),
@@ -339,7 +341,8 @@ void main() {
   testWidgets(
       'logout cancellation, confirmed session clearing, no Back to shell and login again',
       (tester) async {
-    final u = UserProvider(), d = PatientDataProvider();
+    final u = UserProvider(auth: FakeAuthService()),
+        d = PatientDataProvider();
     await tester.pumpWidget(providers(u, d, const App()));
     Future<void> login() async {
       await openMe(tester, 'Đăng nhập');

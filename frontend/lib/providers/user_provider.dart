@@ -1,14 +1,21 @@
 import 'package:flutter/foundation.dart';
 
+import 'dart:async';
+
+import '../data/api_client.dart';
 import '../data/models/user_model.dart';
 import '../data/mock_data.dart';
+import '../data/services/auth_service.dart';
 import '../data/services/user_service.dart';
 
 /// Quản lý state danh sách user cho UI.
 class UserProvider extends ChangeNotifier {
   final UserService _service;
+  final AuthService _auth;
 
-  UserProvider({UserService? service}) : _service = service ?? UserService();
+  UserProvider({UserService? service, AuthService? auth})
+      : _service = service ?? UserService(),
+        _auth = auth ?? FirebaseAuthService();
 
   // The existing demo login uses one patient account. No password is retained.
   UserModel _account = UserModel(
@@ -52,6 +59,66 @@ class UserProvider extends ChangeNotifier {
   void signOutDemo() {
     _authenticated = false;
     notifyListeners();
+  }
+
+  // ===== Đăng nhập thật bằng Firebase =====
+  // Các hàm trả về null nếu thành công, ngược lại trả về thông báo lỗi.
+
+  Future<String?> login(String email, String password) async {
+    try {
+      await _auth.signIn(email, password);
+    } on AuthException catch (e) {
+      return e.message;
+    }
+    signInDemo(email);
+    return null;
+  }
+
+  Future<String?> register(
+      String fullName, String email, String password) async {
+    try {
+      await _auth.register(fullName, email, password);
+    } on AuthException catch (e) {
+      return e.message;
+    }
+    signInDemo(email);
+    return null;
+  }
+
+  Future<String?> resetPassword(String email) async {
+    try {
+      await _auth.sendPasswordReset(email);
+      return null;
+    } on AuthException catch (e) {
+      return e.message;
+    }
+  }
+
+  Future<void> logout() async {
+    await _auth.signOut();
+    signOutDemo();
+  }
+
+  /// Gọi /api/users/sync. Trả về null nếu thành công, ngược lại trả về
+  /// cảnh báo. Lỗi sync không chặn đăng nhập vì lần đăng nhập sau sẽ sync lại.
+  Future<String?> syncProfile({String? fullName}) async {
+    try {
+      await _auth.syncProfile(fullName: fullName);
+      return null;
+    } on ApiException catch (e) {
+      return 'Đã đăng nhập nhưng chưa đồng bộ được hồ sơ: ${e.message}';
+    }
+  }
+
+  /// Gọi khi mở app: nếu Firebase còn nhớ phiên thì đánh dấu đã đăng nhập
+  /// và sync lại ở nền (không bắt người dùng chờ mạng).
+  Future<void> restoreSession() async {
+    final email = await _auth.restoreEmail();
+    if (email == null) return;
+    signInDemo(email);
+    unawaited(syncProfile().then((warning) {
+      if (warning != null) debugPrint(warning);
+    }));
   }
 
   void updateDemoAccount(

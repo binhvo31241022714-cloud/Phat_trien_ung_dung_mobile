@@ -34,7 +34,8 @@ class ApiClient {
   final bool _ownsClient;
   final String baseUrl;
   final Duration timeout;
-  final String? Function()? tokenProvider;
+  // Có thể trả token ngay hoặc trả Future (ví dụ Firebase getIdToken).
+  final FutureOr<String?> Function()? tokenProvider;
 
   ApiClient(
       {http.Client? client,
@@ -48,8 +49,8 @@ class ApiClient {
 
   Uri _uri(String path) =>
       Uri.parse('$baseUrl/${path.replaceFirst(RegExp(r'^/+'), '')}');
-  Map<String, String> get _headers {
-    final token = tokenProvider?.call();
+  Future<Map<String, String>> _headers() async {
+    final token = await tokenProvider?.call();
     return {
       'Accept': 'application/json',
       'Content-Type': 'application/json',
@@ -58,13 +59,18 @@ class ApiClient {
   }
 
   Future<dynamic> get(String path) =>
-      _send(() => _client.get(_uri(path), headers: _headers));
-  Future<dynamic> post(String path, Map<String, dynamic> body) => _send(() =>
-      _client.post(_uri(path), headers: _headers, body: jsonEncode(body)));
-  Future<dynamic> put(String path, Map<String, dynamic> body) => _send(
-      () => _client.put(_uri(path), headers: _headers, body: jsonEncode(body)));
+      _send(() async => _client.get(_uri(path), headers: await _headers()));
+  Future<dynamic> post(String path, Map<String, dynamic> body) =>
+      _send(() async => _client.post(_uri(path),
+          headers: await _headers(), body: jsonEncode(body)));
+  Future<dynamic> put(String path, Map<String, dynamic> body) =>
+      _send(() async => _client.put(_uri(path),
+          headers: await _headers(), body: jsonEncode(body)));
+  Future<dynamic> patch(String path, Map<String, dynamic> body) =>
+      _send(() async => _client.patch(_uri(path),
+          headers: await _headers(), body: jsonEncode(body)));
   Future<dynamic> delete(String path) =>
-      _send(() => _client.delete(_uri(path), headers: _headers));
+      _send(() async => _client.delete(_uri(path), headers: await _headers()));
 
   Future<dynamic> _send(Future<http.Response> Function() request) async {
     final http.Response response;

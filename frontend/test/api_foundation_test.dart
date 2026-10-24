@@ -37,11 +37,11 @@ void main() {
             .apiBaseUrl,
         'https://example.invalid:9000');
     expect(AppConfig.fromValues(platform: TargetPlatform.android).apiBaseUrl,
-        'http://10.0.2.2:8080');
+        'http://10.0.2.2:3000');
     expect(
         AppConfig.fromValues(platform: TargetPlatform.android, isWeb: true)
             .apiBaseUrl,
-        'http://localhost:8080');
+        'http://localhost:3000');
     expect(() => config('typo'), throwsArgumentError);
     expect(() => AppConfig.fromValues(baseUrl: 'http://user:secret@host'),
         throwsArgumentError);

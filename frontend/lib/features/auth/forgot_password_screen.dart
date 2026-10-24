@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+
+import '../../providers/user_provider.dart';
 
 class ForgotPasswordScreen extends StatefulWidget {
   const ForgotPasswordScreen({super.key});
@@ -30,17 +33,21 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
       _isLoading = true;
     });
 
-    // Demo: giả lập gửi yêu cầu khôi phục mật khẩu.
-    await Future.delayed(
-      const Duration(milliseconds: 700),
-    );
+    final messenger = ScaffoldMessenger.of(context);
+    final error = await context
+        .read<UserProvider>()
+        .resetPassword(_emailController.text);
 
     if (!mounted) return;
 
     setState(() {
       _isLoading = false;
-      _submitted = true;
+      _submitted = error == null;
     });
+
+    if (error != null) {
+      messenger.showSnackBar(SnackBar(content: Text(error)));
+    }
   }
 
   @override
@@ -179,9 +186,12 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
           ),
         ),
         const SizedBox(height: 12),
+        // Firebase không cho biết email có tồn tại hay không (để chống dò
+        // tài khoản), nên câu thông báo phải trung tính.
         Text(
-          'Đây là bản demo. Chưa có email thật '
-          'được gửi đến ${_emailController.text.trim()}.',
+          'Nếu ${_emailController.text.trim()} đã đăng ký, bạn sẽ nhận '
+          'được email hướng dẫn đặt lại mật khẩu. Hãy kiểm tra cả '
+          'hộp thư Spam.',
           textAlign: TextAlign.center,
           style: const TextStyle(
             height: 1.5,

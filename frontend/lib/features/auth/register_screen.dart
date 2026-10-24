@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
+import '../../providers/user_provider.dart';
 import '../../routes/app_routes.dart';
 
 class RegisterScreen extends StatefulWidget {
@@ -47,6 +49,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   }
 
   Future<void> _register() async {
+    if (_isLoading) return;
     if (!_formKey.currentState!.validate()) {
       return;
     }
@@ -55,10 +58,27 @@ class _RegisterScreenState extends State<RegisterScreen> {
       _isLoading = true;
     });
 
-    // Demo: giả lập đăng ký tài khoản.
-    await Future.delayed(
-      const Duration(milliseconds: 700),
+    final users = context.read<UserProvider>();
+    final messenger = ScaffoldMessenger.of(context);
+    final fullName = _nameController.text.trim();
+    final error = await users.register(
+      fullName,
+      _emailController.text,
+      _passwordController.text,
     );
+
+    if (!mounted) return;
+
+    if (error != null) {
+      setState(() {
+        _isLoading = false;
+      });
+      messenger.showSnackBar(SnackBar(content: Text(error)));
+      return;
+    }
+
+    // Firebase đã tự đăng nhập sau khi tạo tài khoản, nên vào thẳng app.
+    final warning = await users.syncProfile(fullName: fullName);
 
     if (!mounted) return;
 
@@ -66,19 +86,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
       _isLoading = false;
     });
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text(
-          'Đăng ký demo thành công! '
-          'Vui lòng đăng nhập.',
-        ),
-      ),
+    messenger.showSnackBar(
+      SnackBar(content: Text(warning ?? 'Đăng ký thành công!')),
     );
 
     Navigator.pushNamedAndRemoveUntil(
       context,
-      AppRoutes.login,
-      (route) => route.settings.name == AppRoutes.welcome,
+      AppRoutes.main,
+      (route) => false,
     );
   }
 

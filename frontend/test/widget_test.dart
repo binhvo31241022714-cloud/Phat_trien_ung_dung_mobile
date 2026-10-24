@@ -6,10 +6,13 @@ import 'package:frontend/app/main_shell.dart';
 import 'package:frontend/data/providers/patient_data_provider.dart';
 import 'package:frontend/providers/user_provider.dart';
 
+import 'support/fake_auth_service.dart';
+
 Widget _withProviders(Widget child) {
   return MultiProvider(
     providers: [
-      ChangeNotifierProvider(create: (_) => UserProvider()),
+      ChangeNotifierProvider(
+          create: (_) => UserProvider(auth: FakeAuthService())),
       ChangeNotifierProvider(create: (_) => PatientDataProvider()),
     ],
     child: child,

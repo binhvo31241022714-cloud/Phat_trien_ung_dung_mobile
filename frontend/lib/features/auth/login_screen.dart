@@ -67,10 +67,25 @@ class _LoginScreenState extends State<LoginScreen> {
       _isLoading = true;
     });
 
-    // Demo: giả lập thời gian gọi API.
-    await Future.delayed(
-      const Duration(milliseconds: 700),
+    final users = context.read<UserProvider>();
+    final messenger = ScaffoldMessenger.of(context);
+    final error = await users.login(
+      _emailController.text,
+      _passwordController.text,
     );
+
+    if (!mounted) return;
+
+    if (error != null) {
+      setState(() {
+        _isLoading = false;
+      });
+      messenger.showSnackBar(SnackBar(content: Text(error)));
+      return;
+    }
+
+    // Tạo hồ sơ trên backend nếu chưa có. Lỗi chỉ cảnh báo, vẫn cho vào app.
+    final warning = await users.syncProfile();
 
     if (!mounted) return;
 
@@ -78,7 +93,9 @@ class _LoginScreenState extends State<LoginScreen> {
       _isLoading = false;
     });
 
-    context.read<UserProvider>().signInDemo(_emailController.text);
+    if (warning != null) {
+      messenger.showSnackBar(SnackBar(content: Text(warning)));
+    }
     Navigator.pushNamedAndRemoveUntil(
       context,
       AppRoutes.main,
@@ -249,18 +266,6 @@ class _LoginScreenState extends State<LoginScreen> {
                           child: const Text('Đăng ký ngay'),
                         ),
                       ],
-                    ),
-                    const SizedBox(height: 12),
-                    const Center(
-                      child: Text(
-                        'DEMO: Dùng email hợp lệ và '
-                        'mật khẩu từ 6 ký tự.',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          color: Color(0xFF666666),
-                          fontSize: 12,
-                        ),
-                      ),
                     ),
                   ],
                 ),

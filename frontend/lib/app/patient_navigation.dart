@@ -26,9 +26,10 @@ class PatientNavigation {
     );
   }
 
-  static void logout(BuildContext context) {
-    context.read<UserProvider>().signOutDemo();
-    Navigator.of(context, rootNavigator: true).pushNamedAndRemoveUntil(
+  static Future<void> logout(BuildContext context) async {
+    final navigator = Navigator.of(context, rootNavigator: true);
+    await context.read<UserProvider>().logout();
+    navigator.pushNamedAndRemoveUntil(
       AppRoutes.welcome,
       (_) => false,
     );

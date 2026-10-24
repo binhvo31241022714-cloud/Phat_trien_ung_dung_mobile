@@ -22,8 +22,8 @@ class AppConfig {
     final url = baseUrl.trim().isNotEmpty
         ? baseUrl.trim().replaceFirst(RegExp(r'/+$'), '')
         : (!isWeb && platform == TargetPlatform.android
-            ? 'http://10.0.2.2:8080'
-            : 'http://localhost:8080');
+            ? 'http://10.0.2.2:3000'
+            : 'http://localhost:3000');
     final uri = Uri.tryParse(url);
     if (uri == null ||
         !['http', 'https'].contains(uri.scheme) ||

@@ -5,7 +5,10 @@ import 'core/theme/app_scroll_behavior.dart';
 import 'routes/app_routes.dart';
 
 class App extends StatelessWidget {
-  const App({super.key});
+  /// true khi Firebase còn nhớ phiên đăng nhập, mở thẳng trang chính.
+  final bool signedIn;
+
+  const App({super.key, this.signedIn = false});
 
   @override
   Widget build(BuildContext context) {
@@ -14,7 +17,7 @@ class App extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       theme: AppTheme.light,
       scrollBehavior: const AppScrollBehavior(),
-      initialRoute: AppRoutes.welcome,
+      initialRoute: signedIn ? AppRoutes.main : AppRoutes.welcome,
       onGenerateRoute: AppRoutes.onGenerateRoute,
     );
   }

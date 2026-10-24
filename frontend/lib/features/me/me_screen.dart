@@ -177,9 +177,9 @@ class _AccountOverview extends StatelessWidget {
                 final confirmed = await showDialog<bool>(
                     context: context,
                     builder: (dialogContext) => AlertDialog(
-                            title: const Text('Đăng xuất khỏi phiên demo?'),
+                            title: const Text('Đăng xuất khỏi tài khoản?'),
                             content: const Text(
-                                'Bạn sẽ trở về màn hình chào mừng. Dữ liệu hồ sơ demo không bị xóa.'),
+                                'Bạn sẽ trở về màn hình chào mừng. Lần sau cần đăng nhập lại.'),
                             actions: [
                               TextButton(
                                   onPressed: () =>

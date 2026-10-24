@@ -3,6 +3,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
 import 'package:provider/provider.dart';
 import 'package:frontend/main.dart' as app;
+
+import '../test/support/fake_auth_service.dart';
 import 'package:frontend/app/main_shell.dart';
 import 'package:frontend/core/theme/app_scroll_behavior.dart';
 import 'package:frontend/data/providers/patient_data_provider.dart';
@@ -15,7 +17,8 @@ void main() {
   final binding = IntegrationTestWidgetsFlutterBinding.ensureInitialized();
   testWidgets('Android boundaries across all tabs and secondary routes',
       (tester) async {
-    app.main();
+    // AuthService giả: test luồng giao diện, không gọi Firebase thật.
+    await app.startApp(FakeAuthService());
     await tester.pumpAndSettle();
     final root = tester.state<NavigatorState>(find.byType(Navigator).first);
     Future<void> sweep(String page) async {
