@@ -24,6 +24,15 @@ abstract interface class AuthService {
   /// Xác thực lại bằng mật khẩu hiện tại rồi đổi sang mật khẩu mới.
   Future<void> changePassword(String currentPassword, String newPassword);
 
+  /// Email của user đang đăng nhập đã xác minh chưa; null nếu chưa đăng nhập.
+  bool? get isEmailVerified;
+
+  /// Gửi thư xác minh tới email đang đăng nhập.
+  Future<void> sendEmailVerification();
+
+  /// Tải lại user từ Firebase rồi trả về trạng thái xác minh mới nhất.
+  Future<bool?> reloadEmailVerified();
+
   /// Gọi POST /api/users/sync để backend tạo hồ sơ nếu chưa có.
   /// Ném [ApiException] nếu lỗi.
   Future<void> syncProfile({String? fullName});
@@ -58,6 +67,23 @@ class FirebaseAuthService implements AuthService {
 
   @override
   Future<void> signOut() => _auth.signOut();
+
+  @override
+  bool? get isEmailVerified => _auth.currentUser?.emailVerified;
+
+  @override
+  Future<void> sendEmailVerification() => _guard(() async {
+        final user = _auth.currentUser;
+        if (user == null) throw FirebaseAuthException(code: 'user-not-found');
+        await user.sendEmailVerification();
+      });
+
+  @override
+  Future<bool?> reloadEmailVerified() async {
+    await _guard(() async => _auth.currentUser?.reload());
+    // Sau reload phải đọc lại currentUser mới thấy trạng thái mới.
+    return _auth.currentUser?.emailVerified;
+  }
 
   @override
   Future<void> changePassword(

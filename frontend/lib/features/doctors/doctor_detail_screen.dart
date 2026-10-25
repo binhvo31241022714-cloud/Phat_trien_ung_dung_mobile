@@ -3,16 +3,25 @@ import 'package:provider/provider.dart';
 import '../../core/widgets/network_image_or_icon.dart';
 import '../../data/models/doctor.dart';
 import '../../providers/catalog_provider.dart';
+import '../services/service_detail_screen.dart';
+import '../shared/catalog_navigation.dart';
 import '../shared/favorite_button.dart';
 
 class DoctorDetailScreen extends StatelessWidget {
-  const DoctorDetailScreen({required this.doctor, super.key});
+  const DoctorDetailScreen(
+      {required this.doctor, this.showRelated = true, super.key});
   final Doctor doctor;
+
+  /// false khi mở từ mục "Bác sĩ thực hiện" của dịch vụ: ẩn "Dịch vụ thực
+  /// hiện" để không đi vòng bác sĩ → dịch vụ → bác sĩ mãi.
+  final bool showRelated;
   @override
   Widget build(BuildContext context) {
     final catalog = context.watch<CatalogProvider>();
+    // Dịch vụ bác sĩ làm, lấy từ danh sách đã tải; mã không tìm thấy thì bỏ qua.
     final services = [
-      for (final id in doctor.serviceIds) catalog.serviceById(id)?.name ?? id
+      for (final id in doctor.serviceIds)
+        if (catalog.serviceById(id) case final s?) s
     ];
     return SingleChildScrollView(
         padding: const EdgeInsets.all(16),
@@ -64,8 +73,28 @@ class DoctorDetailScreen extends StatelessWidget {
                               fontSize: 18, fontWeight: FontWeight.w600)),
                       Wrap(spacing: 8, children: [
                         Chip(label: Text(doctor.specialty)),
-                        for (final name in services) Chip(label: Text(name)),
                       ]),
+                      if (showRelated && services.isNotEmpty) ...[
+                        const SizedBox(height: 12),
+                        const Text('Dịch vụ thực hiện',
+                            style: TextStyle(
+                                fontSize: 18, fontWeight: FontWeight.w600)),
+                        const SizedBox(height: 8),
+                        // Bấm vào dịch vụ để mở chi tiết.
+                        Wrap(spacing: 8, runSpacing: 4, children: [
+                          for (final s in services)
+                            ActionChip(
+                                avatar:
+                                    const Icon(Icons.chevron_right, size: 18),
+                                label: Text(s.name),
+                                onPressed: () => CatalogNavigation.open(
+                                    context,
+                                    'Chi tiết dịch vụ',
+                                    ServiceDetailScreen(
+                                        service: s, showRelated: false))),
+                        ]),
+                        const SizedBox(height: 12),
+                      ],
                       // Dữ liệu mock trong đặt lịch không có trên máy chủ nên
                       // không lưu được.
                       if (doctor.fromApi)

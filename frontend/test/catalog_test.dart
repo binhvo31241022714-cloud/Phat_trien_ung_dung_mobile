@@ -50,7 +50,8 @@ void main() {
         tester, FakeCatalogBackend().provider(), const ServiceListScreen());
     expect(find.text('Khám răng tổng quát'), findsOneWidget);
     expect(find.text('Combo chăm sóc răng miệng cơ bản'), findsOneWidget);
-    expect(find.text('Combo'), findsOneWidget);
+    // Chip lọc "Combo" và nhãn "Combo" trên thẻ combo.
+    expect(find.text('Combo'), findsNWidgets(2));
     expect(find.text('100.000 ₫'), findsOneWidget);
     // imageUrl rỗng: hiện icon mặc định, không tải ảnh.
     expect(find.byType(Image), findsNothing);

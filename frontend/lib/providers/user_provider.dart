@@ -18,10 +18,17 @@ class UserProvider extends ChangeNotifier {
   /// App truyền [SharedPrefsSettingsStore] để lưu tùy chọn xuống máy;
   /// mặc định (dùng trong test) chỉ lưu trong bộ nhớ.
   UserProvider(
-      {UserService? service, AuthService? auth, SettingsStore? settings})
+      {UserService? service,
+      AuthService? auth,
+      SettingsStore? settings,
+      DateTime Function()? clock})
       : _service = service ?? UserService(),
         _auth = auth ?? FirebaseAuthService(),
-        _settings = settings ?? MemorySettingsStore();
+        _settings = settings ?? MemorySettingsStore(),
+        _clock = clock ?? DateTime.now;
+
+  /// Đồng hồ (test truyền đồng hồ giả để thử thời gian chờ gửi lại thư).
+  final DateTime Function() _clock;
 
   // The existing demo login uses one patient account. No password is retained.
   UserModel _account = UserModel(
@@ -98,6 +105,8 @@ class UserProvider extends ChangeNotifier {
       return e.message;
     }
     signInDemo(email);
+    _emailVerified = _auth.isEmailVerified;
+    notifyListeners();
     return null;
   }
 
@@ -109,6 +118,16 @@ class UserProvider extends ChangeNotifier {
       return e.message;
     }
     signInDemo(email);
+    _emailVerified = _auth.isEmailVerified;
+    // Gửi thư xác minh. Lỗi gửi thư không làm hỏng việc đăng ký; người dùng
+    // có thể bấm "Gửi lại thư" ở tab "Tôi".
+    try {
+      await _auth.sendEmailVerification();
+      _lastVerificationSent = _clock();
+    } on AuthException catch (e) {
+      debugPrint('Chưa gửi được thư xác minh: ${e.message}');
+    }
+    notifyListeners();
     return null;
   }
 
@@ -133,7 +152,56 @@ class UserProvider extends ChangeNotifier {
 
   Future<void> logout() async {
     await _auth.signOut();
+    _emailVerified = null;
+    _lastVerificationSent = null;
     signOutDemo();
+  }
+
+  // ===== Xác minh email =====
+  // Không chặn dùng app khi chưa xác minh, chỉ nhắc ở tab "Tôi".
+
+  /// Thời gian chờ giữa 2 lần gửi lại thư.
+  static const verificationCooldown = Duration(seconds: 60);
+
+  bool? _emailVerified;
+  DateTime? _lastVerificationSent;
+
+  /// false: đã đăng nhập nhưng email chưa xác minh (hiện thẻ nhắc).
+  /// null: chưa biết hoặc chưa đăng nhập.
+  bool? get emailVerified => _emailVerified;
+
+  /// Số giây còn phải đợi trước khi được gửi lại thư (0 là gửi được).
+  int get verificationCooldownSeconds {
+    final last = _lastVerificationSent;
+    if (last == null) return 0;
+    final left = verificationCooldown - _clock().difference(last);
+    return left.isNegative ? 0 : (left.inMilliseconds / 1000).ceil();
+  }
+
+  /// Gửi lại thư xác minh. Trả về null nếu thành công, ngược lại trả về lỗi.
+  Future<String?> resendVerificationEmail() async {
+    final wait = verificationCooldownSeconds;
+    if (wait > 0) return 'Vui lòng đợi $wait giây rồi gửi lại.';
+    try {
+      await _auth.sendEmailVerification();
+    } on AuthException catch (e) {
+      return e.message;
+    }
+    _lastVerificationSent = _clock();
+    notifyListeners();
+    return null;
+  }
+
+  /// Tải lại trạng thái xác minh (sau khi người dùng bấm link trong thư).
+  /// Trả về null nếu lấy được trạng thái, ngược lại trả về lỗi.
+  Future<String?> refreshEmailVerified() async {
+    try {
+      _emailVerified = await _auth.reloadEmailVerified();
+    } on AuthException catch (e) {
+      return e.message;
+    }
+    notifyListeners();
+    return null;
   }
 
   /// Gọi /api/users/sync. Trả về null nếu thành công, ngược lại trả về
@@ -153,6 +221,7 @@ class UserProvider extends ChangeNotifier {
     final email = await _auth.restoreEmail();
     if (email == null) return;
     signInDemo(email);
+    _emailVerified = _auth.isEmailVerified;
     unawaited(syncProfile().then((warning) {
       if (warning != null) debugPrint(warning);
     }));

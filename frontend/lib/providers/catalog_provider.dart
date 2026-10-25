@@ -38,6 +38,15 @@ class CatalogProvider extends ChangeNotifier {
   DentalService? serviceById(String id) =>
       _services.where((s) => s.id == id).firstOrNull;
 
+  /// Bác sĩ thực hiện được dịch vụ: serviceIds của bác sĩ chứa id dịch vụ.
+  /// Với combo: bác sĩ phải làm được TẤT CẢ dịch vụ trong combo. Combo chưa
+  /// có danh sách dịch vụ thì không có bác sĩ nào.
+  List<Doctor> doctorsFor(DentalService service) {
+    final ids = service.isCombo ? service.serviceIds.toSet() : {service.id};
+    if (ids.isEmpty) return const [];
+    return _doctors.where((d) => ids.every(d.serviceIds.contains)).toList();
+  }
+
   /// Tải nếu chưa có (gọi khi vào trang chính).
   Future<void> ensureLoaded() async {
     if (!_loaded && !_loading) await load();

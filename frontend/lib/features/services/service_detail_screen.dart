@@ -3,12 +3,20 @@ import 'package:provider/provider.dart';
 import '../../core/utils/formatters.dart';
 import '../../core/widgets/network_image_or_icon.dart';
 import '../../data/models/dental_service.dart';
+import '../../data/models/doctor.dart';
 import '../../providers/catalog_provider.dart';
+import '../doctors/doctor_detail_screen.dart';
+import '../shared/catalog_navigation.dart';
 import '../shared/favorite_button.dart';
 
 class ServiceDetailScreen extends StatelessWidget {
-  const ServiceDetailScreen({required this.service, super.key});
+  const ServiceDetailScreen(
+      {required this.service, this.showRelated = true, super.key});
   final DentalService service;
+
+  /// false khi mở từ mục "Dịch vụ thực hiện" của bác sĩ: ẩn "Bác sĩ thực
+  /// hiện" để không đi vòng dịch vụ → bác sĩ → dịch vụ mãi.
+  final bool showRelated;
   @override
   Widget build(BuildContext context) {
     final catalog = context.watch<CatalogProvider>();
@@ -16,6 +24,12 @@ class ServiceDetailScreen extends StatelessWidget {
     final included = [
       for (final id in service.serviceIds) catalog.serviceById(id)?.name ?? id
     ];
+    // Dịch vụ mock trong đặt lịch có mã khác API nên không tra được bác sĩ.
+    final related = service.fromApi && showRelated;
+    final doctors = related ? catalog.doctorsFor(service) : const <Doctor>[];
+    // Combo luôn hiện mục này (kể cả khi chưa có bác sĩ làm đủ); dịch vụ lẻ
+    // không có bác sĩ thì ẩn.
+    final showDoctors = related && (service.isCombo || doctors.isNotEmpty);
     return SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Card(
@@ -72,6 +86,37 @@ class ServiceDetailScreen extends StatelessWidget {
                       Text(service.description.isEmpty
                           ? 'Chưa có mô tả.'
                           : service.description),
+                      if (showDoctors) ...[
+                        const SizedBox(height: 16),
+                        const Text('Bác sĩ thực hiện',
+                            style: TextStyle(
+                                fontSize: 18, fontWeight: FontWeight.w600)),
+                        const SizedBox(height: 8),
+                        if (doctors.isEmpty)
+                          const Text(
+                              'Phòng khám sẽ sắp xếp bác sĩ phù hợp cho combo này.',
+                              style: TextStyle(color: Color(0xFF666666))),
+                        for (final d in doctors)
+                          ListTile(
+                              contentPadding: EdgeInsets.zero,
+                              leading: CircleAvatar(
+                                  backgroundColor: const Color(0xFFDFE8F6),
+                                  child: ClipOval(
+                                      child: NetworkImageOrIcon(
+                                          url: d.avatarUrl,
+                                          icon: Icons.person_outline,
+                                          color: const Color(0xFF247BF3),
+                                          width: 40,
+                                          height: 40))),
+                              title: Text(d.fullName),
+                              subtitle: Text(d.specialty),
+                              trailing: const Icon(Icons.chevron_right),
+                              onTap: () => CatalogNavigation.open(
+                                  context,
+                                  'Chi tiết bác sĩ',
+                                  DoctorDetailScreen(
+                                      doctor: d, showRelated: false))),
+                      ],
                       const SizedBox(height: 16),
                       Text(
                           service.fromApi

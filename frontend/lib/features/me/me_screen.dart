@@ -12,6 +12,7 @@ import '../../data/providers/patient_data_provider.dart';
 import '../articles/article_detail_screen.dart';
 import '../services/service_detail_screen.dart';
 import '../doctors/doctor_detail_screen.dart';
+import 'email_verification_card.dart';
 import 'health_info_section.dart';
 import 'me_widgets.dart';
 import 'edit_profile_screen.dart';
@@ -149,6 +150,11 @@ class _AccountOverview extends StatelessWidget {
       if (profile.profile?.health.hasWarning ?? false) ...[
         const SizedBox(height: 8),
         const Center(child: HealthWarningBadge()),
+      ],
+      // Chỉ nhắc, không chặn dùng app khi chưa xác minh.
+      if (context.watch<UserProvider>().emailVerified == false) ...[
+        const SizedBox(height: 16),
+        const EmailVerificationCard(),
       ],
       const SizedBox(height: 20),
       // Lỗi tải hồ sơ: báo lỗi nhưng vẫn để menu và nút Đăng xuất dùng được.

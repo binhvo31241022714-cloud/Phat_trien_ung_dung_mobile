@@ -31,6 +31,9 @@ Hướng dẫn chi tiết cách viết API: [`backend/README.md`](backend/README
 | Giới tính và thông tin sức khỏe (dị ứng thuốc, bệnh nền, thuốc đang dùng, mang thai, ghi chú) cho bản thân và người thân; nhãn "⚠ Có lưu ý sức khỏe" | ✅ | `/api/users/me`, `/api/family-members` |
 | Dịch vụ, combo, bác sĩ: trang chủ, danh sách, chi tiết | ✅ | `/api/services`, `/api/combos`, `/api/doctors` |
 | Lưu yêu thích, màn hình "Đã lưu" có tab lọc | ✅ | `/api/favorites` |
+| Tìm kiếm không phân biệt dấu, lọc Dịch vụ/Combo, sắp xếp theo giá; tìm và lọc bác sĩ theo chuyên khoa | ✅ | `/api/services`, `/api/combos`, `/api/doctors` |
+| "Bác sĩ thực hiện" ở chi tiết dịch vụ, bấm dịch vụ ở chi tiết bác sĩ để mở | ✅ | `/api/doctors` (`serviceIds`) |
+| Xác minh email: gửi thư khi đăng ký, nhắc ở tab "Tôi", gửi lại (chờ 60 giây), không chặn dùng app | ✅ | Không cần |
 | Đổi mật khẩu thật (xác thực lại bằng mật khẩu hiện tại) | ✅ | Không cần |
 | Cài đặt "Ngôn ngữ" và "Nhận thông báo" lưu trên máy, mở lại app vẫn còn | ✅ | Không cần |
 | File gọi API dùng chung cho cả nhóm, tự gắn token | ✅ `frontend/lib/data/api_client.dart` | |

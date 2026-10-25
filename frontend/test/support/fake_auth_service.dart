@@ -30,6 +30,28 @@ class FakeAuthService implements AuthService {
   @override
   Future<void> signOut() async => email = null;
 
+  /// Trạng thái xác minh email giả; đặt true để giả lập đã bấm link trong thư.
+  bool emailVerified = true;
+  int verificationEmailsSent = 0;
+
+  @override
+  bool? get isEmailVerified => email == null ? null : emailVerified;
+
+  /// Đặt khác null để chỉ việc gửi thư xác minh bị lỗi.
+  String? failVerificationWith;
+
+  @override
+  Future<void> sendEmailVerification() async {
+    if (failWith != null) throw AuthException(failWith!);
+    if (failVerificationWith != null) {
+      throw AuthException(failVerificationWith!);
+    }
+    verificationEmailsSent++;
+  }
+
+  @override
+  Future<bool?> reloadEmailVerified() async => isEmailVerified;
+
   /// Mật khẩu hiện tại của tài khoản giả.
   String password = 'secret123';
 
