@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:provider/provider.dart';
 import 'package:frontend/app/main_shell.dart';
-import 'package:frontend/app.dart';
 import 'package:frontend/core/theme/app_theme.dart';
 import 'package:frontend/data/providers/patient_data_provider.dart';
 import 'package:frontend/providers/user_provider.dart';

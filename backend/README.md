@@ -117,3 +117,24 @@ Khi test bằng `api-test.http`: bật server, bấm request **1. Đăng nhập*
 ## Module khác
 
 Module 2 (đặt lịch), Module 3 (hồ sơ nha khoa), Module 4 (nội dung và thông báo): người phụ trách bổ sung bảng API của mình vào đây khi viết xong.
+
+## Module 2 - Đặt lịch nha khoa
+
+| Method | Endpoint | Đăng nhập | Mô tả |
+|---|---|---|---|
+| POST | `/api/bookings/quote` | Không | Báo giá dịch vụ/combo, trả `subtotal`, `discount`, `totalPrice`, `durationMinutes`; có thể gửi `voucherCode` |
+| GET | `/api/availability?date=YYYY-MM-DD&durationMinutes=30` | Không | Giờ trống theo ngày; có thể truyền `doctorId`, `comboId`, `serviceIds` (các mã phân tách bằng dấu phẩy) |
+| POST | `/api/vouchers/validate` | Không | Body gồm `code` và `serviceIds` và/hoặc `comboId`; giá được tính lại trên backend |
+| POST | `/api/appointments` | Có | Tạo lịch cho bản thân hoặc người thân; `doctorId` có thể bỏ trống để chọn ngẫu nhiên; body có `patientId?`, `serviceIds?`, `comboId?`, `date`, `startTime`, `voucherCode?` |
+| GET | `/api/appointments` | Có | Lịch của tài khoản đang đăng nhập, bao gồm lịch đặt cho người thân |
+| GET | `/api/appointments/:id` | Có | Chi tiết lịch; chỉ chủ tài khoản được xem |
+| PATCH | `/api/appointments/:id/cancel` | Có | Hủy lịch tương lai và giải phóng các slot đã giữ |
+
+### Quy ước Module 2
+
+- Báo giá luôn đọc `price`, `durationMinutes` từ `services`/`combos`; không tin giá do client gửi. Khi chọn combo kèm các dịch vụ đã nằm trong combo, các dịch vụ đó không bị tính phí/thời lượng lần hai. `totalPrice` là số tiền sau giảm giá, `subtotal` là trước giảm giá, `discount` là số tiền được giảm.
+- `doctor_schedules` dùng `doctorId`, `startAt`, `endAt`, `slotMinutes`, `isAvailable`. `startAt`/`endAt` là thời điểm Firestore; hệ thống diễn giải theo múi giờ Việt Nam (`Asia/Ho_Chi_Minh`). Mỗi document là một ca/ngày cụ thể, không tự lặp theo tuần.
+- Lịch hẹn lưu `accountId`, `patientId`, `doctorId`, `serviceIds`, `comboId`, `date` (`YYYY-MM-DD`), `startTime`/`endTime` (`HH:mm`), `totalPrice`, `discount`, `voucherCode`, `status: "booked"`, `createdAt` (Timestamp). Lịch cho người thân phải tham chiếu một document trong `users/{accountId}/family_members`.
+- Việc tạo lịch dùng Firestore Transaction và collection nội bộ `appointment_slots` để giữ từng đoạn thời gian 15 phút; lịch đã hủy sẽ giải phóng slot. Khi dùng voucher, `usedCount` được tăng trong cùng transaction với đặt lịch.
+- Notification mới có các trường `userId`, `title`, `body`, `type`, `refId`, `isRead`, `createdAt` theo quy ước ở README gốc.
+- Request test nằm tại `backend/api-test.http`; trước khi chạy, thay token Firebase, ngày/giờ và mã bác sĩ theo dữ liệu thật trong Firestore.
