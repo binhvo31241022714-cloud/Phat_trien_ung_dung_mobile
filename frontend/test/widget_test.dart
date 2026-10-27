@@ -5,20 +5,25 @@ import 'package:frontend/app.dart';
 import 'package:frontend/app/main_shell.dart';
 import 'package:frontend/data/providers/patient_data_provider.dart';
 import 'package:frontend/providers/user_provider.dart';
+import 'package:frontend/providers/appointments_provider.dart';
 
+import 'support/fake_appointments_provider.dart';
 import 'support/fake_catalog_backend.dart';
 import 'support/fake_profile_backend.dart';
-
 import 'support/fake_auth_service.dart';
 
 Widget _withProviders(Widget child) {
   return MultiProvider(
     providers: [
       ChangeNotifierProvider(
-          create: (_) => UserProvider(auth: FakeAuthService())),
+        create: (_) => UserProvider(auth: FakeAuthService()),
+      ),
       ChangeNotifierProvider(create: (_) => PatientDataProvider()),
       ChangeNotifierProvider(create: (_) => FakeProfileBackend().provider()),
       ChangeNotifierProvider(create: (_) => FakeCatalogBackend().provider()),
+      ChangeNotifierProvider<AppointmentsProvider>(
+  create: (_) => FakeAppointmentsProvider(),
+),
     ],
     child: child,
   );
@@ -74,10 +79,11 @@ void main() {
     expect(find.byType(NavigationDestination), findsNWidgets(4));
 
     await tester.drag(
-        find.byType(SingleChildScrollView).first, const Offset(0, -1600));
+      find.byType(SingleChildScrollView).first,
+      const Offset(0, -1600),
+    );
     await tester.pumpAndSettle();
-    final data =
-        tester.element(find.byType(MainShell)).read<PatientDataProvider>();
+    final data = tester.element(find.byType(MainShell)).read<PatientDataProvider>();
     data.toggleSavedArticle(data.articles.first.id);
     await tester.pumpAndSettle();
 
@@ -95,14 +101,20 @@ void main() {
     await tester.tap(find.text('Hồ sơ').last);
     await tester.pumpAndSettle();
     expect(find.text('Hồ sơ nha khoa'), findsOneWidget);
-    await tester.scrollUntilVisible(find.text('DỮ LIỆU DEMO · CHỈ ĐỌC'), 200,
-        scrollable: find.byType(Scrollable).last);
+    await tester.scrollUntilVisible(
+      find.text('DỮ LIỆU DEMO · CHỈ ĐỌC'),
+      200,
+      scrollable: find.byType(Scrollable).last,
+    );
     expect(find.text('DỮ LIỆU DEMO · CHỈ ĐỌC'), findsOneWidget);
 
     await tester.tap(find.text('Tôi').last);
     await tester.pumpAndSettle();
-    await tester.scrollUntilVisible(find.text('Đã lưu'), 200,
-        scrollable: find.byType(Scrollable).first);
+    await tester.scrollUntilVisible(
+      find.text('Đã lưu'),
+      200,
+      scrollable: find.byType(Scrollable).first,
+    );
     await tester.tap(find.text('Đã lưu'));
     await tester.pumpAndSettle();
     expect(find.text(data.articles.first.title), findsOneWidget);
@@ -115,7 +127,6 @@ void main() {
     await tester.tap(find.text('Đặt lịch').last);
     await tester.pumpAndSettle();
     expect(find.text('Chọn dịch vụ nha khoa'), findsOneWidget);
-    // Tên "Bản thân" lấy từ hồ sơ API (backend giả).
     expect(find.text('Trần Thị Test (Bản thân)'), findsOneWidget);
 
     await tester.tap(find.text('Tôi').last);
