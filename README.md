@@ -95,14 +95,10 @@ Module 3 phụ trách hồ sơ nha khoa chỉ đọc và các chức năng liên
 | GET | `/api/patients/:id/follow-ups` | Lịch tái khám |
 | POST | `/api/treatments/:id/sessions/link-visit` | Gắn một lần khám vào buổi điều trị do người dùng chọn |
 
-API liên kết lần khám với buổi điều trị nhận body:
-
-```json
-{
-  "visitId": "visit-id",
-  "sessionId": "session-id"
-}
-
+🐕🐕🐕 Đã thêm các chức năng nho nhỏ: 
+  + Link lịch đã khám với liệu trình khám, cho khách hàng tự organize liệu trình của mình.
+  + Lịch tái khám khi bấm đặt lịch sẽ hiện đúng dịch vụ cần tái khám chứ không cần khách tự chọn dịch vụ để đặt lại từ đầu.
+  + Liệu trình có thể xem được kết quả của buổi khám và đơn thuốc được bác sĩ kê.
 
 
 # 2. Prompt cho Claude trong VS Code
