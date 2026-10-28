@@ -118,6 +118,27 @@ Khi test bằng `api-test.http`: bật server, bấm request **1. Đăng nhập*
 
 Module 2 (đặt lịch), Module 3 (hồ sơ nha khoa), Module 4 (nội dung và thông báo): người phụ trách bổ sung bảng API của mình vào đây khi viết xong.
 
+## Module 3 - Hồ sơ nha khoa
+
+| Method | Endpoint | Đăng nhập | Mô tả |
+|---|---|---|---|
+| GET | `/api/patients/:id/visits` | Có | Lịch sử khám của bản thân hoặc người thân |
+| GET | `/api/visits/:id` | Có | Kết quả khám và chẩn đoán |
+| GET | `/api/visits/:id/prescriptions` | Có | Đơn thuốc của lần khám |
+| GET | `/api/patients/:id/invoices` | Có | Danh sách hóa đơn |
+| GET | `/api/invoices/:id` | Có | Chi tiết hóa đơn |
+| GET | `/api/patients/:id/treatments` | Có | Danh sách liệu trình |
+| GET | `/api/treatments/:id` | Có | Chi tiết và tiến độ liệu trình |
+| GET | `/api/treatments/:id/sessions` | Có | Các buổi điều trị |
+| POST | `/api/treatments/:id/sessions/link-visit` | Có | Gắn một lần khám đã hoàn thành vào buổi do người dùng chọn. Body: `{ visitId, sessionId }` |
+| GET | `/api/treatments/:id/photos` | Có | Ảnh trước và sau; trả mảng rỗng nếu chưa có ảnh |
+| GET | `/api/patients/:id/follow-ups` | Có | Lịch tái khám |
+
+`patientId` không được lấy từ body/query của client. Với API danh sách, `:id` chỉ được phép là
+`req.user.uid` hoặc id document trong `users/{req.user.uid}/family_members`. Với API theo
+document id, backend đọc document trước rồi kiểm tra `patientId`; tài khoản không có quyền
+nhận `403`.
+
 ## Module 2 - Đặt lịch nha khoa
 
 | Method | Endpoint | Đăng nhập | Mô tả |

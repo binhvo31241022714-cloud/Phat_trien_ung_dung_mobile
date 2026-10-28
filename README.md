@@ -73,6 +73,37 @@ Module 1 **không thay** các chỗ này vì màn hình của module khác đang
 - **Firestore Rules** đang là `allow read, write: if false` cho toàn bộ database: không đọc/ghi Firestore trực tiếp từ Flutter (không dùng `cloud_firestore`), mọi dữ liệu đi qua API backend (`lib/data/api_client.dart`). **Không sửa Rules.**
 
 ---
+## ✅ Module 3 đã hoàn thành: Hồ sơ nha khoa
+
+Module 3 phụ trách hồ sơ nha khoa chỉ đọc và các chức năng liên kết lịch hẹn, lần khám, đơn thuốc, hóa đơn và liệu trình điều trị.
+
+### Backend đã hoàn thành
+
+Đã triển khai các API hồ sơ nha khoa trong `backend/src/routes/`:
+
+| Method | Endpoint | Mô tả |
+|---|---|---|
+| GET | `/api/patients/:id/visits` | Lịch sử các lần khám của bản thân hoặc người thân |
+| GET | `/api/visits/:id` | Chi tiết lần khám, kết quả và chẩn đoán |
+| GET | `/api/visits/:id/prescriptions` | Đơn thuốc của lần khám |
+| GET | `/api/patients/:id/invoices` | Danh sách hóa đơn |
+| GET | `/api/invoices/:id` | Chi tiết hóa đơn |
+| GET | `/api/patients/:id/treatments` | Danh sách liệu trình điều trị |
+| GET | `/api/treatments/:id` | Chi tiết và tiến độ liệu trình |
+| GET | `/api/treatments/:id/sessions` | Danh sách các buổi điều trị |
+| GET | `/api/treatments/:id/photos` | Ảnh trước và sau điều trị |
+| GET | `/api/patients/:id/follow-ups` | Lịch tái khám |
+| POST | `/api/treatments/:id/sessions/link-visit` | Gắn một lần khám vào buổi điều trị do người dùng chọn |
+
+API liên kết lần khám với buổi điều trị nhận body:
+
+```json
+{
+  "visitId": "visit-id",
+  "sessionId": "session-id"
+}
+
+
 
 # 2. Prompt cho Claude trong VS Code
 
