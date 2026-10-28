@@ -27,6 +27,11 @@ class FollowupScreen extends StatelessWidget {
           Text(doctorName(data, f.doctorId)),
           RecordButton('Đặt lịch tái khám', () {
             data.requestBookingFor(patientId);
+            PatientNavigation.pendingBookingRequest = BookingRequest(
+              serviceIds: const ['svc_01'],
+              restrictToServiceIds: true,
+              patientId: patientId,
+            );
             PatientNavigation.selectTab(context, 1);
           }),
           if (!f.scheduledAt.isAfter(DateTime.now()))

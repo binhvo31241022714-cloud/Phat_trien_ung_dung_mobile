@@ -17,9 +17,10 @@ class SelectServicesStep extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final catalog = controller.catalog;
-    final services = controller.services;
-    final canSelect =
-        !controller.submitting && controller.created == null;
+    final services = controller.restrictToServiceIds
+        ? controller.services.where(controller.isSelected).toList()
+        : controller.services;
+    final canSelect = !controller.submitting && controller.created == null;
 
     return Column(
       children: [
@@ -59,8 +60,7 @@ class SelectServicesStep extends StatelessWidget {
                   ),
                   const SizedBox(height: 12),
                   OutlinedButton.icon(
-                    onPressed:
-                        catalog.loading ? null : () => catalog.load(),
+                    onPressed: catalog.loading ? null : () => catalog.load(),
                     icon: const Icon(Icons.refresh),
                     label: const Text('Thử lại'),
                   ),
@@ -98,9 +98,7 @@ class SelectServicesStep extends StatelessWidget {
       child: Card(
         child: InkWell(
           borderRadius: BorderRadius.circular(16),
-          onTap: enabled
-              ? () => controller.toggleCatalogItem(service)
-              : null,
+          onTap: enabled ? () => controller.toggleCatalogItem(service) : null,
           child: Padding(
             padding: const EdgeInsets.symmetric(
               vertical: 14,
@@ -109,12 +107,8 @@ class SelectServicesStep extends StatelessWidget {
             child: Row(
               children: [
                 Icon(
-                  selected
-                      ? Icons.check_circle
-                      : Icons.radio_button_unchecked,
-                  color: selected
-                      ? const Color(0xFF247BF3)
-                      : Colors.grey,
+                  selected ? Icons.check_circle : Icons.radio_button_unchecked,
+                  color: selected ? const Color(0xFF247BF3) : Colors.grey,
                   size: 22,
                 ),
                 const SizedBox(width: 8),

@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../core/config/app_config.dart';
 import '../data/models/user_profile.dart';
 import '../data/providers/patient_data_provider.dart';
+import '../providers/appointments_provider.dart';
 import '../providers/catalog_provider.dart';
 import '../providers/profile_provider.dart';
 
@@ -29,7 +31,23 @@ class _MainShellState extends State<MainShell> {
     // Vào trang chính thì tải hồ sơ và danh mục từ API.
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
-      context.read<ProfileProvider>().ensureLoaded();
+      final profiles = context.read<ProfileProvider>();
+      if (AppConfig.current.dataSource != DataSource.api) {
+        profiles.ensureLoaded();
+        return;
+      }
+      final appointments = context.read<AppointmentsProvider>();
+      profiles.ensureLoaded().then((_) async {
+        if (!mounted || profiles.profile == null) return;
+        if (!profiles.familyLoaded) await profiles.loadFamily();
+        if (!mounted) return;
+        final records = context.read<PatientDataProvider>();
+        records.syncPatients(profiles.profile!, profiles.family);
+        await records.loadRecords();
+        await appointments.ensureLoaded();
+        if (!mounted) return;
+        records.replaceAppointments(appointments.appointments);
+      });
       // Dịch vụ, combo, bác sĩ và mục yêu thích.
       context.read<CatalogProvider>().ensureLoaded();
     });

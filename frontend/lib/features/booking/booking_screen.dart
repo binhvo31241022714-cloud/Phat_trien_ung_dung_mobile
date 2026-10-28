@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -23,6 +22,7 @@ import 'widgets/booking_price_summary.dart';
 class BookingScreen extends StatefulWidget {
   final String? initialDoctorId;
   final List<String>? initialServiceIds;
+  final bool restrictToServiceIds;
   final String? initialComboId;
   final String? initialPatientId;
 
@@ -30,6 +30,7 @@ class BookingScreen extends StatefulWidget {
     super.key,
     this.initialDoctorId,
     this.initialServiceIds,
+    this.restrictToServiceIds = false,
     this.initialComboId,
     this.initialPatientId,
   });
@@ -63,14 +64,13 @@ class _BookingScreenState extends State<BookingScreen> {
       profile: profile,
       initialDoctorId: widget.initialDoctorId,
       initialServiceIds: widget.initialServiceIds,
+      restrictToServiceIds: widget.restrictToServiceIds,
       initialComboId: widget.initialComboId,
       initialPatientId: widget.initialPatientId,
     )..addListener(_changed);
 
     // Tải dịch vụ, combo và bác sĩ.
-    if (!catalog.loaded &&
-        !catalog.loading &&
-        catalog.error == null) {
+    if (!catalog.loaded && !catalog.loading && catalog.error == null) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted ||
             catalog.loaded ||
@@ -125,6 +125,7 @@ class _BookingScreenState extends State<BookingScreen> {
       c.applyInitialValues(
         doctorId: pending.doctorId,
         serviceIds: pending.serviceIds,
+        restrictToServiceIds: pending.restrictToServiceIds,
         comboId: pending.comboId,
         patientId: pending.patientId,
       );
@@ -255,8 +256,7 @@ class _BookingScreenState extends State<BookingScreen> {
     }
 
     try {
-      final appointmentsProvider =
-          context.read<AppointmentsProvider>();
+      final appointmentsProvider = context.read<AppointmentsProvider>();
 
       final result = await c.submit(
         appointmentsProvider: appointmentsProvider,
@@ -272,22 +272,22 @@ class _BookingScreenState extends State<BookingScreen> {
         );
       }
     } catch (e) {
-  if (!mounted) return;
+      if (!mounted) return;
 
-  // Nếu controller đã có lịch được tạo, không báo thất bại
-  // chỉ vì một bước cập nhật dữ liệu cục bộ bị lỗi.
-  if (c.created != null) {
-    return;
-  }
+      // Nếu controller đã có lịch được tạo, không báo thất bại
+      // chỉ vì một bước cập nhật dữ liệu cục bộ bị lỗi.
+      if (c.created != null) {
+        return;
+      }
 
-  final message = e is ApiException
-      ? e.message
-      : 'Chưa thể tạo lịch. Vui lòng thử lại.';
+      final message = e is ApiException
+          ? e.message
+          : 'Chưa thể tạo lịch. Vui lòng thử lại.';
 
-  ScaffoldMessenger.of(context).showSnackBar(
-    SnackBar(content: Text(message)),
-  );
-}
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(message)),
+      );
+    }
   }
 
   @override
@@ -295,8 +295,7 @@ class _BookingScreenState extends State<BookingScreen> {
     final data = context.watch<PatientDataProvider>();
     final profile = context.watch<ProfileProvider>();
     final success = c.created != null;
-    final apiMode =
-        AppConfig.current.dataSource == DataSource.api;
+    final apiMode = AppConfig.current.dataSource == DataSource.api;
 
     final titles = [
       'Chọn dịch vụ nha khoa',
@@ -323,10 +322,9 @@ class _BookingScreenState extends State<BookingScreen> {
 
       // Chính chủ: ID phải là UID tài khoản từ API.
       if (patientIds.add(account.id)) {
-        final displayName =
-            account.fullName.trim().isNotEmpty
-                ? account.fullName
-                : account.email;
+        final displayName = account.fullName.trim().isNotEmpty
+            ? account.fullName
+            : account.email;
 
         patientItems.add(
           DropdownMenuItem<String>(
@@ -347,10 +345,9 @@ class _BookingScreenState extends State<BookingScreen> {
           continue;
         }
 
-        final relationship =
-            member.relationship.trim().isEmpty
-                ? 'Người thân'
-                : member.relationship;
+        final relationship = member.relationship.trim().isEmpty
+            ? 'Người thân'
+            : member.relationship;
 
         patientItems.add(
           DropdownMenuItem<String>(
@@ -365,8 +362,7 @@ class _BookingScreenState extends State<BookingScreen> {
     } else if (!apiMode) {
       // Giữ nguyên dữ liệu mock cho widget test và chế độ mock.
       for (final patient in data.patients) {
-        if (patient.id.trim().isEmpty ||
-            !patientIds.add(patient.id)) {
+        if (patient.id.trim().isEmpty || !patientIds.add(patient.id)) {
           continue;
         }
 
@@ -389,11 +385,9 @@ class _BookingScreenState extends State<BookingScreen> {
       selectedPatientId = c.patientId;
     } else if (useApiPatients) {
       selectedPatientId = accountProfile.id;
-    } else if (!apiMode &&
-        patientIds.contains(data.selectedPatientId)) {
+    } else if (!apiMode && patientIds.contains(data.selectedPatientId)) {
       selectedPatientId = data.selectedPatientId;
-    } else if (!apiMode &&
-        patientIds.contains(data.primaryPatient.id)) {
+    } else if (!apiMode && patientIds.contains(data.primaryPatient.id)) {
       selectedPatientId = data.primaryPatient.id;
     }
 
@@ -440,12 +434,10 @@ class _BookingScreenState extends State<BookingScreen> {
         }
 
         final stillMockId = data.patients.any(
-          (patient) =>
-              patient.id == currentController.patientId,
+          (patient) => patient.id == currentController.patientId,
         );
         final latestFamilyResolved =
-            latestProfile.familyLoaded ||
-                latestProfile.familyError != null;
+            latestProfile.familyLoaded || latestProfile.familyError != null;
 
         if (stillMockId || latestFamilyResolved) {
           currentController.selectPatient(latestAccountId);
@@ -481,8 +473,7 @@ class _BookingScreenState extends State<BookingScreen> {
 
           final currentShell = MainShellScope.maybeOf(context);
 
-          if (currentShell != null &&
-              currentShell.selectedIndex != 1) {
+          if (currentShell != null && currentShell.selectedIndex != 1) {
             return;
           }
 
@@ -567,16 +558,13 @@ class _BookingScreenState extends State<BookingScreen> {
                                 16,
                               ),
                               keyboardDismissBehavior:
-                                  ScrollViewKeyboardDismissBehavior
-                                      .onDrag,
+                                  ScrollViewKeyboardDismissBehavior.onDrag,
                               child: Column(
-                                crossAxisAlignment:
-                                    CrossAxisAlignment.start,
+                                crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Card(
                                     child: Padding(
-                                      padding:
-                                          const EdgeInsets.all(12),
+                                      padding: const EdgeInsets.all(12),
                                       child: Column(
                                         crossAxisAlignment:
                                             CrossAxisAlignment.start,
@@ -596,55 +584,46 @@ class _BookingScreenState extends State<BookingScreen> {
                                                   'Người được khám',
                                                   style: TextStyle(
                                                     fontSize: 18,
-                                                    fontWeight:
-                                                        FontWeight.w600,
+                                                    fontWeight: FontWeight.w600,
                                                   ),
                                                 ),
                                               ),
                                             ],
                                           ),
                                           const SizedBox(height: 8),
-                                          DropdownButtonFormField<
-                                              String>(
+                                          DropdownButtonFormField<String>(
                                             key: ValueKey(
                                               '${c.patientId}-${patientItems.length}',
                                             ),
-                                            initialValue:
-                                                patientIds.contains(
+                                            initialValue: patientIds.contains(
                                               selectedPatientId,
                                             )
-                                                    ? selectedPatientId
-                                                    : null,
+                                                ? selectedPatientId
+                                                : null,
                                             isExpanded: true,
-                                            decoration:
-                                                InputDecoration(
+                                            decoration: InputDecoration(
                                               contentPadding:
-                                                  const EdgeInsets
-                                                      .symmetric(
+                                                  const EdgeInsets.symmetric(
                                                 horizontal: 16,
                                                 vertical: 8,
                                               ),
-                                              border:
-                                                  OutlineInputBorder(
+                                              border: OutlineInputBorder(
                                                 borderRadius:
-                                                    BorderRadius
-                                                        .circular(30),
+                                                    BorderRadius.circular(30),
                                               ),
                                             ),
                                             items: patientItems,
                                             onChanged: c.submitting
                                                 ? null
                                                 : (value) {
-                                                    if (value !=
-                                                        null) {
+                                                    if (value != null) {
                                                       c.selectPatient(
                                                         value,
                                                       );
                                                     }
                                                   },
                                           ),
-                                          if (apiMode &&
-                                              profile.profileLoading)
+                                          if (apiMode && profile.profileLoading)
                                             const Padding(
                                               padding: EdgeInsets.only(
                                                 top: 8,
@@ -662,8 +641,7 @@ class _BookingScreenState extends State<BookingScreen> {
                                           if (apiMode &&
                                               profile.profileError != null)
                                             Padding(
-                                              padding:
-                                                  const EdgeInsets.only(
+                                              padding: const EdgeInsets.only(
                                                 top: 8,
                                               ),
                                               child: Text(
@@ -694,8 +672,7 @@ class _BookingScreenState extends State<BookingScreen> {
                                           if (apiMode &&
                                               profile.familyError != null)
                                             Padding(
-                                              padding:
-                                                  const EdgeInsets.only(
+                                              padding: const EdgeInsets.only(
                                                 top: 8,
                                               ),
                                               child: Text(

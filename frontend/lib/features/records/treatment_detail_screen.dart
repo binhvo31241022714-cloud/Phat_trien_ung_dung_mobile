@@ -41,20 +41,104 @@ class TreatmentPlanCard extends StatelessWidget {
       if (plan.sessions.isEmpty)
         const Text('Chưa có thông tin các buổi điều trị.'),
       for (final session in plan.sessions)
-        Padding(
-            padding: const EdgeInsets.symmetric(vertical: 8),
-            child: Row(children: [
-              Icon(
-                  session.completed ? Icons.check_circle_outline : Icons.circle,
-                  color: session.completed ? Colors.green : Colors.grey,
-                  size: 18),
-              const SizedBox(width: 8),
-              Expanded(
-                  child: Text(
-                      '${session.title} · ${session.completed ? "Hoàn thành" : "Chưa hoàn thành"}')),
-            ])),
+        _TreatmentSessionCard(session: session),
       RecordButton('Xem ảnh trước – sau',
           () => RecordsRoutes.open(context, RecordsRoutes.photos, plan)),
     ]);
   }
+}
+
+class _TreatmentSessionCard extends StatelessWidget {
+  const _TreatmentSessionCard({required this.session});
+  final TreatmentSession session;
+
+  @override
+  Widget build(BuildContext context) {
+    final data = context.watch<PatientDataProvider>();
+    final appointment = sessionAppointment(data, session);
+    final visit = sessionVisit(data, session);
+    final prescriptions = visit == null
+        ? const <Prescription>[]
+        : data.prescriptions.where((item) => item.visitId == visit.id).toList();
+
+    return Card(
+      margin: const EdgeInsets.symmetric(vertical: 6),
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(children: [
+              Icon(
+                session.completed
+                    ? Icons.check_circle_outline
+                    : Icons.circle_outlined,
+                color: session.completed ? Colors.green : Colors.grey,
+                size: 18,
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  '${session.title} · ${session.completed ? "Hoàn thành" : "Chưa hoàn thành"}',
+                  style: const TextStyle(fontWeight: FontWeight.w600),
+                ),
+              ),
+            ]),
+            if (session.scheduledAt != null) ...[
+              const SizedBox(height: 4),
+              Text(recordDateTime(session.scheduledAt!)),
+            ],
+            if (session.notes.isNotEmpty) ...[
+              const SizedBox(height: 4),
+              Text(session.notes),
+            ],
+            const SizedBox(height: 8),
+            if (appointment != null)
+              _SessionAction(
+                label: 'Xem lịch hẹn',
+                onPressed: () => RecordsRoutes.open(
+                    context, RecordsRoutes.appointment, appointment.id),
+              )
+            else
+              const Text('Chưa liên kết lịch hẹn.',
+                  style: TextStyle(color: Colors.grey)),
+            if (visit != null) ...[
+              _SessionAction(
+                label: 'Xem kết quả khám',
+                onPressed: () =>
+                    RecordsRoutes.open(context, RecordsRoutes.visit, visit),
+              ),
+              if (prescriptions.isNotEmpty)
+                _SessionAction(
+                  label: 'Xem đơn thuốc',
+                  onPressed: () => RecordsRoutes.open(
+                      context, RecordsRoutes.prescription, prescriptions.first),
+                )
+              else
+                const Text('Chưa có đơn thuốc cho buổi này.',
+                    style: TextStyle(color: Colors.grey)),
+            ] else
+              const Text('Chưa có hồ sơ khám cho buổi này.',
+                  style: TextStyle(color: Colors.grey)),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _SessionAction extends StatelessWidget {
+  const _SessionAction({required this.label, required this.onPressed});
+  final String label;
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) => Align(
+        alignment: Alignment.centerLeft,
+        child: TextButton.icon(
+          onPressed: onPressed,
+          icon: const Icon(Icons.open_in_new, size: 16),
+          label: Text(label),
+        ),
+      );
 }

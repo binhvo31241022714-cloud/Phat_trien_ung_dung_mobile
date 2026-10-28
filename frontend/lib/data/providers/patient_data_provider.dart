@@ -1,7 +1,9 @@
+import 'dart:async';
 import 'dart:collection';
 
 import 'package:flutter/foundation.dart';
 
+import '../../core/config/app_config.dart';
 import '../mock_data.dart';
 import '../models/appointment.dart';
 import '../models/article.dart';
@@ -9,14 +11,29 @@ import '../models/dental_service.dart';
 import '../models/doctor.dart';
 import '../models/patient.dart';
 import '../models/patient_records.dart';
+import '../models/family_member.dart';
+import '../models/user_profile.dart';
+import '../services/records_service.dart';
+import '../../core/network/api_client.dart';
 
 class PatientDataProvider extends ChangeNotifier {
+  final RecordsService _recordsService;
+  PatientDataProvider({RecordsService? recordsService})
+      : _recordsService = recordsService ?? RecordsService();
+
   final List<Patient> _patients = List.of(MockData.patients);
   final List<Appointment> _appointments = List.of(MockData.appointments);
   final List<PatientNotification> _notifications =
       List.of(MockData.notifications);
   final Set<String> _savedArticleIds = {};
   String _selectedPatientId = MockData.patients.first.id;
+  List<Visit> _apiVisits = const [];
+  List<Prescription> _apiPrescriptions = const [];
+  List<Receipt> _apiReceipts = const [];
+  List<TreatmentPlan> _apiTreatmentPlans = const [];
+  List<Followup> _apiFollowups = const [];
+  bool _recordsLoading = false;
+  String? _recordsError;
 
   UnmodifiableListView<Patient> get patients => UnmodifiableListView(_patients);
   List<Patient> get familyMembers => patients;
@@ -25,11 +42,25 @@ class PatientDataProvider extends ChangeNotifier {
   List<Article> get articles => MockData.articles;
   UnmodifiableListView<Appointment> get appointments =>
       UnmodifiableListView(_appointments);
-  List<Visit> get visits => MockData.visits;
-  List<Prescription> get prescriptions => MockData.prescriptions;
-  List<Receipt> get receipts => MockData.receipts;
-  List<TreatmentPlan> get treatmentPlans => MockData.treatmentPlans;
-  List<Followup> get followups => MockData.followups;
+  List<Visit> get visits => AppConfig.current.dataSource == DataSource.api
+      ? _apiVisits
+      : MockData.visits;
+  List<Prescription> get prescriptions =>
+      AppConfig.current.dataSource == DataSource.api
+          ? _apiPrescriptions
+          : MockData.prescriptions;
+  List<Receipt> get receipts => AppConfig.current.dataSource == DataSource.api
+      ? _apiReceipts
+      : MockData.receipts;
+  List<TreatmentPlan> get treatmentPlans =>
+      AppConfig.current.dataSource == DataSource.api
+          ? _apiTreatmentPlans
+          : MockData.treatmentPlans;
+  List<Followup> get followups => AppConfig.current.dataSource == DataSource.api
+      ? _apiFollowups
+      : MockData.followups;
+  bool get recordsLoading => _recordsLoading;
+  String? get recordsError => _recordsError;
   UnmodifiableListView<PatientNotification> get notifications =>
       UnmodifiableListView(_notifications);
   UnmodifiableSetView<String> get savedArticleIds =>
@@ -37,7 +68,8 @@ class PatientDataProvider extends ChangeNotifier {
   List<Article> get savedArticles => List.unmodifiable(
         articles.where((article) => _savedArticleIds.contains(article.id)),
       );
-  bool get recordsAreDemoAndReadOnly => true;
+  bool get recordsAreDemoAndReadOnly =>
+      AppConfig.current.dataSource == DataSource.mock;
   int notificationsOpenVersion = 0;
   void requestNotifications() {
     notificationsOpenVersion++;
@@ -58,6 +90,7 @@ class PatientDataProvider extends ChangeNotifier {
     recordsShowAppointments = showAppointments;
     recordsAppointmentId = appointmentId;
     notifyListeners();
+    unawaited(loadRecords(patientId: patientId));
   }
 
   String get selectedPatientId => _selectedPatientId;
@@ -65,15 +98,121 @@ class PatientDataProvider extends ChangeNotifier {
   Patient get selectedPatient =>
       patients.firstWhere((patient) => patient.id == _selectedPatientId);
 
+  void syncPatients(UserProfile profile, List<FamilyMember> family) {
+    final patients = <Patient>[
+      Patient(
+        id: profile.id,
+        fullName: profile.fullName,
+        phone: profile.phone,
+        dateOfBirth: profile.birthday ?? DateTime(1970),
+        relationship: 'Tôi',
+        isPrimary: true,
+      ),
+      for (final member in family)
+        Patient(
+          id: member.id,
+          fullName: member.fullName,
+          phone: member.phone,
+          dateOfBirth: member.birthday ?? DateTime(1970),
+          relationship: member.relationship,
+        ),
+    ];
+    if (patients.isEmpty) return;
+    _patients
+      ..clear()
+      ..addAll(patients);
+    if (!_patients.any((patient) => patient.id == _selectedPatientId)) {
+      _selectedPatientId = profile.id;
+    }
+    notifyListeners();
+  }
+
+  Future<void> loadRecords({String? patientId}) async {
+    if (AppConfig.current.dataSource != DataSource.api) {
+      return;
+    }
+
+    final id = patientId ?? _selectedPatientId;
+    if (!_patients.any((patient) => patient.id == id) && patientId != null) {
+      return;
+    }
+
+    _recordsLoading = true;
+    _recordsError = null;
+    notifyListeners();
+    try {
+      final visitRows = await _recordsService.visits(id);
+      final invoiceRows = await _recordsService.invoices(id);
+      final treatmentRows = await _recordsService.treatments(id);
+      final followupRows = await _recordsService.followups(id);
+      final visits = <Visit>[];
+      final prescriptions = <Prescription>[];
+      for (final row in visitRows.whereType<Map<String, dynamic>>()) {
+        final visit = Visit.fromJson(row);
+        final detail = await _recordsService.visit(visit.id);
+        visits.add(Visit.fromJson(detail));
+        final prescriptionRows = await _recordsService.prescriptions(visit.id);
+        prescriptions.addAll(prescriptionRows
+            .whereType<Map<String, dynamic>>()
+            .map(Prescription.fromJson));
+      }
+      final receipts = <Receipt>[];
+      for (final row in invoiceRows.whereType<Map<String, dynamic>>()) {
+        final invoice = await _recordsService.invoice(row['id'].toString());
+        receipts.add(Receipt.fromJson(invoice));
+      }
+      final plans = <TreatmentPlan>[];
+      for (final row in treatmentRows.whereType<Map<String, dynamic>>()) {
+        final treatmentId = row['id'].toString();
+        final detail = await _recordsService.treatment(treatmentId);
+        final sessionRows = await _recordsService.sessions(treatmentId);
+        final sessions = sessionRows
+            .whereType<Map<String, dynamic>>()
+            .map(TreatmentSession.fromJson)
+            .toList();
+        plans.add(TreatmentPlan.fromJson(detail, sessions: sessions));
+      }
+      if (id == _selectedPatientId) {
+        _apiVisits = visits;
+        _apiPrescriptions = prescriptions;
+        _apiReceipts = receipts;
+        _apiTreatmentPlans = plans;
+        _apiFollowups = followupRows
+            .whereType<Map<String, dynamic>>()
+            .map(Followup.fromJson)
+            .toList();
+      }
+    } on ApiException catch (error) {
+      _recordsError = error.message;
+    } finally {
+      _recordsLoading = false;
+      notifyListeners();
+    }
+  }
+
+  Future<void> linkVisitToTreatment({
+    required String treatmentId,
+    required String visitId,
+    required String sessionId,
+  }) async {
+    if (AppConfig.current.dataSource != DataSource.api) {
+      throw const ApiException('Dữ liệu demo chỉ được xem.');
+    }
+    await _recordsService.linkVisitToTreatment(treatmentId, visitId, sessionId);
+    await loadRecords();
+  }
+
   void selectPatient(String patientId) {
     if (!_patients.any((patient) => patient.id == patientId)) {
       throw ArgumentError.value(
           patientId, 'patientId', 'Không tìm thấy bệnh nhân');
     }
+
     if (_selectedPatientId == patientId) return;
     _selectedPatientId = patientId;
     _appointmentPatientId = null;
     notifyListeners();
+    unawaited(loadRecords(patientId: patientId));
   }
 
   void addFamilyMember(Patient patient) {
@@ -319,6 +458,13 @@ class PatientDataProvider extends ChangeNotifier {
       );
     }
     _appointments.add(appointment);
+    notifyListeners();
+  }
+
+  void replaceAppointments(List<Appointment> appointments) {
+    _appointments
+      ..clear()
+      ..addAll(appointments);
     notifyListeners();
   }
 }

@@ -28,8 +28,9 @@ class PrescriptionScreen extends StatelessWidget {
             const Divider()
           ]),
         RecordSection('Ghi chú', prescription.instructions),
-        const Text('Đơn thuốc minh họa · Chỉ đọc',
-            style: TextStyle(color: Color(0xFF666666))),
+        if (data.recordsAreDemoAndReadOnly)
+          const Text('Đơn thuốc minh họa · Chỉ đọc',
+              style: TextStyle(color: Color(0xFF666666))),
       ])
     ]);
   }

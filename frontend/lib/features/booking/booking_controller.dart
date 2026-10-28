@@ -23,15 +23,14 @@ class BookingController extends ChangeNotifier {
     DateTime Function()? clock,
     String? initialDoctorId,
     List<String>? initialServiceIds,
+    this.restrictToServiceIds = false,
     String? initialComboId,
     String? initialPatientId,
   })  : now = clock ?? DateTime.now,
         bookingService = bookingService ?? BookingService(),
-        availabilityService =
-            availabilityService ?? AvailabilityService(),
-        patientId = initialPatientId ??
-            profile?.profile?.id ??
-            data.selectedPatientId {
+        availabilityService = availabilityService ?? AvailabilityService(),
+        patientId =
+            initialPatientId ?? profile?.profile?.id ?? data.selectedPatientId {
     catalog?.addListener(_onCatalogChanged);
     profile?.addListener(_onProfileChanged);
 
@@ -74,6 +73,7 @@ class BookingController extends ChangeNotifier {
 
   /// Bác sĩ được ưu tiên chọn. Null nghĩa là để Backend chọn bác sĩ phù hợp.
   String? _preferredDoctorId;
+  bool restrictToServiceIds = false;
 
   /// Bác sĩ thực tế của khung giờ đã chọn.
   String? doctorId;
@@ -116,32 +116,29 @@ class BookingController extends ChangeNotifier {
     notifyListeners();
   }
 
- void _onProfileChanged() {
-  if (_disposed ||
-      AppConfig.current.dataSource != DataSource.api) {
-    return;
+  void _onProfileChanged() {
+    if (_disposed || AppConfig.current.dataSource != DataSource.api) {
+      return;
+    }
+
+    final realId = profile?.profile?.id;
+    if (realId == null || realId.isEmpty) return;
+
+    final isMockPatient = data.patients.any(
+      (patient) => patient.id == patientId,
+    );
+
+    final isFamilyMember = profile!.family.any(
+      (member) => member.id == patientId,
+    );
+
+    // Chỉ đổi ID mẫu sang UID tài khoản khi chạy API.
+    // Không ghi đè ID người thân đã được xác định.
+    if (patientId != realId && isMockPatient && !isFamilyMember) {
+      patientId = realId;
+      notifyListeners();
+    }
   }
-
-  final realId = profile?.profile?.id;
-  if (realId == null || realId.isEmpty) return;
-
-  final isMockPatient = data.patients.any(
-    (patient) => patient.id == patientId,
-  );
-
-  final isFamilyMember = profile!.family.any(
-    (member) => member.id == patientId,
-  );
-
-  // Chỉ đổi ID mẫu sang UID tài khoản khi chạy API.
-  // Không ghi đè ID người thân đã được xác định.
-  if (patientId != realId &&
-      isMockPatient &&
-      !isFamilyMember) {
-    patientId = realId;
-    notifyListeners();
-  }
-}
 
   @override
   void dispose() {
@@ -420,9 +417,8 @@ class BookingController extends ChangeNotifier {
     } catch (error) {
       if (_disposed || requestId != _availabilityRequestId) return;
 
-      availabilityError = error is ApiException
-          ? error.message
-          : error.toString();
+      availabilityError =
+          error is ApiException ? error.message : error.toString();
       availabilitySlots = <AvailabilitySlot>[];
     } finally {
       if (!_disposed && requestId == _availabilityRequestId) {
@@ -454,18 +450,17 @@ class BookingController extends ChangeNotifier {
 
   bool validSlot(String slot) =>
       availabilitySlots.whereType<AvailabilitySlot>().any(
-        (item) =>
-            item.startTime == slot &&
-            (doctorId == null || item.doctorId == doctorId),
-      );
+            (item) =>
+                item.startTime == slot &&
+                (doctorId == null || item.doctorId == doctorId),
+          );
 
   bool get validTime =>
       time != null &&
       doctorId != null &&
       availabilitySlots.whereType<AvailabilitySlot>().any(
-        (item) =>
-            item.startTime == time && item.doctorId == doctorId,
-      );
+            (item) => item.startTime == time && item.doctorId == doctorId,
+          );
 
   bool get canContinue => switch (step) {
         0 => hasSelectedItems,
@@ -517,12 +512,11 @@ class BookingController extends ChangeNotifier {
   void chooseAvailabilitySlot(AvailabilitySlot slot) {
     if (_disposed || submitting || created != null) return;
 
-    final available =
-        availabilitySlots.whereType<AvailabilitySlot>().any(
-              (item) =>
-                  item.doctorId == slot.doctorId &&
-                  item.startTime == slot.startTime,
-            );
+    final available = availabilitySlots.whereType<AvailabilitySlot>().any(
+          (item) =>
+              item.doctorId == slot.doctorId &&
+              item.startTime == slot.startTime,
+        );
     if (!available) return;
 
     time = slot.startTime;
@@ -536,8 +530,7 @@ class BookingController extends ChangeNotifier {
 
     for (final slot in availabilitySlots.whereType<AvailabilitySlot>()) {
       if (slot.startTime == value &&
-          (_preferredDoctorId == null ||
-              slot.doctorId == _preferredDoctorId)) {
+          (_preferredDoctorId == null || slot.doctorId == _preferredDoctorId)) {
         chooseAvailabilitySlot(slot);
         return;
       }
@@ -569,6 +562,7 @@ class BookingController extends ChangeNotifier {
   void applyInitialValues({
     String? doctorId,
     List<String>? serviceIds,
+    bool? restrictToServiceIds,
     String? comboId,
     String? patientId,
   }) {
@@ -583,6 +577,9 @@ class BookingController extends ChangeNotifier {
     if (serviceIds != null && serviceIds.isNotEmpty) {
       this.serviceIds.addAll(serviceIds);
     }
+    if (restrictToServiceIds == true) {
+      this.restrictToServiceIds = true;
+    }
     if (doctorId != null && doctorId.isNotEmpty) {
       _preferredDoctorId = doctorId;
       this.doctorId = doctorId;
@@ -595,7 +592,7 @@ class BookingController extends ChangeNotifier {
 
     if (hasSelectedItems && doctorChosen) {
       step = 2;
-    } else if (hasSelectedItems) {
+    } else if (hasSelectedItems && !this.restrictToServiceIds) {
       step = 1;
     } else {
       step = 0;

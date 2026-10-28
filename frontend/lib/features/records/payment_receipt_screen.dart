@@ -44,8 +44,9 @@ class PaymentReceiptScreen extends StatelessWidget {
         RecordLine('Hình thức', receipt.paymentMethod),
         if (receipt.paymentStatus != null)
           RecordLine('Trạng thái', receipt.paymentStatus),
-        const Text('Phiếu minh họa · Chỉ xem thông tin đã ghi nhận',
-            style: TextStyle(color: Color(0xFF666666))),
+        if (data.recordsAreDemoAndReadOnly)
+          const Text('Phiếu minh họa · Chỉ xem thông tin đã ghi nhận',
+              style: TextStyle(color: Color(0xFF666666))),
       ])
     ]);
   }

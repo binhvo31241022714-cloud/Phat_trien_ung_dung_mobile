@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../../core/config/app_config.dart';
 import '../../app/patient_navigation.dart';
 import '../../data/models/appointment.dart';
 import '../../data/models/patient_records.dart';
@@ -180,7 +181,12 @@ class _RecordsOverview extends StatelessWidget {
                         overflow: TextOverflow.ellipsis))
             ],
             onChanged: (id) {
-              if (id != null) data.focusAppointmentsFor(id);
+              if (id != null) {
+                if (AppConfig.current.dataSource == DataSource.api) {
+                  data.selectPatient(id);
+                }
+                data.focusAppointmentsFor(id);
+              }
             }),
       ]),
       Row(children: [
@@ -226,8 +232,9 @@ class _RecordsOverview extends StatelessWidget {
           'Các lịch tái khám được đề xuất',
           Icons.event_repeat_outlined,
           () => RecordsRoutes.open(context, RecordsRoutes.followups, p.id)),
-      const Text('DỮ LIỆU DEMO · CHỈ ĐỌC',
-          style: TextStyle(color: Color(0xFF666666), fontSize: 11)),
+      if (data.recordsAreDemoAndReadOnly)
+        const Text('DỮ LIỆU DEMO · CHỈ ĐỌC',
+            style: TextStyle(color: Color(0xFF666666), fontSize: 11)),
     ]);
   }
 }

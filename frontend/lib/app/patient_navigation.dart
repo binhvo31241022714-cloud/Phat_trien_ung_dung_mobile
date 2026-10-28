@@ -11,12 +11,14 @@ import '../routes/app_routes.dart';
 class BookingRequest {
   final String? doctorId;
   final List<String>? serviceIds;
+  final bool restrictToServiceIds;
   final String? comboId;
   final String? patientId;
 
   const BookingRequest({
     this.doctorId,
     this.serviceIds,
+    this.restrictToServiceIds = false,
     this.comboId,
     this.patientId,
   });
@@ -37,12 +39,14 @@ class PatientNavigation {
     BuildContext context, {
     String? doctorId,
     List<String>? serviceIds,
+    bool restrictToServiceIds = false,
     String? comboId,
     String? patientId,
   }) {
     pendingBookingRequest = BookingRequest(
       doctorId: doctorId,
       serviceIds: serviceIds,
+      restrictToServiceIds: restrictToServiceIds,
       comboId: comboId,
       patientId: patientId,
     );

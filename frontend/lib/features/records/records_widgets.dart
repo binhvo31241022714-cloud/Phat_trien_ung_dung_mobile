@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../../core/utils/formatters.dart';
 import '../../data/models/appointment.dart';
 import '../../data/models/patient_records.dart';
@@ -28,22 +29,43 @@ class RecordsPage extends StatelessWidget {
   final String title;
   final List<Widget> children;
   @override
-  Widget build(BuildContext context) => Scaffold(
-        backgroundColor: const Color(0xFFF1F5FB),
-        appBar: AppBar(
-            title: Text(title),
-            centerTitle: false,
-            toolbarHeight: 48,
-            backgroundColor: const Color(0xFFF1F5FB),
-            surfaceTintColor: Colors.transparent,
-            titleTextStyle: const TextStyle(
-                fontSize: 18,
-                color: Colors.black,
-                fontWeight: FontWeight.w600)),
-        body: ListView(
-            padding: const EdgeInsets.fromLTRB(16, 8, 16, 20),
-            children: children),
-      );
+  Widget build(BuildContext context) {
+    final data = context.watch<PatientDataProvider>();
+    final content = data.recordsLoading
+        ? const Center(child: CircularProgressIndicator())
+        : data.recordsError != null
+            ? Center(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(Icons.error_outline,
+                        color: Colors.red, size: 36),
+                    const SizedBox(height: 8),
+                    Text(data.recordsError!, textAlign: TextAlign.center),
+                    const SizedBox(height: 12),
+                    OutlinedButton(
+                      onPressed: () => data.loadRecords(),
+                      child: const Text('Thử lại'),
+                    ),
+                  ],
+                ),
+              )
+            : ListView(
+                padding: const EdgeInsets.fromLTRB(16, 8, 16, 20),
+                children: children);
+    return Scaffold(
+      backgroundColor: const Color(0xFFF1F5FB),
+      appBar: AppBar(
+          title: Text(title),
+          centerTitle: false,
+          toolbarHeight: 48,
+          backgroundColor: const Color(0xFFF1F5FB),
+          surfaceTintColor: Colors.transparent,
+          titleTextStyle: const TextStyle(
+              fontSize: 18, color: Colors.black, fontWeight: FontWeight.w600)),
+      body: content,
+    );
+  }
 }
 
 class RecordCard extends StatelessWidget {
@@ -177,6 +199,31 @@ String serviceNames(PatientDataProvider data, Iterable<String> ids) {
 Appointment? visitAppointment(PatientDataProvider data, Visit visit) {
   for (final a in data.appointments) {
     if (a.id == visit.appointmentId && a.patientId == visit.patientId) return a;
+  }
+  return null;
+}
+
+Appointment? sessionAppointment(
+    PatientDataProvider data, TreatmentSession session) {
+  final id = session.appointmentId;
+  if (id == null || id.isEmpty) return null;
+  for (final appointment in data.appointments) {
+    if (appointment.id == id) return appointment;
+  }
+  return null;
+}
+
+Visit? sessionVisit(PatientDataProvider data, TreatmentSession session) {
+  final id = session.visitId;
+  if (id != null && id.isNotEmpty) {
+    for (final visit in data.visits) {
+      if (visit.id == id) return visit;
+    }
+  }
+  final appointmentId = session.appointmentId;
+  if (appointmentId == null || appointmentId.isEmpty) return null;
+  for (final visit in data.visits) {
+    if (visit.appointmentId == appointmentId) return visit;
   }
   return null;
 }
