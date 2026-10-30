@@ -68,6 +68,22 @@ class ConfirmBookingStep extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            if (c.awaitingRetry)
+              Container(
+                key: const ValueKey('booking-retry-banner'),
+                width: double.infinity,
+                margin: const EdgeInsets.only(bottom: 12),
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFFF4E5),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Text(
+                  'Mất kết nối khi gửi yêu cầu, lịch có thể đã được tạo. '
+                  'Bấm "Thử lại" để gửi lại (không tạo lịch trùng), hoặc '
+                  '"Chọn lại" để kiểm tra rồi sửa lựa chọn.',
+                ),
+              ),
             // Người khám
             Row(
               children: [
@@ -163,7 +179,7 @@ class ConfirmBookingStep extends StatelessWidget {
                     },
                     textCapitalization: TextCapitalization.characters,
                     autocorrect: false,
-                    enabled: !c.voucherLoading && !c.submitting,
+                    enabled: !c.voucherLoading && !c.locked,
                     decoration: const InputDecoration(
                       hintText: 'Nhập mã, ví dụ: DENTAL10',
                       border: OutlineInputBorder(),
@@ -176,7 +192,7 @@ class ConfirmBookingStep extends StatelessWidget {
                 ),
                 const SizedBox(width: 8),
                 TextButton(
-                  onPressed: c.voucherLoading || c.submitting
+                  onPressed: c.voucherLoading || c.locked
                       ? null
                       : () async {
                           FocusScope.of(context).unfocus();
@@ -231,7 +247,7 @@ class ConfirmBookingStep extends StatelessWidget {
                       ),
                     ),
                     TextButton(
-                      onPressed: c.submitting ? null : c.removeVoucher,
+                      onPressed: c.locked ? null : c.removeVoucher,
                       child: const Text('Gỡ mã'),
                     ),
                   ],
@@ -257,7 +273,7 @@ class ConfirmBookingStep extends StatelessWidget {
               },
               minLines: 2,
               maxLines: 5,
-              enabled: !c.submitting,
+              enabled: !c.locked,
               decoration: const InputDecoration(
                 hintText: 'Ví dụ: Tôi thường bị ê buốt răng...',
                 border: OutlineInputBorder(),

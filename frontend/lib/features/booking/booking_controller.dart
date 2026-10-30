@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math';
 import '../../core/config/app_config.dart';
 import 'package:flutter/foundation.dart';
 
@@ -105,6 +106,19 @@ class BookingController extends ChangeNotifier {
   bool submitting = false;
   Appointment? created;
 
+  /// Lần gửi trước bị mất kết nối/hết thời gian chờ: khóa mọi lựa chọn, chỉ cho
+  /// "Thử lại" (cùng Idempotency-Key) hoặc "Chọn lại".
+  bool awaitingRetry = false;
+  bool get locked => submitting || awaitingRetry;
+
+  /// Idempotency-Key của lựa chọn hiện tại; đổi khi lựa chọn đổi.
+  String? _requestKey;
+  String? _requestFingerprint;
+  String? get requestKey => _requestKey;
+
+  /// Lựa chọn của lần gửi gần nhất (để "Chọn lại" tìm lịch có thể đã tạo).
+  ({String patientId, String date, String startTime})? lastSent;
+
   /// Danh sách chỉ chứa slot hợp lệ, không chứa null.
   List<AvailabilitySlot> availabilitySlots = <AvailabilitySlot>[];
   bool availabilityLoading = false;
@@ -177,7 +191,7 @@ class BookingController extends ChangeNotifier {
   }
 
   void toggleCatalogItem(DentalService item) {
-    if (_disposed || submitting || created != null) return;
+    if (_disposed || locked || created != null) return;
 
     if (item.isCombo) {
       comboId = comboId == item.id ? null : item.id;
@@ -194,7 +208,7 @@ class BookingController extends ChangeNotifier {
 
   /// Giữ lại phương thức cũ để tương thích với các màn hình đang dùng.
   void toggleService(String id) {
-    if (_disposed || submitting || created != null) return;
+    if (_disposed || locked || created != null) return;
 
     if (!serviceIds.add(id)) serviceIds.remove(id);
 
@@ -303,6 +317,7 @@ class BookingController extends ChangeNotifier {
 
   /// Gọi POST /api/vouchers/validate để kiểm tra voucher.
   Future<bool> applyVoucher(String code) async {
+    if (awaitingRetry) return false;
     if (_disposed) return false;
 
     final trimmed = code.trim();
@@ -365,6 +380,7 @@ class BookingController extends ChangeNotifier {
   }
 
   void removeVoucher() {
+    if (awaitingRetry) return;
     if (_disposed) return;
 
     appliedVoucher = null;
@@ -502,14 +518,14 @@ class BookingController extends ChangeNotifier {
       };
 
   void selectPatient(String id) {
-    if (_disposed || submitting || created != null) return;
+    if (_disposed || locked || created != null) return;
     patientId = id;
     notifyListeners();
   }
 
   /// Truyền null để yêu cầu Backend tự chọn bác sĩ còn trống.
   void chooseDoctor(String? id) {
-    if (_disposed || submitting || created != null) return;
+    if (_disposed || locked || created != null) return;
 
     if (id != null && comboId != null && catalog != null) {
       final combo = _findCombo(comboId);
@@ -528,7 +544,7 @@ class BookingController extends ChangeNotifier {
   }
 
   void chooseDate(DateTime value) {
-    if (_disposed || submitting || created != null) return;
+    if (_disposed || locked || created != null) return;
 
     final today = now();
     final selectedDay = DateTime(value.year, value.month, value.day);
@@ -543,7 +559,7 @@ class BookingController extends ChangeNotifier {
 
   /// Chọn một slot tồn tại trong kết quả availability hiện tại.
   void chooseAvailabilitySlot(AvailabilitySlot slot) {
-    if (_disposed || submitting || created != null) return;
+    if (_disposed || locked || created != null) return;
 
     final available = availabilitySlots.whereType<AvailabilitySlot>().any(
           (item) =>
@@ -559,7 +575,7 @@ class BookingController extends ChangeNotifier {
 
   /// Giữ phương thức cũ để tương thích với nơi gọi chooseTime.
   void chooseTime(String value) {
-    if (_disposed || submitting || created != null) return;
+    if (_disposed || locked || created != null) return;
 
     for (final slot in availabilitySlots.whereType<AvailabilitySlot>()) {
       if (slot.startTime == value &&
@@ -584,7 +600,7 @@ class BookingController extends ChangeNotifier {
   }
 
   void back() {
-    if (_disposed || submitting || created != null) return;
+    if (_disposed || locked || created != null) return;
     if (step > 0) {
       step--;
       notifyListeners();
@@ -601,7 +617,7 @@ class BookingController extends ChangeNotifier {
     String? comboId,
     String? patientId,
   }) {
-    if (_disposed || submitting || created != null) return;
+    if (_disposed || locked || created != null) return;
 
     if (replaceSelection) {
       this.serviceIds.clear();
@@ -650,6 +666,56 @@ class BookingController extends ChangeNotifier {
     _reloadIfPossible();
   }
 
+  static String _dateKey(DateTime value) =>
+      '${value.year.toString().padLeft(4, '0')}-'
+      '${value.month.toString().padLeft(2, '0')}-'
+      '${value.day.toString().padLeft(2, '0')}';
+
+  /// UUID v4 ngẫu nhiên an toàn (36 ký tự chữ, số và "-").
+  static String _newRequestKey() {
+    final random = Random.secure();
+    final bytes = List<int>.generate(16, (_) => random.nextInt(256));
+    bytes[6] = (bytes[6] & 0x0f) | 0x40;
+    bytes[8] = (bytes[8] & 0x3f) | 0x80;
+    final hex = bytes.map((b) => b.toRadixString(16).padLeft(2, '0')).join();
+    return '${hex.substring(0, 8)}-${hex.substring(8, 12)}-'
+        '${hex.substring(12, 16)}-${hex.substring(16, 20)}-${hex.substring(20)}';
+  }
+
+  /// Lịch còn hiệu lực khớp lần gửi gần nhất (cùng người khám, ngày, giờ).
+  /// Ghép ngày giờ bằng đúng hàm của model để so khớp với lịch từ máy chủ.
+  Appointment? matchLastSent(Iterable<Appointment> appointments) {
+    final sent = lastSent;
+    if (sent == null) return null;
+    final expected = Appointment.fromJson(
+        {'date': sent.date, 'startTime': sent.startTime}).scheduledAt;
+    return appointments
+        .where((a) =>
+            a.patientId == sent.patientId &&
+            a.hasValidScheduledAt &&
+            a.scheduledAt == expected &&
+            a.status.isUpcomingStatus)
+        .firstOrNull;
+  }
+
+  /// "Chọn lại" sau lỗi mạng mà máy chủ chưa có lịch: mở khóa, lần gửi sau
+  /// dùng key mới.
+  void unlockForNewRequest() {
+    if (_disposed || submitting) return;
+    awaitingRetry = false;
+    _requestKey = null;
+    _requestFingerprint = null;
+    notifyListeners();
+  }
+
+  /// "Chọn lại" thấy lịch vừa gửi đã được tạo: coi như đặt thành công.
+  void adoptCreated(Appointment appointment) {
+    if (_disposed || submitting) return;
+    awaitingRetry = false;
+    created = appointment;
+    notifyListeners();
+  }
+
   /// Tạo lịch hẹn qua POST /api/appointments.
   Future<Appointment?> submit({
     AppointmentsProvider? appointmentsProvider,
@@ -679,15 +745,46 @@ class BookingController extends ChangeNotifier {
           return null;
         }
       }
-      final appointment = await bookingService.createAppointment(
-        patientId: patientId,
-        date: date!,
-        startTime: time!,
-        doctorId: doctorId,
-        serviceIds: serviceIds.toList(),
-        comboId: comboId,
-        voucherCode: appliedVoucher,
-      );
+      final dateKey = _dateKey(date!);
+      final fingerprint = [
+        patientId,
+        dateKey,
+        time,
+        doctorId ?? '',
+        (serviceIds.toList()..sort()).join(','),
+        comboId ?? '',
+        appliedVoucher ?? '',
+        note.trim(),
+      ].join('|');
+      // Cùng lựa chọn (bấm lại, gửi lại sau lỗi mạng) thì dùng lại key cũ.
+      if (_requestKey == null || fingerprint != _requestFingerprint) {
+        _requestKey = _newRequestKey();
+        _requestFingerprint = fingerprint;
+      }
+      lastSent = (patientId: patientId, date: dateKey, startTime: time!);
+      final Appointment appointment;
+      try {
+        appointment = await bookingService.createAppointment(
+          patientId: patientId,
+          date: date!,
+          startTime: time!,
+          doctorId: doctorId,
+          serviceIds: serviceIds.toList(),
+          comboId: comboId,
+          voucherCode: appliedVoucher,
+          note: note,
+          requestKey: _requestKey,
+        );
+        awaitingRetry = false;
+      } on ApiException catch (e) {
+        // Mất kết nối: lịch có thể đã được tạo trên máy chủ, khóa lựa chọn.
+        awaitingRetry = e.kind == ApiErrorKind.connection ||
+            e.kind == ApiErrorKind.timeout;
+        rethrow;
+      } catch (_) {
+        awaitingRetry = false;
+        rethrow;
+      }
 
       if (_disposed ||
           !data.isSessionCurrent(patientGeneration) ||

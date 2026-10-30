@@ -95,6 +95,8 @@ class BookingService {
   }
 
   /// Tạo lịch hẹn thật.
+  /// [requestKey] gửi qua header Idempotency-Key: gửi lại cùng key thì máy chủ
+  /// trả lại đúng lịch đã tạo, không tạo trùng.
   Future<Appointment> createAppointment({
     required String patientId,
     required DateTime date,
@@ -103,6 +105,8 @@ class BookingService {
     List<String> serviceIds = const [],
     String? comboId,
     String? voucherCode,
+    String note = '',
+    String? requestKey,
   }) async {
     final body = <String, dynamic>{
       'patientId': patientId,
@@ -113,10 +117,12 @@ class BookingService {
       if (comboId != null && comboId.isNotEmpty) 'comboId': comboId,
       if (voucherCode != null && voucherCode.trim().isNotEmpty)
         'voucherCode': voucherCode.trim(),
+      'note': note.trim(),
     };
 
     final result = _readMap(
-      await _api.post('/api/appointments', body),
+      await _api.post('/api/appointments', body,
+          headers: requestKey == null ? null : {'Idempotency-Key': requestKey}),
     );
 
     return Appointment.fromJson(result);

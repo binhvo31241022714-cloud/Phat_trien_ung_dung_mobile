@@ -4,9 +4,15 @@ import '../booking_controller.dart';
 
 class BookingPriceSummary extends StatelessWidget {
   const BookingPriceSummary(
-      {required this.controller, required this.onNext, super.key});
+      {required this.controller,
+      required this.onNext,
+      this.onReselect,
+      super.key});
   final BookingController controller;
   final VoidCallback onNext;
+
+  /// Nút "Chọn lại" khi đang khóa sau lỗi mạng.
+  final VoidCallback? onReselect;
   @override
   Widget build(BuildContext context) => Card(
           child: Padding(
@@ -40,10 +46,15 @@ class BookingPriceSummary extends StatelessWidget {
                     spacing: 8,
                     crossAxisAlignment: WrapCrossAlignment.center,
                     children: [
-                      if (controller.step > 0)
+                      if (controller.awaitingRetry)
                         TextButton(
                             onPressed:
-                                controller.submitting ? null : controller.back,
+                                controller.submitting ? null : onReselect,
+                            child: const Text('Chọn lại'))
+                      else if (controller.step > 0)
+                        TextButton(
+                            onPressed:
+                                controller.locked ? null : controller.back,
                             child: const Text('Quay lại')),
                       FilledButton(
                           onPressed:
@@ -61,9 +72,11 @@ class BookingPriceSummary extends StatelessWidget {
                                   height: 18,
                                   child:
                                       CircularProgressIndicator(strokeWidth: 2))
-                              : Text(controller.step == 3
-                                  ? 'Xác nhận đặt lịch →'
-                                  : 'Tiếp theo →')),
+                              : Text(controller.awaitingRetry
+                                  ? 'Thử lại'
+                                  : controller.step == 3
+                                      ? 'Xác nhận đặt lịch →'
+                                      : 'Tiếp theo →')),
                     ]),
               ]),
         ]),

@@ -88,8 +88,38 @@ const STATUS_NOTIFICATIONS = {
   },
 };
 
+const IDEMPOTENCY_KEY = /^[A-Za-z0-9_-]{8,100}$/;
+const NOTE_MAX_LENGTH = 500;
+
+// Dấu vân tay nội dung yêu cầu: cùng Idempotency-Key mà khác nội dung thì 409.
+function requestFingerprint(input) {
+  const { createHash } = require('crypto');
+  return createHash('sha256').update(JSON.stringify(input)).digest('hex');
+}
+
+// Lỗi không được thử bác sĩ khác trong vòng lặp ứng viên.
+function fatalConflict(message) {
+  const error = new ApiError(409, message);
+  error.fatal = true;
+  return error;
+}
+
+// Đã có appointment_requests/{uid}_{key}: trả lại lịch đã tạo (hoặc 409 nếu khác nội dung).
+async function replayRequest(requestSnap, fingerprint, readAppointment) {
+  if (!requestSnap.exists) return null;
+  if (requestSnap.data().fingerprint !== fingerprint) {
+    throw fatalConflict('Mã yêu cầu đã dùng cho một lịch khác');
+  }
+  const appointmentSnap = await readAppointment(
+    db.collection('appointments').doc(requestSnap.data().appointmentId),
+  );
+  if (!appointmentSnap.exists) throw fatalConflict('Lịch hẹn của mã yêu cầu này không còn tồn tại');
+  return { id: appointmentSnap.id, ...appointmentSnap.data() };
+}
+
 // POST /api/appointments
-// Body: { patientId, doctorId?, serviceIds?, comboId?, date, startTime, voucherCode? }
+// Header tùy chọn: Idempotency-Key (gửi lại cùng key không tạo lịch trùng)
+// Body: { patientId, doctorId?, serviceIds?, comboId?, date, startTime, voucherCode?, note? }
 router.post('/', auth, asyncHandler(async (req, res) => {
   const uid = req.user.uid;
   const body = req.body || {};
@@ -112,19 +142,54 @@ router.post('/', auth, asyncHandler(async (req, res) => {
     }
   }
 
+  const requestKey = req.get('Idempotency-Key');
+  if (requestKey !== undefined && !IDEMPOTENCY_KEY.test(requestKey)) {
+    return res.status(400).json({ message: 'Idempotency-Key phải gồm 8 đến 100 ký tự chữ, số, "-" hoặc "_"' });
+  }
+  if (body.note !== undefined && body.note !== null && typeof body.note !== 'string') {
+    return res.status(400).json({ message: 'Ghi chú phải là chuỗi' });
+  }
+  const note = typeof body.note === 'string' ? body.note.trim() : '';
+  if (note.length > NOTE_MAX_LENGTH) {
+    return res.status(400).json({ message: `Ghi chú tối đa ${NOTE_MAX_LENGTH} ký tự` });
+  }
+
   const date = String(body.date || '');
   if (!isValidDateKey(date)) {
     return res.status(400).json({ message: 'date phải theo định dạng YYYY-MM-DD' });
   }
   const startTime = String(body.startTime || '');
   const startMinute = parseTime(startTime, 'startTime');
-  if (!isFutureAppointment(date, startTime)) {
-    return res.status(400).json({ message: 'Không thể đặt lịch vào thời gian đã qua' });
-  }
 
   const requestedDoctorId = typeof body.doctorId === 'string' && body.doctorId.trim()
     ? body.doctorId.trim()
     : null;
+
+  let requestRef = null;
+  let fingerprint = null;
+  if (requestKey !== undefined) {
+    requestRef = db.collection('appointment_requests').doc(`${uid}_${requestKey}`);
+    fingerprint = requestFingerprint({
+      patientId,
+      date,
+      startTime,
+      doctorId: requestedDoctorId,
+      serviceIds: Array.isArray(body.serviceIds)
+        ? [...new Set(body.serviceIds.map(String))].sort()
+        : [],
+      comboId: body.comboId || null,
+      voucherCode: String(body.voucherCode || body.code || '').trim().toUpperCase() || null,
+      note,
+    });
+    // Gửi lại: trả ngay lịch đã tạo. Phải kiểm tra trước khi xét khung giờ,
+    // vì slot đang bị chính lịch đó giữ.
+    const replayed = await replayRequest(await requestRef.get(), fingerprint, (ref) => ref.get());
+    if (replayed) return res.status(201).json(replayed);
+  }
+
+  if (!isFutureAppointment(date, startTime)) {
+    return res.status(400).json({ message: 'Không thể đặt lịch vào thời gian đã qua' });
+  }
   const quoteInput = {
     serviceIds: body.serviceIds || [],
     comboId: body.comboId || null,
@@ -186,6 +251,16 @@ router.post('/', auth, asyncHandler(async (req, res) => {
     try {
       const appointment = await db.runTransaction(async (transaction) => {
         // TẤT CẢ reads phải xong trước write để transaction Firestore hợp lệ.
+        // Đọc yêu cầu trước tiên: hai lần gửi cùng key chạy song song thì lần
+        // thua sẽ được Firestore chạy lại và nhận lịch của lần thắng.
+        if (requestRef) {
+          const replayed = await replayRequest(
+            await transaction.get(requestRef),
+            fingerprint,
+            (ref) => transaction.get(ref),
+          );
+          if (replayed) return replayed;
+        }
         const patientSnap = await transaction.get(patientRef);
         if (!patientSnap.exists && patientId !== uid) {
           throw new ApiError(400, 'Người khám không thuộc danh sách người thân của tài khoản này');
@@ -267,6 +342,7 @@ router.post('/', auth, asyncHandler(async (req, res) => {
           totalPrice: quote.totalPrice,
           discount: quote.discount,
           voucherCode: quote.voucherCode,
+          note,
           status: 'booked',
           slotKeys: lockRefs.map(({ ref }) => ref.id),
           createdAt: new Date(),
@@ -280,6 +356,15 @@ router.post('/', auth, asyncHandler(async (req, res) => {
           });
         }
         transaction.set(appointmentRef, appointmentData);
+        if (requestRef) {
+          transaction.set(requestRef, {
+            accountId: uid,
+            key: requestKey,
+            appointmentId: appointmentRef.id,
+            fingerprint,
+            createdAt: new Date(),
+          });
+        }
         for (const { lock, snapshot } of lockSnapshots) {
           // snapshot đã được kiểm tra chưa tồn tại trong transaction.
           transaction.set(lock.ref, {
@@ -311,6 +396,7 @@ router.post('/', auth, asyncHandler(async (req, res) => {
 
       return res.status(201).json(appointment);
     } catch (error) {
+      if (error.fatal) throw error;
       if (isRetryableSlotConflict(error) && !requestedDoctorId) {
         lastConflict = error;
         continue;

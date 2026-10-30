@@ -60,9 +60,12 @@ class ApiClient {
 
   Future<dynamic> get(String path) =>
       _send(() async => _client.get(_uri(path), headers: await _headers()));
-  Future<dynamic> post(String path, Map<String, dynamic> body) =>
+  /// [headers] thêm header riêng cho request, ví dụ Idempotency-Key.
+  Future<dynamic> post(String path, Map<String, dynamic> body,
+          {Map<String, String>? headers}) =>
       _send(() async => _client.post(_uri(path),
-          headers: await _headers(), body: jsonEncode(body)));
+          headers: {...await _headers(), ...?headers},
+          body: jsonEncode(body)));
   Future<dynamic> put(String path, Map<String, dynamic> body) =>
       _send(() async => _client.put(_uri(path),
           headers: await _headers(), body: jsonEncode(body)));

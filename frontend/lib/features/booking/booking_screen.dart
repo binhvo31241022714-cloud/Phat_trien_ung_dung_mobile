@@ -5,6 +5,7 @@ import '../../app/patient_navigation.dart';
 import '../../core/config/app_config.dart';
 import '../../data/api_client.dart';
 import '../../data/providers/patient_data_provider.dart';
+import '../records/appointment_api_status.dart';
 import '../../providers/appointments_provider.dart';
 import '../../providers/catalog_provider.dart';
 import '../../providers/profile_provider.dart';
@@ -119,7 +120,7 @@ class _BookingScreenState extends State<BookingScreen> {
     // Áp dụng yêu cầu mở đặt lịch từ màn hình khác.
     final pending = PatientNavigation.pendingBookingRequest;
 
-    if (pending != null && !c.submitting) {
+    if (pending != null && !c.locked) {
       // A follow-up starts a fresh draft after a previous successful booking.
       if (pending.replaceSelection && c.created != null) {
         c.removeListener(_changed);
@@ -142,7 +143,7 @@ class _BookingScreenState extends State<BookingScreen> {
     }
 
     final requestedPatient =
-        c.submitting ? null : data.takeBookingPatientRequest();
+        c.locked ? null : data.takeBookingPatientRequest();
 
     if (requestedPatient != null) {
       if (c.created != null) {
@@ -192,12 +193,13 @@ class _BookingScreenState extends State<BookingScreen> {
     });
   }
 
-  void leave(int tab) {
+  void leave(int tab, {String? appointmentId}) {
     if (c.created == null) return;
 
     c.data.focusAppointmentsFor(
       c.created!.patientId,
       showAppointments: tab == 2,
+      appointmentId: appointmentId,
     );
 
     final data = c.data;
@@ -295,9 +297,46 @@ class _BookingScreenState extends State<BookingScreen> {
           : 'Chưa thể tạo lịch. Vui lòng thử lại.';
 
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(message)),
+        SnackBar(
+          content: Text(message),
+          // Mất kết nối: "Thử lại" gửi lại với đúng Idempotency-Key cũ.
+          action: c.awaitingRetry
+              ? SnackBarAction(label: 'Thử lại', onPressed: next)
+              : null,
+        ),
       );
     }
+  }
+
+  /// "Chọn lại" sau lỗi mạng: tải lại lịch của tài khoản. Đã có lịch khớp lần
+  /// gửi (cùng người khám, ngày, giờ) thì coi như đặt thành công và mở lịch đó;
+  /// chưa có thì mở khóa, lần gửi sau dùng key mới.
+  Future<void> reselect() async {
+    final sent = c.lastSent;
+    if (!c.awaitingRetry || c.submitting || sent == null) return;
+    final controller = c;
+    final appointments = context.read<AppointmentsProvider>();
+    final messenger = ScaffoldMessenger.of(context);
+    await reloadAppointments(context);
+    if (!mounted || !identical(controller, c) || !c.awaitingRetry) return;
+    if (appointments.error != null) {
+      messenger.showSnackBar(SnackBar(
+          content: Text(
+              'Chưa kiểm tra được lịch đã đặt: ${appointments.error} Vui lòng thử lại.')));
+      return;
+    }
+    final match = c.matchLastSent(appointments.appointments);
+    if (match == null) {
+      c.unlockForNewRequest();
+      messenger.showSnackBar(const SnackBar(
+          content: Text(
+              'Chưa có lịch nào được tạo. Bạn có thể sửa lựa chọn và gửi lại.')));
+      return;
+    }
+    c.adoptCreated(match);
+    messenger.showSnackBar(const SnackBar(
+        content: Text('Lịch hẹn đã được đặt thành công trước đó.')));
+    leave(2, appointmentId: match.id);
   }
 
   @override
@@ -623,7 +662,7 @@ class _BookingScreenState extends State<BookingScreen> {
                                               ),
                                             ),
                                             items: patientItems,
-                                            onChanged: c.submitting
+                                            onChanged: c.locked
                                                 ? null
                                                 : (value) {
                                                     if (value != null) {
@@ -742,6 +781,7 @@ class _BookingScreenState extends State<BookingScreen> {
                                   BookingPriceSummary(
                                     controller: c,
                                     onNext: next,
+                                    onReselect: reselect,
                                   ),
                                 ],
                               ),
