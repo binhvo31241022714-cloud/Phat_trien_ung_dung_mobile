@@ -33,6 +33,25 @@ function isRetryableSlotConflict(error) {
 router.post('/', auth, asyncHandler(async (req, res) => {
   const uid = req.user.uid;
   const body = req.body || {};
+
+  // Kiểm tra người khám trước mọi bước về dịch vụ, lịch làm việc, khung giờ, slot.
+  // Transaction bên dưới kiểm tra lại lần nữa phòng người thân bị xóa giữa chừng.
+  const patientId = typeof body.patientId === 'string' && body.patientId.trim()
+    ? body.patientId.trim()
+    : uid;
+  const patientRef = patientId === uid
+    ? db.collection('users').doc(uid)
+    : db.collection('users').doc(uid).collection('family_members').doc(patientId);
+  if (patientId !== uid) {
+    const patientSnap = await patientRef.get();
+    if (!patientSnap.exists) {
+      return res.status(400).json({ message: 'Người khám không thuộc danh sách người thân của tài khoản này' });
+    }
+    if (patientSnap.data().isArchived === true) {
+      return res.status(400).json({ message: 'Người thân này đã bị xóa khỏi danh sách, không thể đặt lịch mới' });
+    }
+  }
+
   const date = String(body.date || '');
   if (!isValidDateKey(date)) {
     return res.status(400).json({ message: 'date phải theo định dạng YYYY-MM-DD' });
@@ -43,9 +62,6 @@ router.post('/', auth, asyncHandler(async (req, res) => {
     return res.status(400).json({ message: 'Không thể đặt lịch vào thời gian đã qua' });
   }
 
-  const patientId = typeof body.patientId === 'string' && body.patientId.trim()
-    ? body.patientId.trim()
-    : uid;
   const requestedDoctorId = typeof body.doctorId === 'string' && body.doctorId.trim()
     ? body.doctorId.trim()
     : null;
@@ -99,10 +115,6 @@ router.post('/', auth, asyncHandler(async (req, res) => {
     return res.status(409).json({ message: 'Không có bác sĩ đủ điều kiện làm việc trong khung giờ đã chọn' });
   }
 
-  const patientRef = patientId === uid
-    ? db.collection('users').doc(uid)
-    : db.collection('users').doc(uid).collection('family_members').doc(patientId);
-
   let lastConflict = null;
   for (const candidate of candidates) {
     const { doctor, schedule } = candidate;
@@ -117,6 +129,9 @@ router.post('/', auth, asyncHandler(async (req, res) => {
         const patientSnap = await transaction.get(patientRef);
         if (!patientSnap.exists && patientId !== uid) {
           throw new ApiError(400, 'Người khám không thuộc danh sách người thân của tài khoản này');
+        }
+        if (patientId !== uid && patientSnap.data().isArchived === true) {
+          throw new ApiError(400, 'Người thân này đã bị xóa khỏi danh sách, không thể đặt lịch mới');
         }
 
         const doctorSnap = await transaction.get(doctorRef);

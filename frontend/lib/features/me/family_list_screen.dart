@@ -63,7 +63,8 @@ class _FamilyListScreenState extends State<FamilyListScreen> {
                     builder: (dialogContext) => AlertDialog(
                             title: const Text('Xóa người thân?'),
                             content: Text(
-                                'Bạn có muốn xóa ${p.fullName} khỏi danh sách người thân?'),
+                                'Xóa ${p.fullName} khỏi danh sách người thân? '
+                                'Hồ sơ khám, hóa đơn và lịch hẹn cũ của người này vẫn được giữ.'),
                             actions: [
                               TextButton(
                                   onPressed: () =>

@@ -14,6 +14,11 @@ class FakeProfileBackend {
 
   /// Đặt khác null để mọi request trả lỗi HTTP này.
   int? failStatus;
+
+  /// Id người thân còn lịch hẹn sắp tới: DELETE trả 409 như backend thật.
+  final Set<String> withUpcomingAppointments = {};
+  static const upcomingMessage =
+      'Người thân này còn lịch hẹn sắp tới. Vui lòng hủy lịch hẹn trước khi xóa.';
   int _nextId = 1;
 
   FakeProfileBackend(
@@ -61,6 +66,9 @@ class FakeProfileBackend {
       final index = family.indexWhere((m) => m['id'] == id);
       if (index < 0) return _json({'message': 'Không tìm thấy'}, 404);
       if (request.method == 'DELETE') {
+        if (withUpcomingAppointments.contains(id)) {
+          return _json({'message': upcomingMessage}, 409);
+        }
         family.removeAt(index);
         return _json({'message': 'Đã xóa'});
       }

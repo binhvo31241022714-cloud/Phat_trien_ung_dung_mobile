@@ -65,10 +65,10 @@ Khi test bằng `api-test.http`: bật server, bấm request **1. Đăng nhập*
 | POST   | /api/users/sync           | Có  | Tạo hồ sơ nếu chưa có. Body: `{ fullName, phone }` |
 | GET    | /api/users/me             | Có  | Xem hồ sơ của mình |
 | PATCH  | /api/users/me             | Có  | Sửa `fullName`, `phone`, `birthday`, `address`, giới tính và thông tin sức khỏe (xem bên dưới) |
-| GET    | /api/family-members       | Có  | Danh sách người thân |
+| GET    | /api/family-members       | Có  | Danh sách người thân (ẩn người đã xóa) |
 | POST   | /api/family-members       | Có  | Thêm người thân. Bắt buộc `fullName`; nhận thêm giới tính và thông tin sức khỏe |
 | PATCH  | /api/family-members/:id   | Có  | Sửa người thân (gồm cả giới tính và thông tin sức khỏe) |
-| DELETE | /api/family-members/:id   | Có  | Xóa người thân |
+| DELETE | /api/family-members/:id   | Có  | Xóa mềm người thân (xem "Xóa người thân" bên dưới) |
 | GET    | /api/services             | Không | Danh sách dịch vụ |
 | GET    | /api/services/:id         | Không | Chi tiết dịch vụ |
 | GET    | /api/combos               | Không | Danh sách combo |
@@ -100,6 +100,13 @@ Khi test bằng `api-test.http`: bật server, bấm request **1. Đăng nhập*
 - Kiểm tra giới tính và sức khỏe dùng chung ở `src/utils/health.js` (`readHealth`).
 - Khi GET, trường còn thiếu (dữ liệu cũ) được trả giá trị mặc định: `""`, `[]` hoặc `false` (`withHealthDefaults`).
 - PATCH chỉ đổi những trường có gửi lên; POST người thân thiếu trường thì lưu mặc định.
+
+### Xóa người thân (xóa mềm)
+
+- `DELETE /api/family-members/:id` không xóa document mà đặt `isArchived: true` và `archivedAt` (Timestamp), để hồ sơ khám, hóa đơn, lịch hẹn cũ vẫn còn.
+- Người thân còn lịch hẹn chưa hủy và chưa diễn ra thì trả **409**, phải hủy lịch trước.
+- Người thân đã xóa: không hiện trong `GET /api/family-members`, `PATCH`/`DELETE` trả 404, **không đặt lịch mới được** (`POST /api/appointments` trả 400), nhưng chủ tài khoản **vẫn xem được hồ sơ khám cũ** (`utils/records.js` chỉ kiểm tra document còn tồn tại).
+- Module khác đọc `family_members` để kiểm tra người khám thì nhớ xét `isArchived` nếu là thao tác tạo mới.
 
 ### Ghi chú về isActive
 

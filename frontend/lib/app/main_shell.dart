@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../core/config/app_config.dart';
+import '../data/models/family_member.dart';
 import '../data/models/user_profile.dart';
 import '../data/providers/patient_data_provider.dart';
 import '../providers/appointments_provider.dart';
@@ -25,6 +26,7 @@ class MainShell extends StatefulWidget {
 class _MainShellState extends State<MainShell> {
   int _selectedIndex = 0;
   UserProfile? _appliedProfile;
+  List<FamilyMember>? _appliedFamily;
 
   @override
   void initState() {
@@ -66,8 +68,28 @@ class _MainShellState extends State<MainShell> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
+    final profiles = context.watch<ProfileProvider>();
+    // Thêm/sửa/xóa người thân xong thì ProfileProvider tải lại danh sách:
+    // đồng bộ luôn người khám để tab Hồ sơ và Đặt lịch thấy ngay.
+    final family = profiles.family;
+    if (AppConfig.current.dataSource == DataSource.api &&
+        profiles.familyLoaded &&
+        profiles.profile != null &&
+        !identical(family, _appliedFamily)) {
+      _appliedFamily = family;
+      final records = context.read<PatientDataProvider>();
+      final generation = records.sessionGeneration;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        final latest = profiles.profile;
+        if (!mounted || !records.isSessionCurrent(generation) || latest == null) {
+          return;
+        }
+        records.syncPatients(latest, profiles.family, generation: generation);
+      });
+    }
+
     // Có hồ sơ mới thì đổi tên "Bản thân" trong dữ liệu đặt lịch/hồ sơ khám.
-    final profile = context.watch<ProfileProvider>().profile;
+    final profile = profiles.profile;
     if (profile != null && !identical(profile, _appliedProfile)) {
       _appliedProfile = profile;
       final records = context.read<PatientDataProvider>();

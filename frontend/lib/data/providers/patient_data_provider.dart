@@ -162,8 +162,22 @@ class PatientDataProvider extends SessionNotifier {
     _patients
       ..clear()
       ..addAll(patients);
-    if (!_patients.any((patient) => patient.id == _selectedPatientId)) {
+    bool missing(String? id) =>
+        id != null && !_patients.any((patient) => patient.id == id);
+    if (missing(_selectedPatientId)) {
       _selectedPatientId = profile.id;
+    }
+    // Người đang xem ở tab Hồ sơ vừa bị xóa: quay về "Bản thân" và đóng các
+    // trang chi tiết của người đó (giống removeFamilyMember), nếu không
+    // recordsPatient không tìm thấy người và tab Hồ sơ bị lỗi.
+    if (missing(_appointmentPatientId)) {
+      _appointmentPatientId = profile.id;
+      recordsFocusVersion++;
+      recordsShowAppointments = false;
+      recordsAppointmentId = null;
+    }
+    if (missing(_bookingPatientRequest)) {
+      _bookingPatientRequest = profile.id;
     }
     notifyListeners();
   }
