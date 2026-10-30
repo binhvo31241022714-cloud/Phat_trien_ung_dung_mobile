@@ -1,3 +1,4 @@
+import '../providers/content_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -36,21 +37,30 @@ class _MainShellState extends State<MainShell> {
         profiles.ensureLoaded();
         return;
       }
-      final appointments = context.read<AppointmentsProvider>();
-      profiles.ensureLoaded().then((_) async {
-        if (!mounted || profiles.profile == null) return;
-        if (!profiles.familyLoaded) await profiles.loadFamily();
-        if (!mounted) return;
-        final records = context.read<PatientDataProvider>();
-        records.syncPatients(profiles.profile!, profiles.family);
-        await records.loadRecords();
-        await appointments.ensureLoaded();
-        if (!mounted) return;
-        records.replaceAppointments(appointments.appointments);
-      });
+      _loadAccount();
       // Dịch vụ, combo, bác sĩ và mục yêu thích.
       context.read<CatalogProvider>().ensureLoaded();
     });
+  }
+
+  Future<void> _loadAccount() async {
+    final profiles = context.read<ProfileProvider>();
+    final records = context.read<PatientDataProvider>();
+    final appointments = context.read<AppointmentsProvider>();
+    final generation = records.sessionGeneration;
+    bool current() => mounted && records.isSessionCurrent(generation);
+    await profiles.ensureLoaded();
+    if (!current() || profiles.profile == null) return;
+    if (!profiles.familyLoaded) await profiles.loadFamily();
+    if (!current()) return;
+    records.syncPatients(profiles.profile!, profiles.family,
+        generation: generation);
+    await records.loadRecords();
+    if (!current()) return;
+    await appointments.ensureLoaded();
+    if (!current()) return;
+    records.replaceAppointments(appointments.appointments,
+        generation: generation);
   }
 
   @override
@@ -60,9 +70,15 @@ class _MainShellState extends State<MainShell> {
     final profile = context.watch<ProfileProvider>().profile;
     if (profile != null && !identical(profile, _appliedProfile)) {
       _appliedProfile = profile;
+      final records = context.read<PatientDataProvider>();
+      final generation = records.sessionGeneration;
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (!mounted) return;
-        context.read<PatientDataProvider>().applyAccountProfile(
+        if (!mounted ||
+            !records.isSessionCurrent(generation) ||
+            records.patients.isEmpty) {
+          return;
+        }
+        records.applyAccountProfile(
             name: profile.fullName,
             phone: profile.phone,
             dateOfBirth: profile.birthday);
@@ -71,6 +87,11 @@ class _MainShellState extends State<MainShell> {
   }
 
   void _onTabSelected(int index) {
+    if (index == 0 && AppConfig.current.dataSource == DataSource.api) {
+      final content = context.read<ContentProvider>();
+      content.loadHome();
+      content.loadUnread();
+    }
     setState(() {
       _selectedIndex = index;
     });
@@ -78,6 +99,19 @@ class _MainShellState extends State<MainShell> {
 
   @override
   Widget build(BuildContext context) {
+    if (AppConfig.current.dataSource == DataSource.api &&
+        context.watch<PatientDataProvider>().patients.isEmpty) {
+      final profiles = context.watch<ProfileProvider>();
+      return Scaffold(
+          body: Center(
+              child: profiles.profileError == null
+                  ? const CircularProgressIndicator()
+                  : Column(mainAxisSize: MainAxisSize.min, children: [
+                      Text(profiles.profileError!),
+                      TextButton(
+                          onPressed: _loadAccount, child: const Text('Thử lại'))
+                    ])));
+    }
     return MainShellScope(
       onSelectTab: _onTabSelected,
       selectedIndex: _selectedIndex,

@@ -27,12 +27,14 @@ class EditProfileScreen extends StatelessWidget {
               padding: EdgeInsets.only(top: 80), child: LoadingView()),
       ]);
     }
-    return _ProfileForm(profile: data);
+    return _ProfileForm(
+        key: ValueKey('${profile.sessionGeneration}:${data.id}'),
+        profile: data);
   }
 }
 
 class _ProfileForm extends StatefulWidget {
-  const _ProfileForm({required this.profile});
+  const _ProfileForm({required this.profile, super.key});
   final UserProfile profile;
   @override
   State<_ProfileForm> createState() => _ProfileFormState();
@@ -70,13 +72,15 @@ class _ProfileFormState extends State<_ProfileForm> {
   Future<void> _save() async {
     if (_saving || !_form.currentState!.validate()) return;
     setState(() => _saving = true);
-    final error = await context.read<ProfileProvider>().saveProfile(
+    final provider = context.read<ProfileProvider>();
+    final session = provider.sessionGeneration;
+    final error = await provider.saveProfile(
         fullName: _name.text,
         phone: _phone.text,
         birthday: _birthday,
         gender: _health.gender,
         health: _health.build());
-    if (!mounted) return;
+    if (!mounted || !provider.isSessionCurrent(session)) return;
     if (error != null) {
       setState(() => _saving = false);
       meMessage(context, 'Chưa lưu được: $error');

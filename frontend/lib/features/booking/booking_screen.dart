@@ -119,10 +119,20 @@ class _BookingScreenState extends State<BookingScreen> {
     // Áp dụng yêu cầu mở đặt lịch từ màn hình khác.
     final pending = PatientNavigation.pendingBookingRequest;
 
-    if (pending != null) {
+    if (pending != null && !c.submitting) {
+      // A follow-up starts a fresh draft after a previous successful booking.
+      if (pending.replaceSelection && c.created != null) {
+        c.removeListener(_changed);
+        c.dispose();
+        _controller =
+            BookingController(data, catalog: catalog, profile: profile)
+              ..addListener(_changed);
+      }
       PatientNavigation.pendingBookingRequest = null;
 
       c.applyInitialValues(
+        replaceSelection: pending.replaceSelection,
+        suggestedDate: pending.suggestedDate,
         doctorId: pending.doctorId,
         serviceIds: pending.serviceIds,
         restrictToServiceIds: pending.restrictToServiceIds,

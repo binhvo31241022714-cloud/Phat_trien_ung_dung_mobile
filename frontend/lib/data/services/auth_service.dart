@@ -38,7 +38,21 @@ abstract interface class AuthService {
   Future<void> syncProfile({String? fullName});
 }
 
-class FirebaseAuthService implements AuthService {
+/// Non-secret identity events; never exposes an ID token.
+abstract interface class AuthIdentitySource {
+  String? get currentUid;
+  String? get currentEmail;
+  Stream<String?> get uidChanges;
+}
+
+class FirebaseAuthService implements AuthService, AuthIdentitySource {
+  @override
+  String? get currentUid => _auth.currentUser?.uid;
+  @override
+  String? get currentEmail => _auth.currentUser?.email;
+  @override
+  Stream<String?> get uidChanges =>
+      _auth.authStateChanges().map((user) => user?.uid).distinct();
   // Chỉ lấy FirebaseAuth khi thật sự dùng, để tạo đối tượng này không cần
   // Firebase đã khởi tạo.
   FirebaseAuth get _auth => FirebaseAuth.instance;

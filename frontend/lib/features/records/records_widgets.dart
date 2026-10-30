@@ -25,15 +25,20 @@ class RecordsRoutes {
 }
 
 class RecordsPage extends StatelessWidget {
-  const RecordsPage({required this.title, required this.children, super.key});
+  const RecordsPage(
+      {required this.title,
+      required this.children,
+      this.useRecordsState = true,
+      super.key});
   final String title;
+  final bool useRecordsState;
   final List<Widget> children;
   @override
   Widget build(BuildContext context) {
     final data = context.watch<PatientDataProvider>();
-    final content = data.recordsLoading
+    final content = useRecordsState && data.recordsLoading
         ? const Center(child: CircularProgressIndicator())
-        : data.recordsError != null
+        : useRecordsState && data.recordsError != null
             ? Center(
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
@@ -240,3 +245,7 @@ String visitDoctor(PatientDataProvider data, Visit v) {
 
 String recordDateTime(DateTime date) =>
     '${formatVietnameseDate(date)} · ${formatVietnameseTime(date)}';
+
+String appointmentDateText(Appointment a) => a.hasValidScheduledAt
+    ? recordDateTime(a.scheduledAt)
+    : 'Chưa có thông tin ngày giờ';

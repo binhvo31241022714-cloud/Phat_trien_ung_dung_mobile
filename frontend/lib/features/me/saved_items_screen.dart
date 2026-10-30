@@ -1,3 +1,4 @@
+import '../../core/config/app_config.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../core/widgets/error_state.dart';
@@ -65,9 +66,18 @@ class _SavedItemsScreenState extends State<SavedItemsScreen> {
   Widget build(BuildContext context) {
     final data = context.watch<PatientDataProvider>();
     final catalog = context.watch<CatalogProvider>();
-    // Bài viết vẫn là dữ liệu mock của module Nội dung.
-    final articles = data.savedArticles;
-    final items = _items;
+    // API articles come only from server favorites; demo bookmarks stay local.
+    final isApi = AppConfig.current.dataSource == DataSource.api;
+    final articles = isApi
+        ? (_items?.articles ?? [])
+            .where((a) => catalog.isSaved('article', a.id))
+            .toList()
+        : data.savedArticles;
+    // A catalog error in Module 1 must not hide independently saved demo articles.
+    final items = _items ??
+        (!isApi && articles.isNotEmpty
+            ? const SavedCatalogItems(services: [], doctors: [])
+            : null);
     if (items == null) {
       return MePage(title: 'Đã lưu', children: [
         if (_error != null && !_loading)
@@ -150,8 +160,10 @@ class _SavedItemsScreenState extends State<SavedItemsScreen> {
           _SavedTile(
               a.title,
               'Bài viết',
-              () => MeRoutes.open(context, MeRoutes.article, arguments: a),
-              () => data.toggleSavedArticle(a.id)),
+              () => _open(MeRoutes.article, a),
+              () => isApi
+                  ? _remove('article', a.id)
+                  : data.toggleSavedArticle(a.id)),
       if (show(_SavedTab.services))
         for (final s in services)
           _SavedTile(

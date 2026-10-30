@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 
 import '../../../data/models/doctor.dart';
@@ -25,23 +24,20 @@ class SelectDoctorStep extends StatelessWidget {
   Widget build(BuildContext context) {
     final catalog = controller.catalog;
 
-    final allDoctors = catalog == null
-        ? controller.data.doctors
-        : catalog.doctors;
+    final allDoctors =
+        catalog == null ? controller.data.doctors : catalog.doctors;
 
     final catalogReady = catalog == null || catalog.loaded;
 
     // Tổng hợp các dịch vụ riêng lẻ và dịch vụ trong combo.
     final selectedCombos = controller.services
         .where(
-          (service) =>
-              service.isCombo && service.id == controller.comboId,
+          (service) => service.isCombo && service.id == controller.comboId,
         )
         .toList();
 
     final invalidCombo = controller.comboId != null &&
-        (selectedCombos.isEmpty ||
-            selectedCombos.first.serviceIds.isEmpty);
+        (selectedCombos.isEmpty || selectedCombos.first.serviceIds.isEmpty);
 
     final requiredServiceIds = <String>{
       ...controller.serviceIds,
@@ -78,9 +74,7 @@ class SelectDoctorStep extends StatelessWidget {
       children: [
         Card(
           child: ListTile(
-            onTap: canSelect
-                ? () => controller.chooseDoctor(null)
-                : null,
+            onTap: canSelect ? () => controller.chooseDoctor(null) : null,
             leading: const Icon(
               Icons.shuffle,
               color: Color(0xFF247BF3),
@@ -98,7 +92,6 @@ class SelectDoctorStep extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 12),
-
         if (catalog != null && !catalog.loaded) ...[
           if (catalog.loading)
             const Padding(
@@ -128,9 +121,7 @@ class SelectDoctorStep extends StatelessWidget {
                   ),
                   const SizedBox(height: 12),
                   OutlinedButton.icon(
-                    onPressed: catalog.loading
-                        ? null
-                        : () => catalog.load(),
+                    onPressed: catalog.loading ? null : () => catalog.load(),
                     icon: const Icon(Icons.refresh),
                     label: const Text('Thử lại'),
                   ),
@@ -159,8 +150,7 @@ class SelectDoctorStep extends StatelessWidget {
               child: Card(
                 child: InkWell(
                   borderRadius: BorderRadius.circular(16),
-                  onTap: controller.submitting ||
-                          controller.created != null
+                  onTap: controller.submitting || controller.created != null
                       ? null
                       : () => controller.chooseDoctor(doctor.id),
                   child: Padding(
@@ -182,8 +172,7 @@ class SelectDoctorStep extends StatelessWidget {
                             const SizedBox(width: 12),
                             Expanded(
                               child: Column(
-                                crossAxisAlignment:
-                                    CrossAxisAlignment.start,
+                                crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text(
                                     doctor.fullName,

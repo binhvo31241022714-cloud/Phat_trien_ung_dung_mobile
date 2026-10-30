@@ -33,14 +33,18 @@ class ArticleCard extends StatelessWidget {
             child: SizedBox(
               height: 144,
               width: double.infinity,
-              child: article.imageAsset == null
-                  ? const _ArticlePlaceholder()
-                  : Image.asset(
-                      article.imageAsset!,
+              child: article.imageUrl != null
+                  ? Image.network(article.imageUrl!,
                       fit: BoxFit.cover,
-                      errorBuilder: (context, error, stackTrace) =>
-                          const _ArticlePlaceholder(),
-                    ),
+                      errorBuilder: (_, __, ___) => const _ArticlePlaceholder())
+                  : article.imageAsset == null
+                      ? const _ArticlePlaceholder()
+                      : Image.asset(
+                          article.imageAsset!,
+                          fit: BoxFit.cover,
+                          errorBuilder: (context, error, stackTrace) =>
+                              const _ArticlePlaceholder(),
+                        ),
             ),
           ),
           Padding(
@@ -85,8 +89,12 @@ class ArticleCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 12),
                 Text(
-                  '${formatVietnameseDate(article.publishedAt)} · '
-                  '${article.readingMinutes} phút đọc',
+                  [
+                    if (article.hasPublishedDate)
+                      formatVietnameseDate(article.publishedAt),
+                    if (article.readingMinutes != null)
+                      '${article.readingMinutes} phút đọc'
+                  ].join(' · '),
                   style: Theme.of(context).textTheme.bodySmall,
                 ),
               ],

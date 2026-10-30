@@ -1,3 +1,6 @@
+import '../../data/models/home_appointment.dart';
+import '../../core/config/app_config.dart';
+import '../../providers/content_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -54,25 +57,38 @@ class _HomeOverview extends StatelessWidget {
     final displayName = context
         .watch<ProfileProvider>()
         .displayName(context.watch<UserProvider>().account.email);
+    final content = AppConfig.current.dataSource == DataSource.api
+        ? context.watch<ContentProvider>()
+        : null;
+    final articles = content == null
+        ? data.articles
+        : (content.home?.articles ?? <Article>[]);
     final scale = MediaQuery.textScalerOf(context).scale(14) / 14;
     final extraScale = scale > 1 ? scale - 1 : 0.0;
     final now = DateTime.now();
-    final upcomingAppointments = data.appointments
-        .where(
-          (appointment) =>
-              appointment.patientId == data.appointmentPatientId &&
-              appointment.status != AppointmentStatus.cancelled &&
-              appointment.status != AppointmentStatus.completed &&
-              !appointment.scheduledAt.isBefore(now),
-        )
-        .toList()
+    final upcomingAppointments = content != null
+        ? <Appointment>[
+            if (content.home?.appointment != null) content.home!.appointment!
+          ]
+        : data.appointments
+            .where(
+              (appointment) =>
+                  appointment.patientId == data.appointmentPatientId &&
+                  appointment.status != AppointmentStatus.cancelled &&
+                  appointment.status != AppointmentStatus.completed &&
+                  !appointment.scheduledAt.isBefore(now),
+            )
+            .toList()
       ..sort((a, b) => a.scheduledAt.compareTo(b.scheduledAt));
 
     // Dịch vụ và bác sĩ lấy từ API. API chưa có cờ "nổi bật" nên lấy 6 dịch
     // vụ đầu tiên.
-    final catalog = context.watch<CatalogProvider>();
-    final featuredServices = catalog.services.take(6).toList();
-    final doctors = catalog.doctors;
+    context.watch<CatalogProvider>();
+    final featuredServices = content == null
+        ? data.services.take(6).toList()
+        : (content.home?.services ?? <DentalService>[]);
+    final doctors =
+        content == null ? data.doctors : (content.home?.doctors ?? []);
 
     return Scaffold(
       backgroundColor: const Color(0xFFF1F5FB),
@@ -112,10 +128,12 @@ class _HomeOverview extends StatelessWidget {
                             data.requestNotifications();
                             PatientNavigation.selectTab(context, 3);
                           },
-                          icon: const Icon(
-                            Icons.notifications_none_rounded,
-                            color: AppColors.textPrimary,
-                          ),
+                          icon: Badge(
+                              isLabelVisible: (content?.unreadCount ?? 0) > 0,
+                              label: Text('${content?.unreadCount ?? 0}'),
+                              child: const Icon(
+                                  Icons.notifications_none_rounded,
+                                  color: AppColors.textPrimary)),
                         ),
                       ),
                     ],
@@ -165,7 +183,16 @@ class _HomeOverview extends StatelessWidget {
                     ],
                   ),
                   const SizedBox(height: 24),
-                  _buildAppointmentCard(context, upcomingAppointments),
+                  if (content?.errors['unread'] != null)
+                    Row(children: [
+                      const Expanded(
+                          child: Text('Chưa tải được số thông báo chưa đọc.')),
+                      TextButton(
+                          onPressed: content!.loadUnread,
+                          child: const Text('Thử lại'))
+                    ]),
+                  _contentState(content) ??
+                      _buildAppointmentCard(context, upcomingAppointments),
                   const SizedBox(height: 24),
                   _buildSectionHeader(
                     icon: Icons.stars_rounded,
@@ -177,7 +204,7 @@ class _HomeOverview extends StatelessWidget {
                   const SizedBox(height: 12),
                   SizedBox(
                     height: 182 + 140 * extraScale,
-                    child: _catalogState(catalog) ??
+                    child: _contentState(content) ??
                         (featuredServices.isEmpty
                             ? const Center(
                                 child: Text('Chưa có dịch vụ nổi bật.'))
@@ -209,7 +236,7 @@ class _HomeOverview extends StatelessWidget {
                   const SizedBox(height: 12),
                   SizedBox(
                     height: 156 + 90 * extraScale,
-                    child: _catalogState(catalog) ??
+                    child: _contentState(content) ??
                         (doctors.isEmpty
                             ? const Center(
                                 child: Text('Chưa có thông tin bác sĩ.'))
@@ -241,24 +268,25 @@ class _HomeOverview extends StatelessWidget {
                   const SizedBox(height: 12),
                   SizedBox(
                     height: 206 + 160 * extraScale,
-                    child: data.articles.isEmpty
-                        ? const Center(child: Text('Chưa có bài viết.'))
-                        : ListView.separated(
-                            scrollDirection: Axis.horizontal,
-                            itemCount: data.articles.length,
-                            separatorBuilder: (_, __) =>
-                                const SizedBox(width: 12),
-                            itemBuilder: (context, index) {
-                              final article = data.articles[index];
-                              return _ArticleTile(
-                                article: article,
-                                onTap: () => CatalogNavigation.open(
-                                    context,
-                                    'Chi tiết bài viết',
-                                    ArticleDetailScreen(article: article)),
-                              );
-                            },
-                          ),
+                    child: _contentState(content) ??
+                        (articles.isEmpty
+                            ? const Center(child: Text('Chưa có bài viết.'))
+                            : ListView.separated(
+                                scrollDirection: Axis.horizontal,
+                                itemCount: articles.length,
+                                separatorBuilder: (_, __) =>
+                                    const SizedBox(width: 12),
+                                itemBuilder: (context, index) {
+                                  final article = articles[index];
+                                  return _ArticleTile(
+                                    article: article,
+                                    onTap: () => CatalogNavigation.open(
+                                        context,
+                                        'Chi tiết bài viết',
+                                        ArticleDetailScreen(article: article)),
+                                  );
+                                },
+                              )),
                   ),
                 ],
               ),
@@ -270,20 +298,21 @@ class _HomeOverview extends StatelessWidget {
   }
 
   /// Đang tải hoặc lỗi thì trả về widget tương ứng; có dữ liệu thì null.
-  Widget? _catalogState(CatalogProvider catalog) {
-    if (catalog.firstLoading) {
+  Widget? _contentState(ContentProvider? content) {
+    if (content == null) return null;
+    if (!content.signedIn) {
+      return const Center(child: Text('Vui lòng đăng nhập để xem Trang chủ.'));
+    }
+    if (content.loading('home') ||
+        content.home == null && content.errors['home'] == null) {
       return const Center(child: CircularProgressIndicator());
     }
-    if (!catalog.loaded && catalog.error != null) {
+    if (content.errors['home'] != null) {
       return Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(catalog.error!, textAlign: TextAlign.center),
-            TextButton(onPressed: catalog.load, child: const Text('Thử lại')),
-          ],
-        ),
-      );
+          child: Column(mainAxisSize: MainAxisSize.min, children: [
+        Text(content.errors['home']!, textAlign: TextAlign.center),
+        TextButton(onPressed: content.loadHome, child: const Text('Thử lại'))
+      ]));
     }
     return null;
   }
@@ -496,7 +525,7 @@ class _HomeOverview extends StatelessWidget {
                                       fit: BoxFit.scaleDown,
                                       alignment: Alignment.centerLeft,
                                       child: Text(
-                                        '${_formatTime(nextAppointment.scheduledAt)} - ${_formatTime(nextAppointment.scheduledAt.add(const Duration(minutes: 30)))}',
+                                        _appointmentTime(nextAppointment),
                                         style: const TextStyle(
                                           fontSize: 15,
                                           fontWeight: FontWeight.w600,
@@ -509,7 +538,7 @@ class _HomeOverview extends StatelessWidget {
                           Text(
                             _firstServiceName(
                               nextAppointment,
-                              data: context.read<PatientDataProvider>(),
+                              context: context,
                             ),
                             style: const TextStyle(
                               fontSize: 18,
@@ -521,8 +550,7 @@ class _HomeOverview extends StatelessWidget {
                           ),
                           const SizedBox(height: 4),
                           Text(
-                            _doctorName(nextAppointment,
-                                context.read<PatientDataProvider>()),
+                            _doctorName(nextAppointment, context),
                             style: const TextStyle(
                               fontSize: 14,
                               color: AppColors.textSecondary,
@@ -606,19 +634,50 @@ class _HomeOverview extends StatelessWidget {
     return names[month];
   }
 
+  String _appointmentTime(Appointment appointment) {
+    final start = _formatTime(appointment.scheduledAt);
+    final end = appointment.endAt;
+    if (end != null && end.isAfter(appointment.scheduledAt)) {
+      return '$start - ${_formatTime(end)}';
+    }
+    // API Home mapping already applies only an explicitly supplied duration.
+    return start;
+  }
+
   String _firstServiceName(Appointment appointment,
-      {required PatientDataProvider data}) {
+      {required BuildContext context}) {
+    if (appointment is HomeAppointment && appointment.serviceName != null) {
+      return appointment.serviceName!;
+    }
     if (appointment.serviceIds.isEmpty) return 'Dịch vụ';
-    for (final service in data.services) {
-      if (service.id == appointment.serviceIds.first) return service.name;
+    final services = AppConfig.current.dataSource == DataSource.api
+        ? context.read<CatalogProvider>().services
+        : context.read<PatientDataProvider>().services;
+    for (final service in services) {
+      if (service.id == appointment.serviceIds.first &&
+          service.name.trim().isNotEmpty) {
+        return service.name;
+      }
     }
     return 'Chưa có thông tin dịch vụ';
   }
 
-  String _doctorName(Appointment appointment, PatientDataProvider data) {
-    if (appointment.doctorId == null) return 'Chờ phân công';
-    for (final doctor in data.doctors) {
-      if (doctor.id == appointment.doctorId) return doctor.fullName;
+  String _doctorName(Appointment appointment, BuildContext context) {
+    if (AppConfig.current.dataSource == DataSource.api &&
+        appointment.doctorName?.trim().isNotEmpty == true) {
+      return appointment.doctorName!.trim();
+    }
+    if (appointment.doctorId == null || appointment.doctorId!.trim().isEmpty) {
+      return 'Chờ phân công';
+    }
+    final doctors = AppConfig.current.dataSource == DataSource.api
+        ? context.read<CatalogProvider>().doctors
+        : context.read<PatientDataProvider>().doctors;
+    for (final doctor in doctors) {
+      if (doctor.id == appointment.doctorId &&
+          doctor.fullName.trim().isNotEmpty) {
+        return doctor.fullName;
+      }
     }
     return 'Chưa có thông tin bác sĩ';
   }
@@ -799,10 +858,23 @@ class _ArticleTile extends StatelessWidget {
                 color: const Color(0xFFEAF1F8),
                 borderRadius: BorderRadius.circular(14),
               ),
-              child: const Icon(
-                Icons.menu_book_rounded,
-                size: 38,
-                color: AppColors.primary,
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(14),
+                child: article.imageUrl?.trim().isNotEmpty == true
+                    ? Image.network(
+                        article.imageUrl!.trim(),
+                        fit: BoxFit.cover,
+                        errorBuilder: (_, __, ___) => const Icon(
+                          Icons.menu_book_rounded,
+                          size: 38,
+                          color: AppColors.primary,
+                        ),
+                      )
+                    : const Icon(
+                        Icons.menu_book_rounded,
+                        size: 38,
+                        color: AppColors.primary,
+                      ),
               ),
             ),
             const SizedBox(height: 12),
@@ -821,7 +893,9 @@ class _ArticleTile extends StatelessWidget {
               children: [
                 Expanded(
                   child: Text(
-                    formatVietnameseDate(article.publishedAt),
+                    article.hasPublishedDate
+                        ? formatVietnameseDate(article.publishedAt)
+                        : '',
                     style: const TextStyle(
                       fontSize: 12,
                       color: AppColors.textSecondary,

@@ -1,3 +1,4 @@
+import 'booking_doctor_name.dart';
 
 import 'package:flutter/material.dart';
 
@@ -29,7 +30,6 @@ class BookingSuccessScreen extends StatelessWidget {
 
     final data = controller.data;
     final profile = controller.profile;
-    final catalog = controller.catalog;
 
     // Tìm người khám trong dữ liệu mẫu trước.
     // Dùng where().toList() để không phát sinh Bad state: No element.
@@ -39,8 +39,7 @@ class BookingSuccessScreen extends StatelessWidget {
 
     // Tìm người khám trong hồ sơ tài khoản thật.
     final currentProfile = profile?.profile;
-    final isAccountHolder =
-        currentProfile?.id == appointment.patientId;
+    final isAccountHolder = currentProfile?.id == appointment.patientId;
 
     // Tìm người khám trong danh sách người thân từ API.
     final familyMembers = profile?.family
@@ -64,31 +63,6 @@ class BookingSuccessScreen extends StatelessWidget {
       patientName = 'Người khám';
     }
 
-    // Bác sĩ có thể đến từ API hoặc dữ liệu mẫu.
-    final doctorId = appointment.doctorId;
-    final String doctorName;
-
-    if (doctorId == null || doctorId.trim().isEmpty) {
-      doctorName = 'Chờ phân công';
-    } else {
-      final catalogDoctors = catalog?.doctors
-              .where((doctor) => doctor.id == doctorId)
-              .toList() ??
-          [];
-
-      final localDoctors = data.doctors
-          .where((doctor) => doctor.id == doctorId)
-          .toList();
-
-      if (catalogDoctors.isNotEmpty) {
-        doctorName = catalogDoctors.first.fullName;
-      } else if (localDoctors.isNotEmpty) {
-        doctorName = localDoctors.first.fullName;
-      } else {
-        doctorName = 'Bác sĩ đã chọn';
-      }
-    }
-
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
       child: Card(
@@ -102,7 +76,6 @@ class BookingSuccessScreen extends StatelessWidget {
                 size: 48,
               ),
               const SizedBox(height: 16),
-
               const Text(
                 'Đặt lịch thành công!',
                 textAlign: TextAlign.center,
@@ -112,7 +85,6 @@ class BookingSuccessScreen extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 12),
-
               const Text(
                 'Thông tin đặt lịch đã được ghi nhận. '
                 'Vui lòng chờ phòng khám xác nhận.',
@@ -122,7 +94,6 @@ class BookingSuccessScreen extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 12),
-
               const Chip(
                 label: Text(
                   'Chờ xác nhận',
@@ -131,7 +102,6 @@ class BookingSuccessScreen extends StatelessWidget {
                 backgroundColor: Color(0xFFFFE2D4),
               ),
               const SizedBox(height: 12),
-
               Card(
                 child: Padding(
                   padding: const EdgeInsets.all(12),
@@ -140,16 +110,15 @@ class BookingSuccessScreen extends StatelessWidget {
                     children: [
                       Text('Người khám: $patientName'),
                       const SizedBox(height: 8),
-
                       Text(
-                        'Ngày giờ: '
-                        '${formatVietnameseDateTime(appointment.scheduledAt)}',
+                        'Ngày giờ: ${appointment.hasValidScheduledAt ? formatVietnameseDateTime(appointment.scheduledAt) : "Chưa có thông tin ngày giờ"}',
                       ),
                       const SizedBox(height: 8),
-
-                      Text('Bác sĩ: $doctorName'),
+                      BookingDoctorName(
+                          controller: controller,
+                          doctorId: appointment.doctorId,
+                          payloadName: appointment.doctorName),
                       const SizedBox(height: 8),
-
                       Row(
                         children: [
                           const Expanded(
@@ -165,7 +134,6 @@ class BookingSuccessScreen extends StatelessWidget {
                           ),
                         ],
                       ),
-
                       if (appointment.voucherCode != null &&
                           appointment.voucherCode!.trim().isNotEmpty) ...[
                         const SizedBox(height: 8),
@@ -176,7 +144,6 @@ class BookingSuccessScreen extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 12),
-
               SizedBox(
                 width: double.infinity,
                 child: FilledButton(
@@ -188,7 +155,6 @@ class BookingSuccessScreen extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 8),
-
               SizedBox(
                 width: double.infinity,
                 child: OutlinedButton(

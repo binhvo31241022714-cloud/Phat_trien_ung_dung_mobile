@@ -95,6 +95,10 @@ class BookingController extends ChangeNotifier {
   int? _apiTotal;
   int _durationMinutes = 30;
   bool quoteLoading = false;
+  String? quoteError;
+  bool get apiMode => AppConfig.current.dataSource == DataSource.api;
+  bool get quoteReady =>
+      !apiMode || (!quoteLoading && quoteError == null && _apiTotal != null);
 
   String note = '';
 
@@ -216,10 +220,11 @@ class BookingController extends ChangeNotifier {
     }).fold<int>(0, (sum, service) => sum + service.price);
   }
 
-  int get subtotal => _apiSubtotal ?? localSubtotal;
+  int get subtotal => _apiSubtotal ?? (apiMode ? 0 : localSubtotal);
   int get discount => _apiDiscount;
   int get total =>
-      _apiTotal ?? (subtotal - discount).clamp(0, double.infinity).toInt();
+      _apiTotal ??
+      (apiMode ? 0 : (subtotal - discount).clamp(0, double.infinity).toInt());
   int get durationMinutes => _durationMinutes;
 
   /// Gọi POST /api/bookings/quote để lấy giá và thời lượng chuẩn.
@@ -227,6 +232,7 @@ class BookingController extends ChangeNotifier {
     if (_disposed) return;
 
     if (!hasSelectedItems) {
+      quoteError = null;
       _quoteRequestId++;
       _apiSubtotal = null;
       _apiDiscount = 0;
@@ -237,7 +243,12 @@ class BookingController extends ChangeNotifier {
       return;
     }
 
+    final session = data.sessionGeneration;
     final requestId = ++_quoteRequestId;
+    quoteError = null;
+    _apiSubtotal = null;
+    _apiTotal = null;
+    _apiDiscount = 0;
     quoteLoading = true;
     notifyListeners();
 
@@ -248,20 +259,42 @@ class BookingController extends ChangeNotifier {
         voucherCode: appliedVoucher,
       );
 
-      if (_disposed || requestId != _quoteRequestId) return;
+      if (_disposed ||
+          !data.isSessionCurrent(session) ||
+          requestId != _quoteRequestId) {
+        return;
+      }
 
+      if (apiMode &&
+          (quote.durationMinutes <= 0 ||
+              quote.subtotal < 0 ||
+              quote.discount < 0 ||
+              quote.totalPrice < 0)) {
+        throw const ApiException(
+            'Báo giá máy chủ không hợp lệ. Vui lòng thử lại.');
+      }
       _apiSubtotal = quote.subtotal;
       _apiDiscount = quote.discount;
       _apiTotal = quote.totalPrice;
       _durationMinutes = quote.durationMinutes;
-    } catch (_) {
-      if (_disposed || requestId != _quoteRequestId) return;
-      // Giữ giá tạm tính cục bộ khi API chưa kết nối được.
+    } catch (error) {
+      if (_disposed ||
+          !data.isSessionCurrent(session) ||
+          requestId != _quoteRequestId) {
+        return;
+      }
+      if (apiMode) {
+        quoteError = error is ApiException
+            ? error.message
+            : 'Không thể tải giá từ máy chủ. Vui lòng thử lại.';
+      }
       _apiSubtotal = null;
       _apiDiscount = 0;
       _apiTotal = null;
     } finally {
-      if (!_disposed && requestId == _quoteRequestId) {
+      if (!_disposed &&
+          data.isSessionCurrent(session) &&
+          requestId == _quoteRequestId) {
         quoteLoading = false;
         notifyListeners();
       }
@@ -465,7 +498,7 @@ class BookingController extends ChangeNotifier {
   bool get canContinue => switch (step) {
         0 => hasSelectedItems,
         1 => doctorChosen,
-        _ => validTime,
+        _ => validTime && quoteReady,
       };
 
   void selectPatient(String id) {
@@ -560,6 +593,8 @@ class BookingController extends ChangeNotifier {
 
   /// Áp dụng giá trị chọn sẵn khi mở đặt lịch từ dịch vụ/combo/bác sĩ.
   void applyInitialValues({
+    bool replaceSelection = false,
+    DateTime? suggestedDate,
     String? doctorId,
     List<String>? serviceIds,
     bool? restrictToServiceIds,
@@ -568,6 +603,15 @@ class BookingController extends ChangeNotifier {
   }) {
     if (_disposed || submitting || created != null) return;
 
+    if (replaceSelection) {
+      this.serviceIds.clear();
+      this.comboId = null;
+      _preferredDoctorId = null;
+      this.doctorId = null;
+      doctorChosen = false;
+      this.restrictToServiceIds = false;
+      date = null;
+    }
     if (patientId != null && patientId.isNotEmpty) {
       this.patientId = patientId;
     }
@@ -586,6 +630,10 @@ class BookingController extends ChangeNotifier {
       doctorChosen = true;
     }
 
+    if (suggestedDate != null && suggestedDate.isAfter(now())) {
+      date =
+          DateTime(suggestedDate.year, suggestedDate.month, suggestedDate.day);
+    }
     _verifyDoctorForCurrentCombo();
     _resetAvailability();
     unawaited(refreshQuote());
@@ -617,10 +665,20 @@ class BookingController extends ChangeNotifier {
       return null;
     }
 
+    final patientGeneration = data.sessionGeneration;
+    final appointmentGeneration = appointmentsProvider?.sessionGeneration;
     submitting = true;
     notifyListeners();
 
     try {
+      if (apiMode && !quoteReady) {
+        await refreshQuote();
+        if (_disposed ||
+            !data.isSessionCurrent(patientGeneration) ||
+            !quoteReady) {
+          return null;
+        }
+      }
       final appointment = await bookingService.createAppointment(
         patientId: patientId,
         date: date!,
@@ -631,12 +689,22 @@ class BookingController extends ChangeNotifier {
         voucherCode: appliedVoucher,
       );
 
-      if (_disposed) return appointment;
+      if (_disposed ||
+          !data.isSessionCurrent(patientGeneration) ||
+          appointmentGeneration != null &&
+              !appointmentsProvider!.isSessionCurrent(appointmentGeneration)) {
+        return appointment;
+      }
 
       created = appointment;
-      appointmentsProvider?.addCreated(appointment);
-      // Giữ bản sao để tương thích với màn hình cũ.
-      data.addAppointment(appointment);
+      appointmentsProvider?.addCreated(appointment,
+          generation: appointmentGeneration);
+      if (AppConfig.current.dataSource == DataSource.api) {
+        data.upsertApiAppointment(appointment, generation: patientGeneration);
+      } else {
+        // Preserve demo validation and behavior independently of API IDs.
+        data.addAppointment(appointment, generation: patientGeneration);
+      }
       return appointment;
     } finally {
       submitting = false;

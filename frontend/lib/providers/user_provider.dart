@@ -1,3 +1,4 @@
+import '../core/config/app_config.dart';
 import 'package:flutter/foundation.dart';
 
 import 'dart:async';
@@ -13,6 +14,7 @@ import '../data/services/user_service.dart';
 class UserProvider extends ChangeNotifier {
   final UserService _service;
   final AuthService _auth;
+  final bool _hasIdentitySource;
   final SettingsStore _settings;
 
   /// App truyền [SharedPrefsSettingsStore] để lưu tùy chọn xuống máy;
@@ -24,8 +26,38 @@ class UserProvider extends ChangeNotifier {
       DateTime Function()? clock})
       : _service = service ?? UserService(),
         _auth = auth ?? FirebaseAuthService(),
+        _hasIdentitySource = auth is AuthIdentitySource,
         _settings = settings ?? MemorySettingsStore(),
-        _clock = clock ?? DateTime.now;
+        _clock = clock ?? DateTime.now {
+    if (auth is AuthIdentitySource) {
+      final identity = auth as AuthIdentitySource;
+      _identitySubscription = identity.uidChanges.listen((uid) {
+        if (_disposed) return;
+        _setIdentity(uid, identity.currentEmail ?? '');
+      }, onError: (_) {
+        if (!_disposed) _setIdentity(null, '');
+      });
+    }
+  }
+  StreamSubscription<String?>? _identitySubscription;
+  String? _uid;
+  int _sessionGeneration = 0;
+  String? get uid => _uid;
+  int get sessionGeneration => _sessionGeneration;
+  void _setIdentity(String? uid, String email) {
+    if (_uid == uid) return;
+    _uid = uid;
+    _sessionGeneration++;
+    _authenticated = uid != null;
+    _account =
+        UserModel(id: 1, name: '', email: email, createdAt: DateTime.now());
+    _users = [];
+    _error = null;
+    _isLoading = false;
+    _emailVerified = null;
+    _lastVerificationSent = null;
+    notifyListeners();
+  }
 
   /// Đồng hồ (test truyền đồng hồ giả để thử thời gian chờ gửi lại thư).
   final DateTime Function() _clock;
@@ -79,10 +111,23 @@ class UserProvider extends ChangeNotifier {
   }
 
   void signInDemo(String email) {
+    final source = _auth;
+    final identity = _hasIdentitySource
+        ? (source as AuthIdentitySource).currentUid
+        : 'demo:${email.trim()}';
+    // Demo fixtures retain their existing presentation; real identity is always UID.
+    if (_hasIdentitySource) {
+      _setIdentity(identity, (source as AuthIdentitySource).currentEmail ?? '');
+    } else if (_uid != identity) {
+      _uid = identity;
+      _sessionGeneration++;
+    }
     _account = UserModel(
         id: _account.id,
         name: _account.name,
-        email: email.trim(),
+        email: _hasIdentitySource
+            ? (source as AuthIdentitySource).currentEmail ?? ''
+            : email.trim(),
         phone: _account.phone,
         dateOfBirth: _account.dateOfBirth,
         createdAt: _account.createdAt);
@@ -91,6 +136,12 @@ class UserProvider extends ChangeNotifier {
   }
 
   void signOutDemo() {
+    final demoAccount = _account;
+    _setIdentity(null, '');
+    if (!_hasIdentitySource &&
+        AppConfig.current.dataSource == DataSource.mock) {
+      _account = demoAccount;
+    }
     _authenticated = false;
     notifyListeners();
   }
@@ -151,6 +202,7 @@ class UserProvider extends ChangeNotifier {
   }
 
   Future<void> logout() async {
+    signOutDemo();
     await _auth.signOut();
     _emailVerified = null;
     _lastVerificationSent = null;
@@ -218,7 +270,12 @@ class UserProvider extends ChangeNotifier {
   /// Gọi khi mở app: nếu Firebase còn nhớ phiên thì đánh dấu đã đăng nhập
   /// và sync lại ở nền (không bắt người dùng chờ mạng).
   Future<void> restoreSession() async {
+    final generation = _sessionGeneration;
     final email = await _auth.restoreEmail();
+    if (_disposed ||
+        generation != _sessionGeneration && _auth is! AuthIdentitySource) {
+      return;
+    }
     if (email == null) return;
     signInDemo(email);
     _emailVerified = _auth.isEmailVerified;
@@ -242,10 +299,17 @@ class UserProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  @override
+  void notifyListeners() {
+    if (!_disposed) super.notifyListeners();
+  }
+
   bool _disposed = false;
   @override
   void dispose() {
     _disposed = true;
+    _sessionGeneration++;
+    _identitySubscription?.cancel();
     _service.close();
     super.dispose();
   }
@@ -259,32 +323,43 @@ class UserProvider extends ChangeNotifier {
   String? get error => _error;
 
   Future<void> fetchUsers() async {
+    final generation = _sessionGeneration;
     if (_disposed || _isLoading) return;
     _isLoading = true;
     _error = null;
     notifyListeners();
     try {
       final result = await _service.getAll();
-      if (!_disposed) _users = result;
+      if (!_disposed && generation == _sessionGeneration) _users = result;
     } catch (e) {
-      if (!_disposed) {
+      if (!_disposed && generation == _sessionGeneration) {
         _users = [];
         _error = e.toString();
       }
     } finally {
-      _isLoading = false;
-      if (!_disposed) notifyListeners();
+      if (!_disposed && generation == _sessionGeneration) {
+        _isLoading = false;
+        notifyListeners();
+      }
     }
   }
 
   /// Trả về null nếu thành công, ngược lại trả về thông báo lỗi.
   Future<String?> saveUser(
       {int? id, required String name, required String email}) async {
+    final generation = _sessionGeneration;
     try {
       if (id == null) {
-        _users = [..._users, await _service.create(name, email)];
+        final created = await _service.create(name, email);
+        if (_disposed || generation != _sessionGeneration) {
+          return 'Phiên đăng nhập đã thay đổi.';
+        }
+        _users = [..._users, created];
       } else {
         final updated = await _service.update(id, name, email);
+        if (_disposed || generation != _sessionGeneration) {
+          return 'Phiên đăng nhập đã thay đổi.';
+        }
         _users = [for (final u in _users) u.id == id ? updated : u];
       }
       notifyListeners();
@@ -295,8 +370,12 @@ class UserProvider extends ChangeNotifier {
   }
 
   Future<String?> deleteUser(int id) async {
+    final generation = _sessionGeneration;
     try {
       await _service.delete(id);
+      if (_disposed || generation != _sessionGeneration) {
+        return 'Phiên đăng nhập đã thay đổi.';
+      }
       _users = _users.where((u) => u.id != id).toList();
       notifyListeners();
       return null;

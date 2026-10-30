@@ -1,7 +1,6 @@
+import '../../core/state/session_notifier.dart';
 import 'dart:async';
 import 'dart:collection';
-
-import 'package:flutter/foundation.dart';
 
 import '../../core/config/app_config.dart';
 import '../mock_data.dart';
@@ -16,10 +15,48 @@ import '../models/user_profile.dart';
 import '../services/records_service.dart';
 import '../../core/network/api_client.dart';
 
-class PatientDataProvider extends ChangeNotifier {
+class PatientDataProvider extends SessionNotifier {
   final RecordsService _recordsService;
-  PatientDataProvider({RecordsService? recordsService})
-      : _recordsService = recordsService ?? RecordsService();
+  PatientDataProvider({RecordsService? recordsService, bool seedDemo = true})
+      : _recordsService = recordsService ?? RecordsService() {
+    if (!seedDemo) clearPrivateState();
+  }
+
+  void resetDemoSession() {
+    clearPrivateState();
+    _patients.addAll(MockData.patients);
+    _appointments.addAll(MockData.appointments);
+    _notifications.addAll(MockData.notifications);
+    _selectedPatientId = MockData.patients.first.id;
+    notifyListeners();
+  }
+
+  int _recordsRequest = 0;
+  void clearPrivateState() {
+    invalidateSession();
+    _recordsRequest++;
+    _patients.clear();
+    _appointments.clear();
+    _notifications.clear();
+    _savedArticleIds.clear();
+    savedServiceIds.clear();
+    savedDoctorIds.clear();
+    _apiVisits = const [];
+    _apiPrescriptions = const [];
+    _apiReceipts = const [];
+    _apiTreatmentPlans = const [];
+    _apiFollowups = const [];
+    _selectedPatientId = '';
+    _appointmentPatientId = null;
+    _bookingPatientRequest = null;
+    recordsAppointmentId = null;
+    recordsShowAppointments = false;
+    recordsFocusVersion = 0;
+    notificationsOpenVersion = 0;
+    _recordsLoading = false;
+    _recordsError = null;
+    notifyListeners();
+  }
 
   final List<Patient> _patients = List.of(MockData.patients);
   final List<Appointment> _appointments = List.of(MockData.appointments);
@@ -98,7 +135,11 @@ class PatientDataProvider extends ChangeNotifier {
   Patient get selectedPatient =>
       patients.firstWhere((patient) => patient.id == _selectedPatientId);
 
-  void syncPatients(UserProfile profile, List<FamilyMember> family) {
+  void syncPatients(UserProfile profile, List<FamilyMember> family,
+      {int? generation}) {
+    if (isDisposed || generation != null && !isSessionCurrent(generation)) {
+      return;
+    }
     final patients = <Patient>[
       Patient(
         id: profile.id,
@@ -132,26 +173,37 @@ class PatientDataProvider extends ChangeNotifier {
       return;
     }
 
+    if (isDisposed || _patients.isEmpty) return;
     final id = patientId ?? _selectedPatientId;
     if (!_patients.any((patient) => patient.id == id) && patientId != null) {
       return;
     }
 
+    final generation = sessionGeneration;
+    final request = ++_recordsRequest;
+    bool current() =>
+        isSessionCurrent(generation) && request == _recordsRequest;
     _recordsLoading = true;
     _recordsError = null;
     notifyListeners();
     try {
       final visitRows = await _recordsService.visits(id);
+      if (!current()) return;
       final invoiceRows = await _recordsService.invoices(id);
+      if (!current()) return;
       final treatmentRows = await _recordsService.treatments(id);
+      if (!current()) return;
       final followupRows = await _recordsService.followups(id);
+      if (!current()) return;
       final visits = <Visit>[];
       final prescriptions = <Prescription>[];
       for (final row in visitRows.whereType<Map<String, dynamic>>()) {
         final visit = Visit.fromJson(row);
         final detail = await _recordsService.visit(visit.id);
+        if (!current()) return;
         visits.add(Visit.fromJson(detail));
         final prescriptionRows = await _recordsService.prescriptions(visit.id);
+        if (!current()) return;
         prescriptions.addAll(prescriptionRows
             .whereType<Map<String, dynamic>>()
             .map(Prescription.fromJson));
@@ -159,20 +211,23 @@ class PatientDataProvider extends ChangeNotifier {
       final receipts = <Receipt>[];
       for (final row in invoiceRows.whereType<Map<String, dynamic>>()) {
         final invoice = await _recordsService.invoice(row['id'].toString());
+        if (!current()) return;
         receipts.add(Receipt.fromJson(invoice));
       }
       final plans = <TreatmentPlan>[];
       for (final row in treatmentRows.whereType<Map<String, dynamic>>()) {
         final treatmentId = row['id'].toString();
         final detail = await _recordsService.treatment(treatmentId);
+        if (!current()) return;
         final sessionRows = await _recordsService.sessions(treatmentId);
+        if (!current()) return;
         final sessions = sessionRows
             .whereType<Map<String, dynamic>>()
             .map(TreatmentSession.fromJson)
             .toList();
         plans.add(TreatmentPlan.fromJson(detail, sessions: sessions));
       }
-      if (id == _selectedPatientId) {
+      if (current() && id == _selectedPatientId) {
         _apiVisits = visits;
         _apiPrescriptions = prescriptions;
         _apiReceipts = receipts;
@@ -182,11 +237,17 @@ class PatientDataProvider extends ChangeNotifier {
             .map(Followup.fromJson)
             .toList();
       }
-    } on ApiException catch (error) {
-      _recordsError = error.message;
+    } catch (error) {
+      if (current()) {
+        _recordsError = error is ApiException
+            ? error.message
+            : 'Không thể tải hồ sơ. Vui lòng thử lại.';
+      }
     } finally {
-      _recordsLoading = false;
-      notifyListeners();
+      if (current()) {
+        _recordsLoading = false;
+        notifyListeners();
+      }
     }
   }
 
@@ -198,8 +259,10 @@ class PatientDataProvider extends ChangeNotifier {
     if (AppConfig.current.dataSource != DataSource.api) {
       throw const ApiException('Dữ liệu demo chỉ được xem.');
     }
+    final generation = sessionGeneration;
+    if (isDisposed) return;
     await _recordsService.linkVisitToTreatment(treatmentId, visitId, sessionId);
-    await loadRecords();
+    if (isSessionCurrent(generation)) await loadRecords();
   }
 
   void selectPatient(String patientId) {
@@ -363,6 +426,7 @@ class PatientDataProvider extends ChangeNotifier {
     final current = now ?? DateTime.now();
     final result = appointments.where((a) => a.patientId == patientId).toList();
     bool upcoming(Appointment a) =>
+        a.hasValidScheduledAt &&
         a.scheduledAt.isAfter(current) &&
         (a.status == AppointmentStatus.pending ||
             a.status == AppointmentStatus.confirmed);
@@ -403,6 +467,7 @@ class PatientDataProvider extends ChangeNotifier {
         doctorId: a.doctorId,
         totalPrice: a.totalPrice,
         serviceIds: a.serviceIds,
+        hasValidScheduledAt: a.hasValidScheduledAt,
         scheduledAt: a.scheduledAt,
         status: AppointmentStatus.cancelled,
         note: a.note,
@@ -424,7 +489,10 @@ class PatientDataProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  void addAppointment(Appointment appointment) {
+  void addAppointment(Appointment appointment, {int? generation}) {
+    if (isDisposed || generation != null && !isSessionCurrent(generation)) {
+      return;
+    }
     if (_appointments.any((item) => item.id == appointment.id)) {
       throw ArgumentError.value(
         appointment.id,
@@ -461,7 +529,24 @@ class PatientDataProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  void replaceAppointments(List<Appointment> appointments) {
+  /// Apply a confirmed API response without consulting demo catalog IDs.
+  /// Session is required because callers may finish after logout/account change.
+  void upsertApiAppointment(Appointment appointment,
+      {required int generation}) {
+    if (!isSessionCurrent(generation)) return;
+    final index = _appointments.indexWhere((item) => item.id == appointment.id);
+    if (index < 0) {
+      _appointments.add(appointment);
+    } else {
+      _appointments[index] = appointment;
+    }
+    notifyListeners();
+  }
+
+  void replaceAppointments(List<Appointment> appointments, {int? generation}) {
+    if (isDisposed || generation != null && !isSessionCurrent(generation)) {
+      return;
+    }
     _appointments
       ..clear()
       ..addAll(appointments);

@@ -1,3 +1,4 @@
+import '../booking_doctor_name.dart';
 import 'package:flutter/material.dart';
 
 import '../../../core/utils/formatters.dart';
@@ -16,9 +17,8 @@ class ConfirmBookingStep extends StatelessWidget {
     final c = controller;
 
     // Tìm bệnh nhân an toàn trong dữ liệu mock.
-    final localPatients = c.data.patients
-        .where((patient) => patient.id == c.patientId)
-        .toList();
+    final localPatients =
+        c.data.patients.where((patient) => patient.id == c.patientId).toList();
 
     // Tìm hồ sơ chính chủ và người thân từ API.
     final currentProfile = c.profile?.profile;
@@ -30,8 +30,7 @@ class ConfirmBookingStep extends StatelessWidget {
 
     final String patientName;
 
-    if (currentProfile != null &&
-        currentProfile.id == c.patientId) {
+    if (currentProfile != null && currentProfile.id == c.patientId) {
       patientName = currentProfile.fullName.trim().isNotEmpty
           ? currentProfile.fullName
           : currentProfile.email;
@@ -43,35 +42,10 @@ class ConfirmBookingStep extends StatelessWidget {
       patientName = 'Chưa xác định người khám';
     }
 
-    // Tìm bác sĩ trong catalog API trước, sau đó mới đến dữ liệu mock.
-    var doctorName = 'Chờ phân công';
-
-    final doctorId = c.doctorId;
-
-    if (doctorId != null && doctorId.trim().isNotEmpty) {
-      final catalogDoctors = c.catalog?.doctors
-              .where((doctor) => doctor.id == doctorId)
-              .toList() ??
-          [];
-
-      final localDoctors = c.data.doctors
-          .where((doctor) => doctor.id == doctorId)
-          .toList();
-
-      if (catalogDoctors.isNotEmpty) {
-        doctorName = catalogDoctors.first.fullName;
-      } else if (localDoctors.isNotEmpty) {
-        doctorName = localDoctors.first.fullName;
-      } else {
-        doctorName = 'Bác sĩ đã chọn';
-      }
-    }
-
     // Lấy dịch vụ/combo từ cùng nguồn dữ liệu với BookingController.
     final selectedCombos = c.services
         .where(
-          (service) =>
-              service.isCombo && service.id == c.comboId,
+          (service) => service.isCombo && service.id == c.comboId,
         )
         .toList();
 
@@ -156,7 +130,7 @@ class ConfirmBookingStep extends StatelessWidget {
             const Divider(height: 24),
 
             // Bác sĩ, ngày và giờ
-            Text('Bác sĩ: $doctorName'),
+            BookingDoctorName(controller: c, doctorId: c.doctorId),
             const SizedBox(height: 12),
 
             Text(
@@ -187,8 +161,7 @@ class ConfirmBookingStep extends StatelessWidget {
                     onChanged: (value) {
                       c.voucher = value;
                     },
-                    textCapitalization:
-                        TextCapitalization.characters,
+                    textCapitalization: TextCapitalization.characters,
                     autocorrect: false,
                     enabled: !c.voucherLoading && !c.submitting,
                     decoration: const InputDecoration(
@@ -202,7 +175,6 @@ class ConfirmBookingStep extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(width: 8),
-
                 TextButton(
                   onPressed: c.voucherLoading || c.submitting
                       ? null
@@ -221,9 +193,7 @@ class ConfirmBookingStep extends StatelessWidget {
                           ),
                         )
                       : Text(
-                          c.appliedVoucher == null
-                              ? 'Áp dụng'
-                              : 'Áp dụng lại',
+                          c.appliedVoucher == null ? 'Áp dụng' : 'Áp dụng lại',
                         ),
                 ),
               ],
@@ -261,9 +231,7 @@ class ConfirmBookingStep extends StatelessWidget {
                       ),
                     ),
                     TextButton(
-                      onPressed: c.submitting
-                          ? null
-                          : c.removeVoucher,
+                      onPressed: c.submitting ? null : c.removeVoucher,
                       child: const Text('Gỡ mã'),
                     ),
                   ],
@@ -291,21 +259,27 @@ class ConfirmBookingStep extends StatelessWidget {
               maxLines: 5,
               enabled: !c.submitting,
               decoration: const InputDecoration(
-                hintText:
-                    'Ví dụ: Tôi thường bị ê buốt răng...',
+                hintText: 'Ví dụ: Tôi thường bị ê buốt răng...',
                 border: OutlineInputBorder(),
               ),
             ),
 
             const Divider(height: 32),
 
+            if (c.quoteLoading) const Text('Đang tải giá…'),
+            if (c.quoteError != null) ...[
+              Text(c.quoteError!),
+              TextButton(
+                  onPressed: c.quoteLoading ? null : c.refreshQuote,
+                  child: const Text('Thử lại báo giá')),
+            ],
             // Tạm tính
             Row(
               children: [
                 const Expanded(
                   child: Text('Tạm tính'),
                 ),
-                Text(formatVnd(c.subtotal)),
+                Text(c.quoteReady ? formatVnd(c.subtotal) : 'Chưa có giá'),
               ],
             ),
 
@@ -342,7 +316,7 @@ class ConfirmBookingStep extends StatelessWidget {
                   ),
                 ),
                 Text(
-                  formatVnd(c.total),
+                  c.quoteReady ? formatVnd(c.total) : 'Chưa có giá',
                   style: const TextStyle(
                     fontWeight: FontWeight.bold,
                     color: Color(0xFF247BF3),

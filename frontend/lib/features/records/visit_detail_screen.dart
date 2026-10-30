@@ -1,3 +1,4 @@
+import 'record_catalog_names.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../core/utils/formatters.dart';
@@ -11,46 +12,52 @@ class VisitDetailScreen extends StatelessWidget {
   final Visit visit;
   @override
   Widget build(BuildContext context) {
-    final data = context.watch<PatientDataProvider>();
-    final a = visitAppointment(data, visit);
-    final activeTreatments = data.treatmentPlans
-        .where((plan) =>
-            plan.patientId == visit.patientId &&
-            plan.completedVisits < plan.totalVisits)
-        .toList();
-    return RecordsPage(title: 'Chi tiết lần khám', children: [
-      RecordCard(children: [
-        const RecordHeading('Chi tiết lần khám'),
-        RecordLine('Ngày khám', formatVietnameseDate(visit.visitedAt)),
-        RecordLine('Dịch vụ', visitServices(data, visit)),
-        RecordLine('Bác sĩ', visitDoctor(data, visit)),
-        const Divider(height: 28),
-        RecordSection('Chẩn đoán', visit.diagnosis),
-        RecordSection('Điều trị', visit.treatment),
-        RecordSection('Dặn dò', visit.note),
-        if (visit.result != null)
-          RecordButton('Xem kết quả khám',
-              () => RecordsRoutes.open(context, RecordsRoutes.result, visit)),
-        for (final p in data.prescriptions.where((p) => p.visitId == visit.id))
-          RecordButton('Xem đơn thuốc',
-              () => RecordsRoutes.open(context, RecordsRoutes.prescription, p)),
-        if (!data.recordsAreDemoAndReadOnly && activeTreatments.isNotEmpty)
-          RecordButton(
-              'Thêm vào liệu trình khám',
-              () => _chooseTreatment(
-                    context,
-                    data,
-                    activeTreatments,
-                  )),
-        if (a != null)
-          for (final r in data.receipts.where((r) => r.appointmentId == a.id))
-            RecordButton('Xem phiếu thanh toán',
-                () => RecordsRoutes.open(context, RecordsRoutes.receipt, r)),
-      ]),
-      if (data.recordsAreDemoAndReadOnly)
-        const Text('DỮ LIỆU DEMO · CHỈ ĐỌC',
-            style: TextStyle(color: Color(0xFF666666), fontSize: 12))
-    ]);
+    return RecordCatalogNames(builder: (context, names) {
+      final data = context.watch<PatientDataProvider>();
+      final a = visitAppointment(data, visit);
+      final activeTreatments = data.treatmentPlans
+          .where((plan) =>
+              plan.patientId == visit.patientId &&
+              plan.completedVisits < plan.totalVisits)
+          .toList();
+      return RecordsPage(title: 'Chi tiết lần khám', children: [
+        if (names.status != null) names.status!,
+        RecordCard(children: [
+          const RecordHeading('Chi tiết lần khám'),
+          RecordLine('Ngày khám', formatVietnameseDate(visit.visitedAt)),
+          RecordLine('Dịch vụ', names.visitServices(visit)),
+          RecordLine('Bác sĩ', names.visitDoctor(visit)),
+          const Divider(height: 28),
+          RecordSection('Chẩn đoán', visit.diagnosis),
+          RecordSection('Điều trị', visit.treatment),
+          RecordSection('Dặn dò', visit.note),
+          if (visit.result != null)
+            RecordButton('Xem kết quả khám',
+                () => RecordsRoutes.open(context, RecordsRoutes.result, visit)),
+          for (final p
+              in data.prescriptions.where((p) => p.visitId == visit.id))
+            RecordButton(
+                'Xem đơn thuốc',
+                () =>
+                    RecordsRoutes.open(context, RecordsRoutes.prescription, p)),
+          if (!data.recordsAreDemoAndReadOnly && activeTreatments.isNotEmpty)
+            RecordButton(
+                'Thêm vào liệu trình khám',
+                () => _chooseTreatment(
+                      context,
+                      data,
+                      activeTreatments,
+                    )),
+          if (a != null)
+            for (final r in data.receipts.where((r) => r.appointmentId == a.id))
+              RecordButton('Xem phiếu thanh toán',
+                  () => RecordsRoutes.open(context, RecordsRoutes.receipt, r)),
+        ]),
+        if (data.recordsAreDemoAndReadOnly)
+          const Text('DỮ LIỆU DEMO · CHỈ ĐỌC',
+              style: TextStyle(color: Color(0xFF666666), fontSize: 12))
+      ]);
+    });
   }
 
   Future<void> _chooseTreatment(

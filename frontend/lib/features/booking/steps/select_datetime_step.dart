@@ -24,8 +24,7 @@ class SelectDatetimeStep extends StatelessWidget {
     final today = DateTime(now.year, now.month, now.day);
 
     final selectedDate = controller.date;
-    final initialDate = selectedDate != null &&
-            !selectedDate.isBefore(today)
+    final initialDate = selectedDate != null && !selectedDate.isBefore(today)
         ? selectedDate
         : today;
 
@@ -81,7 +80,6 @@ class SelectDatetimeStep extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 8),
-
             if (!controller.hasSelectedItems)
               const Padding(
                 padding: EdgeInsets.symmetric(vertical: 12),
@@ -167,7 +165,6 @@ class SelectDatetimeStep extends StatelessWidget {
                 ],
               ),
             ],
-
             if (selectedTime != null && controller.validTime) ...[
               const SizedBox(height: 16),
               Container(
@@ -197,9 +194,7 @@ class SelectDatetimeStep extends StatelessWidget {
     for (final slot in slots) {
       if (slot.startTime == controller.time &&
           slot.doctorId == controller.doctorId) {
-        return slot.doctorName.isNotEmpty
-            ? slot.doctorName
-            : 'Bác sĩ đã chọn';
+        return slot.doctorName.isNotEmpty ? slot.doctorName : 'Bác sĩ đã chọn';
       }
     }
 

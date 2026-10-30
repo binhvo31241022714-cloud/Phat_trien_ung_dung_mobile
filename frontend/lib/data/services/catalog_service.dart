@@ -1,3 +1,4 @@
+import '../models/article.dart';
 import '../api_client.dart';
 import '../models/dental_service.dart';
 import '../models/doctor.dart';
@@ -38,6 +39,9 @@ class CatalogService {
 
   Future<List<Doctor>> getDoctors() async =>
       [for (final row in await _list('/api/doctors')) Doctor.fromJson(row)];
+
+  Future<Article> getArticle(String id) async =>
+      Article.fromJson(await _one('/api/articles/${Uri.encodeComponent(id)}'));
 
   Future<DentalService> getService(String id) async =>
       DentalService.fromJson(await _one('/api/services/$id'));

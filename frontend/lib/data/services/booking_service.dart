@@ -141,12 +141,22 @@ class BookingService {
     return Appointment.fromJson(result);
   }
 
+  Future<AppointmentCancellationInfo> cancellationInfo(String id) async {
+    final json = _readMap(
+        await _api.get('/api/appointments/${Uri.encodeComponent(id)}'));
+    if (json['id'] != id) throw _invalidResponse;
+    return AppointmentCancellationInfo(json);
+  }
+
   /// Hủy lịch hẹn trên máy chủ.
   Future<void> cancelAppointment(String id) async {
-    await _api.patch(
+    final result = _readMap(await _api.patch(
       '/api/appointments/${Uri.encodeComponent(id)}/cancel',
       <String, dynamic>{},
-    );
+    ));
+    if (result['id'] != id || result['status'] != 'cancelled') {
+      throw _invalidResponse;
+    }
   }
 }
 
@@ -184,9 +194,8 @@ class BookingQuote {
       discount: readInt(json['discount']),
       totalPrice: readInt(json['totalPrice']),
       durationMinutes: readInt(json['durationMinutes']),
-      voucherCode: json['voucherCode'] is String
-          ? json['voucherCode'] as String
-          : null,
+      voucherCode:
+          json['voucherCode'] is String ? json['voucherCode'] as String : null,
     );
   }
 }
@@ -248,5 +257,49 @@ class AvailabilitySlot {
           ? (json['durationMinutes'] as num).round()
           : int.tryParse('${json['durationMinutes']}') ?? 0,
     );
+  }
+}
+
+/// Raw API fields are retained for eligibility; the general appointment model
+/// normalizes unknown statuses/dates and must not decide cancellation rights.
+class AppointmentCancellationInfo {
+  final Map<String, dynamic> json;
+  AppointmentCancellationInfo(Map<String, dynamic> value)
+      : json = Map.unmodifiable(value);
+  Appointment get appointment => Appointment.fromJson(json);
+  bool canCancelFor(String uid, {DateTime? now}) {
+    if (uid.isEmpty || json['accountId'] != uid) return false;
+    final status = (json['status'] ?? '').toString().toLowerCase();
+    if ([
+      'cancelled',
+      'canceled',
+      'rejected',
+      'declined',
+      'expired',
+      'completed'
+    ].contains(status)) {
+      return false;
+    }
+    final date = json['date'];
+    final time = json['startTime'];
+    final end = json['endTime'];
+    if (date is! String ||
+        time is! String ||
+        end is! String ||
+        !RegExp(r'^\d{4}-\d{2}-\d{2}$').hasMatch(date) ||
+        !RegExp(r'^([01]\d|2[0-3]):[0-5]\d$').hasMatch(time) ||
+        !RegExp(r'^([01]\d|2[0-3]):[0-5]\d$').hasMatch(end) ||
+        json['doctorId'] is! String ||
+        (json['doctorId'] as String).trim().isEmpty) {
+      return false;
+    }
+    final start = DateTime.tryParse('${date}T$time:00+07:00');
+    final day = DateTime.tryParse(date);
+    if (start == null ||
+        day == null ||
+        day.toIso8601String().substring(0, 10) != date) {
+      return false;
+    }
+    return start.isAfter(now ?? DateTime.now());
   }
 }

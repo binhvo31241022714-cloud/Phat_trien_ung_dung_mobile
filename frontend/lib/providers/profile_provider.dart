@@ -1,4 +1,4 @@
-import 'package:flutter/foundation.dart';
+import '../core/state/session_notifier.dart';
 
 import '../data/api_client.dart';
 import '../data/models/family_member.dart';
@@ -10,14 +10,16 @@ import '../data/services/profile_service.dart';
 ///
 /// Tách riêng khỏi PatientDataProvider: đặt lịch và hồ sơ khám vẫn dùng dữ
 /// liệu mock cho tới khi các module đó nối API.
-class ProfileProvider extends ChangeNotifier {
+class ProfileProvider extends SessionNotifier {
   final ProfileService _service;
 
   ProfileProvider({ProfileService? service})
       : _service = service ?? ProfileService();
 
   // Tăng mỗi lần đăng xuất, để kết quả API của phiên cũ trả về muộn bị bỏ qua.
-  int _session = 0;
+
+  int _profileRequest = 0;
+  int _familyRequest = 0;
 
   UserProfile? _profile;
   bool _profileLoading = false;
@@ -52,17 +54,20 @@ class ProfileProvider extends ChangeNotifier {
   }
 
   Future<void> loadProfile() async {
-    final session = _session;
+    if (isDisposed) return;
+    final session = sessionGeneration;
+    final request = ++_profileRequest;
+    bool current() => isSessionCurrent(session) && request == _profileRequest;
     _profileLoading = true;
     _profileError = null;
     notifyListeners();
     try {
       final result = await _service.getMe();
-      if (session != _session) return;
+      if (!current()) return;
       _profile = result;
-    } on ApiException catch (e) {
-      if (session != _session) return;
-      _profileError = e.message;
+    } catch (e) {
+      if (!current()) return;
+      _profileError = e is ApiException ? e.message : 'Không thể tải hồ sơ.';
     }
     _profileLoading = false;
     notifyListeners();
@@ -76,6 +81,8 @@ class ProfileProvider extends ChangeNotifier {
     String? gender,
     HealthInfo? health,
   }) async {
+    if (isDisposed) return 'Phiên đăng nhập đã kết thúc.';
+    final session = sessionGeneration;
     final current = _profile;
     if (current == null) return 'Chưa tải được hồ sơ.';
     final newGender = gender ?? current.gender;
@@ -88,9 +95,12 @@ class ProfileProvider extends ChangeNotifier {
           birthday: birthday,
           gender: newGender,
           health: newHealth);
-    } on ApiException catch (e) {
-      return e.message;
+    } catch (e) {
+      return isSessionCurrent(session)
+          ? (e is ApiException ? e.message : 'Không thể cập nhật hồ sơ.')
+          : 'Phiên đăng nhập đã thay đổi.';
     }
+    if (!isSessionCurrent(session)) return 'Phiên đăng nhập đã thay đổi.';
     _profile = UserProfile(
       id: current.id,
       email: current.email,
@@ -106,18 +116,22 @@ class ProfileProvider extends ChangeNotifier {
   }
 
   Future<void> loadFamily() async {
-    final session = _session;
+    if (isDisposed) return;
+    final session = sessionGeneration;
+    final request = ++_familyRequest;
+    bool current() => isSessionCurrent(session) && request == _familyRequest;
     _familyLoading = true;
     _familyError = null;
     notifyListeners();
     try {
       final result = await _service.getFamily();
-      if (session != _session) return;
+      if (!current()) return;
       _family = List.unmodifiable(result);
       _familyLoaded = true;
-    } on ApiException catch (e) {
-      if (session != _session) return;
-      _familyError = e.message;
+    } catch (e) {
+      if (!current()) return;
+      _familyError =
+          e is ApiException ? e.message : 'Không thể tải người thân.';
     }
     _familyLoading = false;
     notifyListeners();
@@ -132,18 +146,23 @@ class ProfileProvider extends ChangeNotifier {
       _mutate(() => _service.deleteFamily(id));
 
   Future<String?> _mutate(Future<void> Function() action) async {
+    if (isDisposed) return 'Phiên đăng nhập đã kết thúc.';
+    final session = sessionGeneration;
     try {
       await action();
-    } on ApiException catch (e) {
-      return e.message;
+    } catch (e) {
+      return isSessionCurrent(session)
+          ? (e is ApiException ? e.message : 'Không thể cập nhật hồ sơ.')
+          : 'Phiên đăng nhập đã thay đổi.';
     }
+    if (!isSessionCurrent(session)) return 'Phiên đăng nhập đã thay đổi.';
     await loadFamily();
     return null;
   }
 
   /// Gọi khi đăng xuất để người dùng sau không thấy dữ liệu người trước.
   void clear() {
-    _session++;
+    invalidateSession();
     _profile = null;
     _profileLoading = false;
     _profileError = null;

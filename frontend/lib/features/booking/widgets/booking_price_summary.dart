@@ -12,6 +12,13 @@ class BookingPriceSummary extends StatelessWidget {
           child: Padding(
         padding: const EdgeInsets.all(12),
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          if (controller.step != 3 && controller.quoteError != null) ...[
+            Text(controller.quoteError!),
+            TextButton(
+                onPressed:
+                    controller.quoteLoading ? null : controller.refreshQuote,
+                child: const Text('Thử lại báo giá')),
+          ],
           Text('${controller.serviceIds.length} dịch vụ đã chọn',
               style: const TextStyle(color: Color(0xFF666666))),
           Wrap(
@@ -19,7 +26,12 @@ class BookingPriceSummary extends StatelessWidget {
               crossAxisAlignment: WrapCrossAlignment.center,
               spacing: 8,
               children: [
-                Text(formatVnd(controller.total),
+                Text(
+                    controller.quoteReady
+                        ? formatVnd(controller.total)
+                        : controller.quoteLoading
+                            ? 'Đang tải giá…'
+                            : 'Chưa có giá',
                     style: const TextStyle(
                         color: Color(0xFF247BF3),
                         fontSize: 18,

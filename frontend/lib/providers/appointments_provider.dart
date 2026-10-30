@@ -1,19 +1,28 @@
-import 'package:flutter/foundation.dart';
+import 'dart:async';
+import '../core/state/session_notifier.dart';
 
 import '../data/api_client.dart';
 import '../data/models/appointment.dart';
 import '../data/services/booking_service.dart';
 
 /// Quản lý danh sách lịch hẹn và lịch hẹn sắp tới lấy từ backend.
-class AppointmentsProvider extends ChangeNotifier {
+class AppointmentsProvider extends SessionNotifier {
   final BookingService _service;
 
   AppointmentsProvider({BookingService? service})
       : _service = service ?? BookingService();
 
-  int _session = 0;
+  int _loadRequest = 0;
 
   List<Appointment> _appointments = const [];
+  // Keep successful creates until a GET has observed their IDs. An older
+  // in-flight list response must not remove a just-created appointment.
+  final Set<String> _unobservedCreates = {};
+  final Set<String> _confirmedCancellations = {};
+  final Map<String, Future<String?>> _cancelJobs = {};
+  bool isCancelling(String id) => _cancelJobs.containsKey(id);
+  Future<AppointmentCancellationInfo> cancellationInfo(String id) =>
+      _service.cancellationInfo(id);
   bool _loading = false;
   bool _loaded = false;
   String? _error;
@@ -31,7 +40,7 @@ class AppointmentsProvider extends ChangeNotifier {
           a.status == AppointmentStatus.completed) {
         return false;
       }
-      return !a.scheduledAt.isBefore(now);
+      return a.hasValidScheduledAt && !a.scheduledAt.isBefore(now);
     }).toList();
 
     if (active.isEmpty) return null;
@@ -50,26 +59,41 @@ class AppointmentsProvider extends ChangeNotifier {
   }
 
   Future<void> load() async {
-    final session = _session;
+    if (isDisposed) return;
+    final session = sessionGeneration;
+    final request = ++_loadRequest;
+    bool current() => isSessionCurrent(session) && request == _loadRequest;
     _loading = true;
     _error = null;
     notifyListeners();
 
     try {
       final results = await _service.getAppointments();
-      if (session != _session) return;
+      if (!current()) return;
       // Sắp xếp lịch hẹn: lịch mới nhất lên đầu (theo ngày giờ khám).
       results.sort((a, b) => b.scheduledAt.compareTo(a.scheduledAt));
-      _appointments = List.unmodifiable(results);
+      _confirmedCancellations.removeWhere((id) => results
+          .any((a) => a.id == id && a.status == AppointmentStatus.cancelled));
+      for (var i = 0; i < results.length; i++) {
+        if (_confirmedCancellations.contains(results[i].id)) {
+          results[i] = _cancelled(results[i]);
+        }
+      }
+      final ids = results.map((a) => a.id).toSet();
+      _unobservedCreates.removeWhere(ids.contains);
+      _appointments = List.unmodifiable([
+        ..._appointments.where((a) => _unobservedCreates.contains(a.id)),
+        ...results
+      ]);
       _loaded = true;
     } on ApiException catch (e) {
-      if (session != _session) return;
+      if (!current()) return;
       _error = e.message;
     } catch (_) {
-      if (session != _session) return;
+      if (!current()) return;
       _error = 'Không thể tải danh sách lịch hẹn. Vui lòng thử lại.';
     } finally {
-      if (session == _session) {
+      if (current()) {
         _loading = false;
         notifyListeners();
       }
@@ -78,51 +102,88 @@ class AppointmentsProvider extends ChangeNotifier {
 
   /// Hủy một lịch hẹn chưa diễn ra trên máy chủ.
   /// Trả về null nếu thành công, ngược lại trả về chuỗi thông báo lỗi.
-  Future<String?> cancel(String id) async {
-    try {
-      await _service.cancelAppointment(id);
-      // Cập nhật trạng thái cục bộ ngay lập tức để UI phản hồi mượt mà.
-      _appointments = _appointments.map((a) {
-        if (a.id == id) {
-          return Appointment(
-            id: a.id,
-            patientId: a.patientId,
-            doctorId: a.doctorId,
-            doctorName: a.doctorName,
-            accountId: a.accountId,
-            comboId: a.comboId,
-            voucherCode: a.voucherCode,
-            totalPrice: a.totalPrice,
-            discount: a.discount,
-            durationMinutes: a.durationMinutes,
-            serviceIds: a.serviceIds,
-            scheduledAt: a.scheduledAt,
-            endAt: a.endAt,
-            status: AppointmentStatus.cancelled,
-            note: a.note,
-            isDemo: false,
-          );
+  Future<String?> cancel(String id, {Appointment? snapshot}) {
+    if (isDisposed) return Future.value('Phiên đăng nhập đã kết thúc.');
+    if (_cancelJobs.containsKey(id)) return _cancelJobs[id]!;
+    final session = sessionGeneration;
+    final done = Completer<String?>();
+    _cancelJobs[id] = done.future;
+    notifyListeners();
+    () async {
+      String? error;
+      try {
+        await _service.cancelAppointment(id);
+        if (!isSessionCurrent(session)) {
+          error = 'Phiên đăng nhập đã thay đổi.';
+        } else {
+          _confirmedCancellations.add(id);
+          final target =
+              _appointments.where((a) => a.id == id).firstOrNull ?? snapshot;
+          if (target != null && target.id == id) {
+            final cancelled = _cancelled(target);
+            _appointments = [
+              for (final a in _appointments) a.id == id ? cancelled : a
+            ];
+            if (!_appointments.any((a) => a.id == id)) {
+              _appointments = [cancelled, ..._appointments];
+            }
+          }
         }
-        return a;
-      }).toList();
-      notifyListeners();
-      return null;
-    } on ApiException catch (e) {
-      return e.message;
-    } catch (_) {
-      return 'Lỗi khi hủy lịch hẹn. Vui lòng thử lại sau.';
-    }
+      } catch (e) {
+        error = !isSessionCurrent(session)
+            ? 'Phiên đăng nhập đã thay đổi.'
+            : e is ApiException
+                ? e.message
+                : 'Lỗi khi hủy lịch hẹn. Vui lòng thử lại sau.';
+      } finally {
+        if (isSessionCurrent(session)) {
+          _cancelJobs.remove(id);
+          notifyListeners();
+        }
+        done.complete(error);
+      }
+    }();
+    return done.future;
   }
 
+  Appointment _cancelled(Appointment a) => Appointment(
+      id: a.id,
+      patientId: a.patientId,
+      doctorId: a.doctorId,
+      doctorName: a.doctorName,
+      accountId: a.accountId,
+      comboId: a.comboId,
+      voucherCode: a.voucherCode,
+      totalPrice: a.totalPrice,
+      discount: a.discount,
+      durationMinutes: a.durationMinutes,
+      serviceIds: a.serviceIds,
+      hasValidScheduledAt: a.hasValidScheduledAt,
+      scheduledAt: a.scheduledAt,
+      endAt: a.endAt,
+      status: AppointmentStatus.cancelled,
+      note: a.note,
+      isDemo: false);
+
   /// Thêm lịch vừa tạo thành công vào đầu danh sách lịch hẹn.
-  void addCreated(Appointment appointment) {
-    _appointments = [appointment, ..._appointments];
+  void addCreated(Appointment appointment, {int? generation}) {
+    if (isDisposed || generation != null && !isSessionCurrent(generation)) {
+      return;
+    }
+    _unobservedCreates.add(appointment.id);
+    _appointments = [
+      appointment,
+      ..._appointments.where((a) => a.id != appointment.id)
+    ];
     notifyListeners();
   }
 
   /// Xóa dữ liệu khi người dùng đăng xuất.
   void clear() {
-    _session++;
+    invalidateSession();
+    _unobservedCreates.clear();
+    _confirmedCancellations.clear();
+    _cancelJobs.clear();
     _appointments = const [];
     _loading = false;
     _loaded = false;

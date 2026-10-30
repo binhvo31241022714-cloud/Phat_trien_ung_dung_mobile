@@ -9,6 +9,8 @@ import '../features/shared/patient_detail_screen.dart';
 import '../routes/app_routes.dart';
 
 class BookingRequest {
+  final bool replaceSelection;
+  final DateTime? suggestedDate;
   final String? doctorId;
   final List<String>? serviceIds;
   final bool restrictToServiceIds;
@@ -16,6 +18,8 @@ class BookingRequest {
   final String? patientId;
 
   const BookingRequest({
+    this.replaceSelection = false,
+    this.suggestedDate,
     this.doctorId,
     this.serviceIds,
     this.restrictToServiceIds = false,
@@ -77,6 +81,7 @@ class PatientNavigation {
     final catalog = context.read<CatalogProvider>();
     final appointments = context.read<AppointmentsProvider>();
     await context.read<UserProvider>().logout();
+    if (!context.mounted) return;
     profile.clear();
     catalog.clear();
     appointments.clear();

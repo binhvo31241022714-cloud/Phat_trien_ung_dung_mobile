@@ -1,4 +1,6 @@
-import 'package:flutter/foundation.dart';
+import '../core/state/session_notifier.dart';
+import '../data/models/article.dart';
+import '../core/config/app_config.dart';
 
 import '../data/api_client.dart';
 import '../data/models/dental_service.dart';
@@ -9,15 +11,18 @@ import '../data/services/catalog_service.dart';
 ///
 /// Tách riêng khỏi PatientDataProvider: các bước chọn dịch vụ, bác sĩ trong
 /// đặt lịch vẫn dùng dữ liệu mock cho tới khi module đặt lịch nối API.
-class CatalogProvider extends ChangeNotifier {
+class CatalogProvider extends SessionNotifier {
   final CatalogService _service;
 
   CatalogProvider({CatalogService? service})
       : _service = service ?? CatalogService();
 
   // Tăng mỗi lần đăng xuất, để kết quả API của phiên cũ trả về muộn bị bỏ qua.
-  int _session = 0;
 
+  int _favoriteRevision = 0;
+  int _catalogRequest = 0;
+
+  int _favoritesRequest = 0;
   // ===== Danh mục =====
   List<DentalService> _services = const [];
   List<DentalService> _combos = const [];
@@ -54,7 +59,8 @@ class CatalogProvider extends ChangeNotifier {
   }
 
   Future<void> load() async {
-    final session = _session;
+    if (isDisposed) return;
+    final request = ++_catalogRequest;
     _loading = true;
     _error = null;
     notifyListeners();
@@ -64,14 +70,14 @@ class CatalogProvider extends ChangeNotifier {
         _service.getCombos(),
         _service.getDoctors(),
       ]);
-      if (session != _session) return;
+      if (isDisposed || request != _catalogRequest) return;
       _services = List.unmodifiable(results[0] as List<DentalService>);
       _combos = List.unmodifiable(results[1] as List<DentalService>);
       _doctors = List.unmodifiable(results[2] as List<Doctor>);
       _loaded = true;
-    } on ApiException catch (e) {
-      if (session != _session) return;
-      _error = e.message;
+    } catch (e) {
+      if (isDisposed || request != _catalogRequest) return;
+      _error = e is ApiException ? e.message : 'Không thể tải danh mục.';
     }
     _loading = false;
     notifyListeners();
@@ -99,18 +105,23 @@ class CatalogProvider extends ChangeNotifier {
       _pending.contains(favoriteId(type, itemId));
 
   Future<void> loadFavorites() async {
-    final session = _session;
+    if (isDisposed) return;
+    final session = sessionGeneration;
+    final request = ++_favoritesRequest;
+    bool current() => isSessionCurrent(session) && request == _favoritesRequest;
+    final revision = _favoriteRevision;
     _favoritesLoading = true;
     _favoritesError = null;
     notifyListeners();
     try {
       final result = await _service.getFavorites();
-      if (session != _session) return;
-      _favorites = List.unmodifiable(result);
+      if (!current()) return;
+      if (revision == _favoriteRevision) _favorites = List.unmodifiable(result);
       _favoritesLoaded = true;
-    } on ApiException catch (e) {
-      if (session != _session) return;
-      _favoritesError = e.message;
+    } catch (e) {
+      if (!current()) return;
+      _favoritesError =
+          e is ApiException ? e.message : 'Không thể tải nội dung đã lưu.';
     }
     _favoritesLoading = false;
     notifyListeners();
@@ -118,6 +129,8 @@ class CatalogProvider extends ChangeNotifier {
 
   /// Lưu hoặc bỏ lưu. Trả về null nếu thành công, ngược lại trả về lỗi.
   Future<String?> toggleFavorite(String type, String itemId) async {
+    if (isDisposed) return 'Phiên đăng nhập đã kết thúc.';
+    final session = sessionGeneration;
     final id = favoriteId(type, itemId);
     if (!_pending.add(id)) return null;
     final saved = isSaved(type, itemId);
@@ -126,15 +139,22 @@ class CatalogProvider extends ChangeNotifier {
     try {
       if (saved) {
         await _service.removeFavorite(id);
+        if (!isSessionCurrent(session)) return null;
+        _favoriteRevision++;
         _favorites = List.unmodifiable(_favorites.where((f) => f.id != id));
       } else {
         await _service.addFavorite(type, itemId);
+        if (!isSessionCurrent(session)) return null;
+        _favoriteRevision++;
         _favorites = List.unmodifiable(
             [..._favorites, Favorite(id: id, type: type, itemId: itemId)]);
       }
-    } on ApiException catch (e) {
-      error = e.message;
+    } catch (e) {
+      if (!isSessionCurrent(session)) return null;
+      error =
+          e is ApiException ? e.message : 'Không thể cập nhật nội dung đã lưu.';
     }
+    if (!isSessionCurrent(session)) return null;
     _pending.remove(id);
     notifyListeners();
     return error;
@@ -143,7 +163,12 @@ class CatalogProvider extends ChangeNotifier {
   /// Tải chi tiết các mục đã lưu cho màn hình "Đã lưu". Dùng GET /:id nên
   /// vẫn xem được mục đã ngừng hoạt động. Mục đã bị xóa hẳn thì bỏ qua.
   Future<SavedCatalogItems> loadSavedItems() async {
+    if (isDisposed) throw const ApiException('Phiên đăng nhập đã kết thúc.');
+    final session = sessionGeneration;
     await loadFavorites();
+    if (!isSessionCurrent(session)) {
+      throw const ApiException('Phiên đăng nhập đã thay đổi.');
+    }
     if (_favoritesError != null) throw ApiException(_favoritesError!);
     Future<T?> fetch<T>(Future<T> Function() get) async {
       try {
@@ -154,6 +179,7 @@ class CatalogProvider extends ChangeNotifier {
       }
     }
 
+    final articles = <Future<Article?>>[];
     final services = <Future<DentalService?>>[];
     final doctors = <Future<Doctor?>>[];
     for (final f in _favorites) {
@@ -164,18 +190,27 @@ class CatalogProvider extends ChangeNotifier {
           services.add(fetch(() => _service.getCombo(f.itemId)));
         case 'doctor':
           doctors.add(fetch(() => _service.getDoctor(f.itemId)));
-        // 'article': bài viết vẫn là mock của module Nội dung, chưa hiện ở đây.
+        case 'article':
+          if (AppConfig.current.dataSource == DataSource.api) {
+            articles.add(fetch(() => _service.getArticle(f.itemId)));
+          }
       }
     }
-    return SavedCatalogItems(
+    final result = SavedCatalogItems(
       services: (await Future.wait(services)).nonNulls.toList(),
       doctors: (await Future.wait(doctors)).nonNulls.toList(),
+      articles: (await Future.wait(articles)).nonNulls.toList(),
     );
+    if (!isSessionCurrent(session)) {
+      throw const ApiException('Phiên đăng nhập đã thay đổi.');
+    }
+    return result;
   }
 
   /// Gọi khi đăng xuất để người dùng sau không thấy dữ liệu người trước.
   void clear() {
-    _session++;
+    invalidateSession();
+    _favoriteRevision++;
     _favorites = const [];
     _favoritesLoading = false;
     _favoritesLoaded = false;
@@ -188,5 +223,9 @@ class CatalogProvider extends ChangeNotifier {
 class SavedCatalogItems {
   final List<DentalService> services;
   final List<Doctor> doctors;
-  const SavedCatalogItems({required this.services, required this.doctors});
+  final List<Article> articles;
+  const SavedCatalogItems(
+      {required this.services,
+      required this.doctors,
+      this.articles = const []});
 }

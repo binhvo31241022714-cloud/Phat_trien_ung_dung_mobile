@@ -1,3 +1,5 @@
+import '../../core/config/app_config.dart';
+import 'api_notifications_view.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../app/patient_navigation.dart';
@@ -26,6 +28,9 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    if (AppConfig.current.dataSource == DataSource.api) {
+      return const ApiNotificationsView();
+    }
     final data = context.watch<PatientDataProvider>();
     final receive = context.watch<UserProvider>().receiveNotifications;
     final categories = <NotificationCategory?, String>{

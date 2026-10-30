@@ -12,6 +12,9 @@ class Visit extends DemoReadOnlyRecord {
   final String clinic;
   final String? appointmentId;
   final String? doctorId;
+  final String? doctorName;
+  final String? serviceName;
+  final List<String> serviceNames;
   final List<String> serviceIds;
   final String? treatment;
   final String? result;
@@ -26,6 +29,9 @@ class Visit extends DemoReadOnlyRecord {
     required this.clinic,
     this.appointmentId,
     this.doctorId,
+    this.doctorName,
+    this.serviceName,
+    this.serviceNames = const [],
     this.serviceIds = const [],
     this.treatment,
     this.result,
@@ -42,6 +48,12 @@ class Visit extends DemoReadOnlyRecord {
         clinic: _string(json['clinic']),
         appointmentId: _nullableString(json['appointmentId']),
         doctorId: _nullableString(json['doctorId']),
+        doctorName: _displayName(json['doctorName']),
+        serviceName: _displayName(json['serviceName']),
+        serviceNames: json['serviceNames'] is List &&
+                (json['serviceNames'] as List).every((value) => value is String)
+            ? (json['serviceNames'] as List).cast<String>().toList()
+            : const [],
         serviceIds: _strings(json['serviceIds']),
         treatment: _nullableString(json['treatment']),
         result: _nullableString(json['result']),
@@ -77,6 +89,8 @@ class PrescriptionItem {
 
 class Prescription extends DemoReadOnlyRecord {
   final String id;
+  final String? doctorName;
+  final String? doctorId;
   final String visitId;
   final String patientId;
   final DateTime issuedAt;
@@ -85,6 +99,8 @@ class Prescription extends DemoReadOnlyRecord {
 
   Prescription({
     required this.id,
+    this.doctorName,
+    this.doctorId,
     required this.visitId,
     this.patientId = '',
     required this.issuedAt,
@@ -94,6 +110,8 @@ class Prescription extends DemoReadOnlyRecord {
 
   factory Prescription.fromJson(Map<String, dynamic> json) => Prescription(
         id: _string(json['id']),
+        doctorName: _displayName(json['doctorName']),
+        doctorId: _nullableString(json['doctorId']),
         visitId: _string(json['visitId']),
         patientId: _string(json['patientId']),
         issuedAt: _date(json['issuedAt']),
@@ -187,6 +205,7 @@ class TreatmentSession {
 
 class TreatmentPlan extends DemoReadOnlyRecord {
   final String id;
+  final String? doctorName;
   final String patientId;
   final String title;
   final String description;
@@ -201,6 +220,7 @@ class TreatmentPlan extends DemoReadOnlyRecord {
 
   const TreatmentPlan({
     required this.id,
+    this.doctorName,
     required this.patientId,
     required this.title,
     required this.description,
@@ -217,6 +237,7 @@ class TreatmentPlan extends DemoReadOnlyRecord {
     final total = _int(json['totalSessions']);
     return TreatmentPlan(
       id: _string(json['id']),
+      doctorName: _displayName(json['doctorName']),
       patientId: _string(json['patientId']),
       title: _string(json['name'] ?? json['title']),
       description: _string(json['diagnosis'] ?? json['description']),
@@ -230,6 +251,10 @@ class TreatmentPlan extends DemoReadOnlyRecord {
 
 class Followup extends DemoReadOnlyRecord {
   final String id;
+
+  /// Explicit follow-up service; previous visit services are not a prescription.
+  final String? serviceId;
+  final String? doctorName;
   final String patientId;
   final String doctorId;
   final DateTime scheduledAt;
@@ -237,6 +262,8 @@ class Followup extends DemoReadOnlyRecord {
 
   const Followup({
     required this.id,
+    this.serviceId,
+    this.doctorName,
     required this.patientId,
     required this.doctorId,
     required this.scheduledAt,
@@ -245,6 +272,8 @@ class Followup extends DemoReadOnlyRecord {
 
   factory Followup.fromJson(Map<String, dynamic> json) => Followup(
         id: _string(json['id']),
+        serviceId: _displayName(json['serviceId']),
+        doctorName: _displayName(json['doctorName']),
         patientId: _string(json['patientId']),
         doctorId: _string(json['doctorId']),
         scheduledAt: _date(json['scheduledAt']),
@@ -295,3 +324,6 @@ class PatientNotification extends DemoReadOnlyRecord {
     this.appointmentId,
   });
 }
+
+String? _displayName(Object? value) =>
+    value is String && value.trim().isNotEmpty ? value.trim() : null;

@@ -1,3 +1,5 @@
+import 'content_date.dart';
+
 enum AppointmentStatus {
   pending,
   confirmed,
@@ -28,6 +30,9 @@ class Appointment {
   final int durationMinutes;
 
   final List<String> serviceIds;
+
+  /// False when API date/time is absent or malformed; epoch is only a storage sentinel.
+  final bool hasValidScheduledAt;
   final DateTime scheduledAt;
   final DateTime? endAt;
   final AppointmentStatus status;
@@ -48,6 +53,7 @@ class Appointment {
     this.discount = 0,
     this.durationMinutes = 30,
     required List<String> serviceIds,
+    this.hasValidScheduledAt = true,
     required this.scheduledAt,
     this.endAt,
     required this.status,
@@ -60,24 +66,64 @@ class Appointment {
     final startTime = json['startTime']?.toString();
 
     DateTime? parseDateTime(String? dateKey, String? time) {
-      if (dateKey == null || time == null || time.isEmpty) return null;
-      return DateTime.tryParse('${dateKey}T$time:00');
+      if (dateKey == null ||
+          time == null ||
+          !RegExp(r'^\d{4}-\d{2}-\d{2}$').hasMatch(dateKey) ||
+          !RegExp(r'^([01]\d|2[0-3]):[0-5]\d$').hasMatch(time)) {
+        return null;
+      }
+      final result = DateTime.tryParse('${dateKey}T$time:00');
+      if (result == null ||
+          result.year != int.parse(dateKey.substring(0, 4)) ||
+          result.month != int.parse(dateKey.substring(5, 7)) ||
+          result.day != int.parse(dateKey.substring(8, 10))) {
+        return null;
+      }
+      return result;
     }
 
-    final parsedStart = parseDateTime(date, startTime) ??
-        DateTime.tryParse(json['scheduledAt']?.toString() ?? '') ??
-        DateTime.now();
+    DateTime? timestamp(Object? value) {
+      if (value is String) {
+        if (!RegExp(
+                r'^\d{4}-\d{2}-\d{2}T([01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z|[+-]([01]\d|2[0-3]):?[0-5]\d)?$')
+            .hasMatch(value)) {
+          return null;
+        }
+        final parts =
+            RegExp(r'^(\d{4}-\d{2}-\d{2})T(\d{2}:\d{2})').firstMatch(value);
+        if (parts == null || parseDateTime(parts[1], parts[2]) == null) {
+          return null;
+        }
+      }
+      return contentDate(value);
+    }
 
-    final parsedEnd = parseDateTime(
-      date,
-      json['endTime']?.toString(),
-    );
-
-    final duration = json['durationMinutes'] is num
-        ? (json['durationMinutes'] as num).round()
-        : parsedEnd != null
-            ? parsedEnd.difference(parsedStart).inMinutes
-            : 30;
+    final start =
+        parseDateTime(date, startTime) ?? timestamp(json['scheduledAt']);
+    final parsedStart = start ?? DateTime.fromMillisecondsSinceEpoch(0);
+    final candidateEnd = timestamp(json['endAt']) ??
+        parseDateTime(
+            date, json['endTime'] is String ? json['endTime'] as String : null);
+    final rawDuration = json['durationMinutes'];
+    final explicitDuration = rawDuration is num &&
+            rawDuration.isFinite &&
+            rawDuration > 0 &&
+            rawDuration == rawDuration.round()
+        ? rawDuration.toInt()
+        : 0;
+    final validEnd =
+        start != null && candidateEnd != null && candidateEnd.isAfter(start)
+            ? candidateEnd
+            : null;
+    final duration = validEnd != null
+        ? validEnd.difference(parsedStart).inMinutes
+        : explicitDuration;
+    DateTime? parsedEnd = validEnd;
+    if (parsedEnd == null && start != null && explicitDuration > 0) {
+      try {
+        parsedEnd = start.add(Duration(minutes: explicitDuration));
+      } catch (_) {/* Unknown end. */}
+    }
 
     final rawServices = json['serviceIds'];
     final services = rawServices is List
@@ -109,7 +155,8 @@ class Appointment {
       voucherCode: json['voucherCode']?.toString(),
       totalPrice: readInt(json['totalPrice']),
       discount: readInt(json['discount']),
-      durationMinutes: duration > 0 ? duration : 30,
+      durationMinutes: duration,
+      hasValidScheduledAt: start != null,
       serviceIds: services,
       scheduledAt: parsedStart,
       endAt: parsedEnd,
