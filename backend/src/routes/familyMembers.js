@@ -3,6 +3,7 @@ const { db } = require('../config/firebase');
 const auth = require('../middleware/auth');
 const { readHealth, withHealthDefaults, DEFAULTS } = require('../utils/health');
 const { isAppointmentActive, isFutureAppointment } = require('../utils/booking');
+const { readProfile } = require('../utils/profile');
 
 // Người thân lưu bên trong hồ sơ của từng user, nên người khác không xem được
 const col = (uid) => db.collection('users').doc(uid).collection('family_members');
@@ -19,20 +20,24 @@ router.get('/', auth, async (req, res) => {
     .map((d) => ({ id: d.id, ...withHealthDefaults(d.data()) })));
 });
 
+// Các trường cơ bản của người thân (xem utils/profile.js)
+const PROFILE_FIELDS = ['fullName', 'relationship', 'birthday', 'phone'];
+
 // POST /api/family-members
 router.post('/', auth, async (req, res) => {
-  const { fullName, relationship, birthday, phone } = req.body;
-  if (!fullName) return res.status(400).json({ message: 'Thiếu họ tên' });
+  const { data: profile, error: profileError } = readProfile(
+    req.body || {}, PROFILE_FIELDS, { requireName: true });
+  if (profileError) return res.status(400).json({ message: profileError });
 
   // Giới tính và thông tin sức khỏe (xem utils/health.js), thiếu thì lưu mặc định
   const { data: health, error } = readHealth(req.body);
   if (error) return res.status(400).json({ message: error });
 
   const ref = await col(req.user.uid).add({
-    fullName,
-    relationship: relationship || '',
-    birthday: birthday || '',
-    phone: phone || '',
+    fullName: profile.fullName,
+    relationship: profile.relationship || '',
+    birthday: profile.birthday || '',
+    phone: profile.phone || '',
     ...DEFAULTS,
     ...health,
     createdAt: new Date(),
@@ -49,11 +54,10 @@ router.patch('/:id', auth, async (req, res) => {
   const { data: health, error } = readHealth(req.body);
   if (error) return res.status(400).json({ message: error });
 
-  const allowed = ['fullName', 'relationship', 'birthday', 'phone'];
-  const updates = { ...health };
-  allowed.forEach((k) => {
-    if (req.body[k] !== undefined) updates[k] = req.body[k];
-  });
+  const { data: profile, error: profileError } = readProfile(req.body, PROFILE_FIELDS);
+  if (profileError) return res.status(400).json({ message: profileError });
+
+  const updates = { ...health, ...profile };
 
   if (Object.keys(updates).length > 0) await ref.update(updates);
   res.json({ message: 'Cập nhật thành công' });

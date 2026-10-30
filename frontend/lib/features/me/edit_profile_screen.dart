@@ -76,7 +76,7 @@ class _ProfileFormState extends State<_ProfileForm> {
     final session = provider.sessionGeneration;
     final error = await provider.saveProfile(
         fullName: _name.text,
-        phone: _phone.text,
+        phone: Validators.normalizePhone(_phone.text),
         birthday: _birthday,
         gender: _health.gender,
         health: _health.build());

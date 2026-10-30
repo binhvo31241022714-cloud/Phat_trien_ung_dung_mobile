@@ -23,6 +23,9 @@ class SettingsScreen extends StatelessWidget {
             controlAffinity: ListTileControlAffinity.leading,
             activeColor: Colors.black,
             title: const Text('Nhận thông báo'),
+            subtitle: const Text(
+                'Chỉ là tùy chọn lưu trên máy này. Ứng dụng chưa gửi thông báo đẩy.',
+                style: TextStyle(color: Color(0xFF666666), fontSize: 12)),
             value: users.receiveNotifications,
             onChanged: (v) => users.setReceiveNotifications(v ?? false)),
       ])),

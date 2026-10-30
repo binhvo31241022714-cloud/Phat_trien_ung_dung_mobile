@@ -29,7 +29,8 @@ class ProfileService {
       _api.patch(_me, {
         'fullName': fullName,
         'phone': phone,
-        if (birthday != null) 'birthday': writeDate(birthday),
+        // Ngày sinh không bắt buộc: chưa chọn thì gửi chuỗi rỗng.
+        'birthday': birthday == null ? '' : writeDate(birthday),
         if (gender != null) 'gender': gender,
         if (health != null) ...health.forGender(gender ?? '').toJson(),
       });

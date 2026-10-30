@@ -83,12 +83,12 @@ Khi test bằng `api-test.http`: bật server, bấm request **1. Đăng nhập*
 
 | Trường | Kiểu | Có ở | Ghi chú |
 |---|---|---|---|
-| `fullName` | chuỗi | cả hai | |
-| `phone` | chuỗi | cả hai | |
-| `birthday` | chuỗi `"YYYY-MM-DD"` | cả hai | `""` nếu chưa có |
+| `fullName` | chuỗi, 1 đến 100 ký tự | cả hai | Bắt buộc khi thêm người thân; có gửi thì không được rỗng |
+| `phone` | chuỗi 9 đến 11 chữ số | cả hai | `""` nếu chưa có. Không nhận `+84`, dấu cách, dấu chấm (app tự chuẩn hóa trước khi gửi) |
+| `birthday` | chuỗi `"YYYY-MM-DD"` | cả hai | `""` nếu chưa có. Phải là ngày có thật, không ở tương lai (giờ Việt Nam) |
 | `email` | chuỗi | users | Email đăng nhập Firebase, không sửa qua API |
-| `address` | chuỗi | users | |
-| `relationship` | chuỗi | family_members | Ví dụ "Mẹ", "Con" |
+| `address` | chuỗi, tối đa 200 ký tự | users | |
+| `relationship` | chuỗi, tối đa 50 ký tự | family_members | Ví dụ "Mẹ", "Con" |
 | `gender` | `"male"` \| `"female"` \| `"other"` \| `""` | cả hai | `""` là chưa chọn. Giá trị khác trả 400 |
 | `allergies` | chuỗi, tối đa 500 ký tự | cả hai | Dị ứng thuốc, ví dụ `"Penicillin, Lidocaine"` |
 | `medicalConditions` | mảng chuỗi | cả hai | Chỉ nhận: `diabetes` (tiểu đường), `heart_disease` (bệnh tim mạch), `hypertension` (huyết áp cao), `bleeding_disorder` (rối loạn đông máu), `asthma` (hen suyễn), `hepatitis` (viêm gan), `other` (khác). Giá trị lạ trả 400 |
@@ -97,6 +97,7 @@ Khi test bằng `api-test.http`: bật server, bấm request **1. Đăng nhập*
 | `healthNotes` | chuỗi, tối đa 500 ký tự | cả hai | Ghi chú khác |
 | `createdAt` | Timestamp | cả hai | |
 
+- Kiểm tra họ tên, số điện thoại, ngày sinh, mối quan hệ, địa chỉ dùng chung ở `src/utils/profile.js` (`readProfile`). Sai kiểu hoặc sai độ dài trả 400 kèm câu báo tiếng Việt. Chuỗi được bỏ khoảng trắng đầu cuối trước khi lưu.
 - Kiểm tra giới tính và sức khỏe dùng chung ở `src/utils/health.js` (`readHealth`).
 - Khi GET, trường còn thiếu (dữ liệu cũ) được trả giá trị mặc định: `""`, `[]` hoặc `false` (`withHealthDefaults`).
 - PATCH chỉ đổi những trường có gửi lên; POST người thân thiếu trường thì lưu mặc định.

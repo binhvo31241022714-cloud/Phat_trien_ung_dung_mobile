@@ -64,7 +64,7 @@ class _FamilyFormScreenState extends State<FamilyFormScreen> {
         fullName: _name.text.trim(),
         relationship: _relationship,
         birthday: _birthday,
-        phone: _phone.text.trim(),
+        phone: Validators.normalizePhone(_phone.text),
         gender: _health.gender,
         health: _health.build());
     final error = p == null

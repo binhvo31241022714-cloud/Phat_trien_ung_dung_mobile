@@ -64,7 +64,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
         const Padding(
             padding: EdgeInsets.only(bottom: 12),
             child: Text(
-                'Bạn đã tắt nhận thông báo trong phiên demo. Cài đặt này không thay đổi quyền thông báo của hệ điều hành.',
+                'Bạn đã tắt "Nhận thông báo". Đây chỉ là tùy chọn lưu trên máy này; ứng dụng chưa gửi thông báo đẩy và cài đặt này không thay đổi quyền thông báo của hệ điều hành.',
                 style: TextStyle(color: Color(0xFF666666)))),
       if (notifications.isEmpty)
         const MeCard(

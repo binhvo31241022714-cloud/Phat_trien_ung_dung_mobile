@@ -104,11 +104,10 @@ class BirthdayField extends StatelessWidget {
   Widget build(BuildContext context) => FormField<DateTime>(
         key: ValueKey(value),
         initialValue: value,
-        validator: (date) => date == null
-            ? 'Vui lòng chọn ngày sinh'
-            : date.isAfter(DateTime.now())
-                ? 'Ngày sinh không được ở tương lai'
-                : null,
+        // Ngày sinh không bắt buộc; có chọn thì không được ở tương lai.
+        validator: (date) => date != null && date.isAfter(DateTime.now())
+            ? 'Ngày sinh không được ở tương lai'
+            : null,
         builder: (field) => InkWell(
             borderRadius: BorderRadius.circular(30),
             onTap: () async {
@@ -135,7 +134,7 @@ class BirthdayField extends StatelessWidget {
                         const Icon(Icons.calendar_today_outlined, size: 18),
                     suffixIcon: const Icon(Icons.expand_more)),
                 child: Text(value == null
-                    ? 'Chọn ngày sinh'
+                    ? 'Chọn ngày sinh (không bắt buộc)'
                     : formatVietnameseDate(value!)))),
       );
 }

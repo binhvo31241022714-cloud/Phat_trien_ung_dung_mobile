@@ -309,7 +309,8 @@ void main() {
         await openMe(tester, 'Lưu thay đổi');
         expect(find.text('Họ và tên không được để trống'), findsOneWidget);
         expect(find.text('Số điện thoại Việt Nam không hợp lệ'), findsOneWidget);
-        expect(find.text('Vui lòng chọn ngày sinh'), findsOneWidget);
+        // Ngày sinh không bắt buộc.
+        expect(find.text('Vui lòng chọn ngày sinh'), findsNothing);
         expect(backend.me['fullName'], 'Trần Thị Test');
         await tester.enterText(
           find.byType(TextFormField).at(0),
@@ -353,7 +354,10 @@ void main() {
 
     await openMe(tester, 'Thêm người thân');
     await openMe(tester, 'Lưu người thân');
-    expect(find.text('Vui lòng chọn ngày sinh'), findsOneWidget);
+    // Chỉ họ tên bắt buộc; ngày sinh không bắt buộc.
+    expect(find.text('Họ và tên không được để trống'), findsOneWidget);
+    expect(find.text('Vui lòng chọn ngày sinh'), findsNothing);
+    expect(backend.family, isEmpty);
     await tester.enterText(find.byType(TextFormField).first, 'Người thân mới');
     await setBirthday(tester);
     await openMe(tester, 'Lưu người thân');

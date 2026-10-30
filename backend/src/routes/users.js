@@ -2,9 +2,13 @@ const router = require('express').Router();
 const { db } = require('../config/firebase');
 const auth = require('../middleware/auth');
 const { readHealth, withHealthDefaults } = require('../utils/health');
+const { readProfile } = require('../utils/profile');
 
 // POST /api/users/sync
 router.post('/sync', auth, async (req, res) => {
+  const { data: profile, error } = readProfile(req.body || {}, ['fullName', 'phone']);
+  if (error) return res.status(400).json({ message: error });
+
   const { uid, email } = req.user;
   const ref = db.collection('users').doc(uid);
   const doc = await ref.get();
@@ -12,8 +16,8 @@ router.post('/sync', auth, async (req, res) => {
   if (!doc.exists) {
     await ref.set({
       email,
-      fullName: req.body.fullName || '',
-      phone: req.body.phone || '',
+      fullName: profile.fullName || '',
+      phone: profile.phone || '',
       createdAt: new Date(),
     });
   }
@@ -34,11 +38,12 @@ router.patch('/me', auth, async (req, res) => {
   const { data: health, error } = readHealth(req.body);
   if (error) return res.status(400).json({ message: error });
 
-  const allowed = ['fullName', 'phone', 'birthday', 'address'];
-  const updates = { ...health };
-  allowed.forEach((k) => {
-    if (req.body[k] !== undefined) updates[k] = req.body[k];
-  });
+  // Họ tên, số điện thoại, ngày sinh, địa chỉ (xem utils/profile.js)
+  const { data: profile, error: profileError } = readProfile(
+    req.body, ['fullName', 'phone', 'birthday', 'address']);
+  if (profileError) return res.status(400).json({ message: profileError });
+
+  const updates = { ...health, ...profile };
 
   await db.collection('users').doc(req.user.uid).set(updates, { merge: true });
   res.json({ message: 'Cập nhật thành công', ...updates });
