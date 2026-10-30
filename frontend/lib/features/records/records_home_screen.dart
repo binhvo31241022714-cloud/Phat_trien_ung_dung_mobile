@@ -6,6 +6,7 @@ import '../../data/models/appointment.dart';
 import '../../data/models/patient_records.dart';
 import '../../data/providers/patient_data_provider.dart';
 import 'records_widgets.dart';
+import 'appointment_api_status.dart';
 import 'appointments_screen.dart';
 import 'appointment_detail_screen.dart';
 import 'visit_history_screen.dart';
@@ -28,9 +29,20 @@ class RecordsHomeScreen extends StatefulWidget {
 class _RecordsHomeScreenState extends State<RecordsHomeScreen> {
   final _navigator = GlobalKey<NavigatorState>();
   int _focusVersion = 0;
+  bool _wasActive = false;
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
+    // Mỗi lần chuyển sang tab Hồ sơ thì tải lại lịch hẹn để thấy trạng thái mới.
+    final active = MainShellScope.maybeOf(context)?.selectedIndex == 2;
+    if (active &&
+        !_wasActive &&
+        AppConfig.current.dataSource == DataSource.api) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) reloadAppointments(context);
+      });
+    }
+    _wasActive = active;
     final data = context.watch<PatientDataProvider>();
     if (_focusVersion != data.recordsFocusVersion) {
       _focusVersion = data.recordsFocusVersion;

@@ -29,10 +29,14 @@ class RecordsPage extends StatelessWidget {
       {required this.title,
       required this.children,
       this.useRecordsState = true,
+      this.onRefresh,
       super.key});
   final String title;
   final bool useRecordsState;
   final List<Widget> children;
+
+  /// Có giá trị thì cho kéo xuống để tải lại.
+  final Future<void> Function()? onRefresh;
   @override
   Widget build(BuildContext context) {
     final data = context.watch<PatientDataProvider>();
@@ -55,9 +59,16 @@ class RecordsPage extends StatelessWidget {
                   ],
                 ),
               )
-            : ListView(
-                padding: const EdgeInsets.fromLTRB(16, 8, 16, 20),
-                children: children);
+            : onRefresh == null
+                ? ListView(
+                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 20),
+                    children: children)
+                : RefreshIndicator(
+                    onRefresh: onRefresh!,
+                    child: ListView(
+                        physics: const AlwaysScrollableScrollPhysics(),
+                        padding: const EdgeInsets.fromLTRB(16, 8, 16, 20),
+                        children: children));
     return Scaffold(
       backgroundColor: const Color(0xFFF1F5FB),
       appBar: AppBar(
@@ -179,8 +190,10 @@ Widget appointmentBadge(Appointment a) => RecordBadge(
       color: switch (a.status) {
         AppointmentStatus.pending => Colors.deepOrange,
         AppointmentStatus.confirmed => recordsBlue,
+        AppointmentStatus.rejected => Colors.red,
         AppointmentStatus.completed => Colors.green,
         AppointmentStatus.cancelled => Colors.grey,
+        AppointmentStatus.unknown => Colors.blueGrey,
       },
     );
 

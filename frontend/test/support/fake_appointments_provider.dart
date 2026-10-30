@@ -7,6 +7,10 @@ class FakeAppointmentsProvider extends AppointmentsProvider {
   @override
   Future<AppointmentCancellationInfo> cancellationInfo(String id) async =>
       AppointmentCancellationInfo({'id': id, 'status': 'completed'});
+  /// Chỉ trả kết quả "không hủy được", không ghi bản rút gọn này vào danh sách.
+  @override
+  Future<AppointmentCancellationInfo> refreshOne(String id) =>
+      cancellationInfo(id);
   @override
   Future<void> ensureLoaded() async {}
 

@@ -74,8 +74,7 @@ class _HomeOverview extends StatelessWidget {
             .where(
               (appointment) =>
                   appointment.patientId == data.appointmentPatientId &&
-                  appointment.status != AppointmentStatus.cancelled &&
-                  appointment.status != AppointmentStatus.completed &&
+                  appointment.status.isUpcomingStatus &&
                   !appointment.scheduledAt.isBefore(now),
             )
             .toList()

@@ -3,17 +3,25 @@ import 'content_date.dart';
 enum AppointmentStatus {
   pending,
   confirmed,
+  rejected,
   completed,
   cancelled,
+  unknown,
 }
 
 extension AppointmentStatusLabel on AppointmentStatus {
   String get label => switch (this) {
         AppointmentStatus.pending => 'Chờ xác nhận',
         AppointmentStatus.confirmed => 'Đã xác nhận',
+        AppointmentStatus.rejected => 'Bị từ chối',
         AppointmentStatus.completed => 'Đã hoàn tất',
         AppointmentStatus.cancelled => 'Đã hủy',
+        AppointmentStatus.unknown => 'Không xác định',
       };
+
+  /// Lịch còn hiệu lực sắp tới: chờ xác nhận hoặc đã xác nhận.
+  bool get isUpcomingStatus =>
+      this == AppointmentStatus.pending || this == AppointmentStatus.confirmed;
 }
 
 class Appointment {
@@ -130,16 +138,17 @@ class Appointment {
         ? rawServices.map((value) => '$value').toList()
         : <String>[];
 
-    final rawStatus = (json['status']?.toString() ?? 'booked').toLowerCase();
+    final rawStatus = (json['status']?.toString() ?? '').trim().toLowerCase();
 
-    // Backend sử dụng "booked" cho lịch vừa đặt.
-    // Trong giao diện hiện tại, trạng thái này hiển thị là "Chờ xác nhận".
+    // Backend dùng 5 trạng thái: booked (hiển thị "Chờ xác nhận"), confirmed,
+    // rejected, cancelled, completed. Trạng thái lạ hiển thị "Không xác định".
     final status = switch (rawStatus) {
       'cancelled' || 'canceled' => AppointmentStatus.cancelled,
       'completed' => AppointmentStatus.completed,
       'confirmed' => AppointmentStatus.confirmed,
+      'rejected' || 'declined' => AppointmentStatus.rejected,
       'pending' || 'booked' => AppointmentStatus.pending,
-      _ => AppointmentStatus.pending,
+      _ => AppointmentStatus.unknown,
     };
 
     int readInt(dynamic value) =>

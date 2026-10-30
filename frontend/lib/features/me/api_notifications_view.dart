@@ -5,7 +5,16 @@ import '../../providers/content_provider.dart';
 import '../../providers/appointments_provider.dart';
 import '../../data/providers/patient_data_provider.dart';
 import '../../app/patient_navigation.dart';
+import '../records/appointment_api_status.dart';
 import 'me_widgets.dart';
+
+const _appointmentTypes = {
+  'appointment_booked',
+  'appointment_cancelled',
+  'appointment_confirmed',
+  'appointment_rejected',
+  'appointment_completed',
+};
 
 class ApiNotificationsView extends StatefulWidget {
   const ApiNotificationsView({super.key});
@@ -96,14 +105,15 @@ class _ApiNotificationsViewState extends State<ApiNotificationsView> {
                           meMessage(context, content.errors['read']!);
                           return;
                         }
-                        if (!(n.type == 'appointment_booked' ||
-                            n.type == 'appointment_cancelled')) {
-                          return;
-                        }
-                        // Only navigate to an appointment already loaded through the authorized API.
-                        final matches = context
-                            .read<AppointmentsProvider>()
-                            .appointments
+                        if (!_appointmentTypes.contains(n.type)) return;
+                        // Tải lại (cả AppointmentsProvider lẫn PatientDataProvider
+                        // mà màn Hồ sơ đọc) để thấy trạng thái mới. Chỉ mở lịch có
+                        // trong danh sách lấy từ API có phân quyền.
+                        final appointments =
+                            context.read<AppointmentsProvider>();
+                        await reloadAppointments(context);
+                        if (!context.mounted) return;
+                        final matches = appointments.appointments
                             .where((a) => a.id == n.refId);
                         if (matches.isEmpty) {
                           meMessage(

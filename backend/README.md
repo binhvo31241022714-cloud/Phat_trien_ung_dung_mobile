@@ -158,12 +158,50 @@ nhận `403`.
 | GET | `/api/appointments` | Có | Lịch của tài khoản đang đăng nhập, bao gồm lịch đặt cho người thân |
 | GET | `/api/appointments/:id` | Có | Chi tiết lịch; chỉ chủ tài khoản được xem |
 | PATCH | `/api/appointments/:id/cancel` | Có | Hủy lịch tương lai và giải phóng các slot đã giữ |
+| GET | `/api/appointments/staff?status=booked&date=YYYY-MM-DD` | Staff | Nhân viên xem lịch theo trạng thái (mặc định `booked`), lọc ngày tùy chọn |
+| PATCH | `/api/appointments/:id/status` | Staff | Nhân viên đổi trạng thái. Body `{ status: "confirmed" \| "rejected" \| "completed", reason? }`, `reason` bắt buộc khi `rejected` (tối đa 500 ký tự) |
+
+### Trạng thái lịch hẹn
+
+| Trạng thái | Nghĩa | App hiển thị |
+|---|---|---|
+| `booked` | Vừa đặt, chờ phòng khám xác nhận | Chờ xác nhận |
+| `confirmed` | Phòng khám đã xác nhận | Đã xác nhận |
+| `rejected` | Phòng khám từ chối (có lý do trong `statusReason`) | Bị từ chối |
+| `cancelled` | Bệnh nhân hủy | Đã hủy |
+| `completed` | Đã khám xong | Đã hoàn tất |
+
+Trạng thái khác: app hiển thị "Không xác định".
+
+Chuyển hợp lệ (kiểm tra bằng `canTransition` trong `utils/booking.js`), còn lại trả **409**, kể cả gọi lại cùng trạng thái:
+
+```
+booked    → confirmed | rejected | cancelled
+confirmed → completed | cancelled
+```
+
+- Bệnh nhân chỉ hủy qua `PATCH /:id/cancel`. Nhân viên dùng `PATCH /:id/status`.
+- Khi đổi trạng thái lưu `status`, `statusUpdatedAt` (Timestamp), `statusUpdatedBy` (uid nhân viên), `statusReason` (nếu có).
+- `rejected` giải phóng slot và trả 1 lượt voucher giống luồng hủy (hàm dùng chung `readRelease`/`writeRelease` trong `routes/appointments.js`).
+- Mỗi lần đổi trạng thái tạo đúng 1 thông báo gửi `accountId`, id cố định `${appointmentId}_${status}`, `type` là `appointment_confirmed`, `appointment_rejected` hoặc `appointment_completed`, `refId` là id lịch.
+
+### Quyền nhân viên (staff)
+
+- Dùng Firebase custom claims `{ role: "staff" }`. Middleware `src/middleware/requireStaff.js` (đặt sau `auth`) trả **403** nếu không phải staff.
+- Gán: `node scripts/set-staff.js staff@nhakhoa.com`. Gỡ: thêm `--remove`. Người được gán/gỡ phải **đăng nhập lại** để token có quyền mới.
+
+### Lịch làm việc bác sĩ
+
+- `node scripts/seed-schedules.js` chạy thử (in ra), thêm `--apply` để ghi. Tạo ca cho mọi bác sĩ đang hoạt động, từ hôm nay tới 30 ngày sau, thứ 2 đến thứ 7: ca sáng 08:00 đến 12:00, ca chiều 13:30 đến 17:30, slot 30 phút. Id `${doctorId}_${YYYY-MM-DD}_am` / `_pm`.
+- Không xóa, không ghi đè: id đã có thì bỏ qua; bác sĩ đã có ca bất kỳ trong ngày thì bỏ qua ngày đó. **Chạy lại trước hôm demo** để có lịch cho các ngày mới.
+- `loadSchedulingData(date)` chỉ đọc ca có `startAt` trong ngày đang hỏi (giờ Việt Nam) và lịch hẹn, slot có `date` bằng ngày đó. Ca lỗi định dạng bị bỏ qua kèm `console.warn`, không làm hỏng việc đặt lịch.
 
 ### Quy ước Module 2
 
 - Báo giá luôn đọc `price`, `durationMinutes` từ `services`/`combos`; không tin giá do client gửi. Khi chọn combo kèm các dịch vụ đã nằm trong combo, các dịch vụ đó không bị tính phí/thời lượng lần hai. `totalPrice` là số tiền sau giảm giá, `subtotal` là trước giảm giá, `discount` là số tiền được giảm.
 - `doctor_schedules` dùng `doctorId`, `startAt`, `endAt`, `slotMinutes`, `isAvailable`. `startAt`/`endAt` là thời điểm Firestore; hệ thống diễn giải theo múi giờ Việt Nam (`Asia/Ho_Chi_Minh`). Mỗi document là một ca/ngày cụ thể, không tự lặp theo tuần.
-- Lịch hẹn lưu `accountId`, `patientId`, `doctorId`, `serviceIds`, `comboId`, `date` (`YYYY-MM-DD`), `startTime`/`endTime` (`HH:mm`), `totalPrice`, `discount`, `voucherCode`, `status: "booked"`, `createdAt` (Timestamp). Lịch cho người thân phải tham chiếu một document trong `users/{accountId}/family_members`.
+- Lịch hẹn lưu `accountId`, `patientId`, `doctorId`, `serviceIds`, `comboId`, `date` (`YYYY-MM-DD`), `startTime`/`endTime` (`HH:mm`), `totalPrice`, `discount`, `voucherCode`, `status: "booked"`, `createdAt` (Timestamp). Lịch cho người thân phải tham chiếu một document trong `users/{accountId}/family_members` chưa bị xóa (`isArchived`); bước kiểm tra người khám chạy trước mọi bước kiểm tra dịch vụ, lịch làm việc, khung giờ.
+- Test tự động: `node --test test/module2/scheduling.test.cjs test/module2/staff-status.test.cjs`.
 - Việc tạo lịch dùng Firestore Transaction và collection nội bộ `appointment_slots` để giữ từng đoạn thời gian 15 phút; lịch đã hủy sẽ giải phóng slot. Khi dùng voucher, `usedCount` được tăng trong cùng transaction với đặt lịch.
 - Notification mới có các trường `userId`, `title`, `body`, `type`, `refId`, `isRead`, `createdAt` theo quy ước ở README gốc.
 - Request test nằm tại `backend/api-test.http`; trước khi chạy, thay token Firebase, ngày/giờ và mã bác sĩ theo dữ liệu thật trong Firestore.

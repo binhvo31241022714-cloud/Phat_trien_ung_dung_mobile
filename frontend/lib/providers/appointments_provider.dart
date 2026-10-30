@@ -32,14 +32,11 @@ class AppointmentsProvider extends SessionNotifier {
   bool get loaded => _loaded;
   String? get error => _error;
 
-  /// Lịch hẹn sắp tới gần nhất (chưa hoàn tất, chưa hủy, còn ở tương lai).
+  /// Lịch hẹn sắp tới gần nhất (chờ xác nhận hoặc đã xác nhận, còn ở tương lai).
   Appointment? get upcomingAppointment {
     final now = DateTime.now();
     final active = _appointments.where((a) {
-      if (a.status == AppointmentStatus.cancelled ||
-          a.status == AppointmentStatus.completed) {
-        return false;
-      }
+      if (!a.status.isUpcomingStatus) return false;
       return a.hasValidScheduledAt && !a.scheduledAt.isBefore(now);
     }).toList();
 
@@ -97,6 +94,33 @@ class AppointmentsProvider extends SessionNotifier {
         _loading = false;
         notifyListeners();
       }
+    }
+  }
+
+  /// Đọc lại một lịch hẹn từ GET /api/appointments/:id và cập nhật vào danh sách.
+  /// 403/404: bỏ lịch khỏi danh sách rồi ném lỗi để màn hình báo không còn khả dụng.
+  Future<AppointmentCancellationInfo> refreshOne(String id) async {
+    final session = sessionGeneration;
+    try {
+      final info = await cancellationInfo(id);
+      if (isSessionCurrent(session)) {
+        final fresh = _confirmedCancellations.contains(id)
+            ? _cancelled(info.appointment)
+            : info.appointment;
+        _appointments = List.unmodifiable([
+          for (final a in _appointments) a.id == id ? fresh : a,
+          if (!_appointments.any((a) => a.id == id)) fresh,
+        ]);
+        notifyListeners();
+      }
+      return info;
+    } on ApiException catch (e) {
+      if (isSessionCurrent(session) &&
+          (e.statusCode == 403 || e.statusCode == 404)) {
+        _appointments = List.unmodifiable(_appointments.where((a) => a.id != id));
+        notifyListeners();
+      }
+      rethrow;
     }
   }
 

@@ -557,6 +557,13 @@ class PatientDataProvider extends SessionNotifier {
     notifyListeners();
   }
 
+  /// Bỏ lịch máy chủ báo không còn quyền xem hoặc không tồn tại (403/404).
+  void removeApiAppointment(String id, {required int generation}) {
+    if (!isSessionCurrent(generation)) return;
+    _appointments.removeWhere((item) => item.id == id);
+    notifyListeners();
+  }
+
   void replaceAppointments(List<Appointment> appointments, {int? generation}) {
     if (isDisposed || generation != null && !isSessionCurrent(generation)) {
       return;

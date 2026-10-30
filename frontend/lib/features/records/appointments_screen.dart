@@ -97,7 +97,11 @@ class _AppointmentsScreenState extends State<AppointmentsScreen> {
     }
     final patient = patients.first;
     final appointments = data.appointmentsFor(widget.patientId);
-    return RecordsPage(title: 'Lịch hẹn', useRecordsState: false, children: [
+    return RecordsPage(
+        title: 'Lịch hẹn',
+        useRecordsState: false,
+        onRefresh: isApi ? () => reloadAppointments(context) : null,
+        children: [
       if (isApi) const AppointmentApiStatus(),
       if (catalog != null &&
           (catalog.loading || !catalog.loaded || catalog.error != null))

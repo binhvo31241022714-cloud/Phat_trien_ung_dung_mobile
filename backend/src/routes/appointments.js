@@ -1,6 +1,9 @@
 const router = require('express').Router();
 const auth = require('../middleware/auth');
+const requireStaff = require('../middleware/requireStaff');
 const {
+  APPOINTMENT_STATUSES,
+  canTransition,
   ApiError,
   asyncHandler,
   db,
@@ -27,6 +30,63 @@ function isRetryableSlotConflict(error) {
   return error.status === 409 || error.code === 10 || error.code === '10' ||
     error.code === 'already-exists';
 }
+
+// Dùng chung cho hủy và từ chối: đọc (trong transaction) các slot đang giữ và voucher.
+async function readRelease(transaction, appointment) {
+  if (!appointment.doctorId || !appointment.endTime) {
+    throw new ApiError(500, 'Lịch hẹn thiếu doctorId hoặc endTime nên không thể giải phóng slot an toàn');
+  }
+  const startMinute = parseTime(appointment.startTime, 'startTime');
+  const endMinute = parseTime(appointment.endTime, 'endTime');
+  const lockRefs = getSlotLockRefs(appointment.doctorId, appointment.date, startMinute, endMinute);
+  const locks = [];
+  for (const lock of lockRefs) {
+    locks.push({ lock, snapshot: await transaction.get(lock.ref) });
+  }
+
+  let voucherRef = null;
+  let voucherSnap = null;
+  if (appointment.voucherCode) {
+    voucherRef = await findVoucherRef(appointment.voucherCode);
+    if (voucherRef) {
+      voucherSnap = await transaction.get(voucherRef);
+    }
+  }
+  return { locks, voucherRef, voucherSnap };
+}
+
+// Ghi phần giải phóng: xóa slot của đúng lịch này, trả 1 lượt voucher.
+function writeRelease(transaction, appointmentId, { locks, voucherRef, voucherSnap }) {
+  for (const { lock, snapshot } of locks) {
+    if (snapshot.exists && snapshot.data().appointmentId === appointmentId) {
+      transaction.delete(lock.ref);
+    }
+  }
+  if (voucherSnap && voucherSnap.exists) {
+    const currentUsed = Number(voucherSnap.data().usedCount || 0);
+    if (currentUsed > 0) {
+      transaction.update(voucherRef, { usedCount: currentUsed - 1 });
+    }
+  }
+}
+
+const STATUS_NOTIFICATIONS = {
+  confirmed: {
+    type: 'appointment_confirmed',
+    title: 'Lịch hẹn đã được xác nhận',
+    body: (a) => `Lịch hẹn ngày ${a.date} lúc ${a.startTime} đã được phòng khám xác nhận.`,
+  },
+  rejected: {
+    type: 'appointment_rejected',
+    title: 'Lịch hẹn bị từ chối',
+    body: (a, reason) => `Lịch hẹn ngày ${a.date} lúc ${a.startTime} đã bị từ chối. Lý do: ${reason}`,
+  },
+  completed: {
+    type: 'appointment_completed',
+    title: 'Lịch hẹn đã hoàn tất',
+    body: (a) => `Lịch hẹn ngày ${a.date} lúc ${a.startTime} đã hoàn tất. Cảm ơn bạn đã đến khám.`,
+  },
+};
 
 // POST /api/appointments
 // Body: { patientId, doctorId?, serviceIds?, comboId?, date, startTime, voucherCode? }
@@ -281,6 +341,89 @@ router.get('/', auth, asyncHandler(async (req, res) => {
   res.json(appointments);
 }));
 
+// GET /api/appointments/staff?status=booked&date=YYYY-MM-DD - nhân viên xem lịch theo trạng thái
+// Đặt trên /:id để "staff" không bị hiểu là id lịch hẹn.
+router.get('/staff', auth, requireStaff, asyncHandler(async (req, res) => {
+  const status = String(req.query.status || 'booked').trim().toLowerCase();
+  if (!APPOINTMENT_STATUSES.includes(status)) {
+    return res.status(400).json({ message: `status phải là một trong: ${APPOINTMENT_STATUSES.join(', ')}` });
+  }
+  const date = req.query.date === undefined ? null : String(req.query.date);
+  if (date !== null && !isValidDateKey(date)) {
+    return res.status(400).json({ message: 'date phải theo định dạng YYYY-MM-DD' });
+  }
+
+  let query = db.collection('appointments').where('status', '==', status);
+  if (date) query = query.where('date', '==', date);
+  const snapshot = await query.get();
+  const appointments = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+  appointments.sort((a, b) => {
+    const left = `${a.date || ''}T${a.startTime || ''}`;
+    const right = `${b.date || ''}T${b.startTime || ''}`;
+    return left.localeCompare(right);
+  });
+  res.json(appointments);
+}));
+
+// PATCH /api/appointments/:id/status - nhân viên xác nhận, từ chối, hoàn tất lịch
+// Body: { status: "confirmed" | "rejected" | "completed", reason? (bắt buộc khi rejected) }
+router.patch('/:id/status', auth, requireStaff, asyncHandler(async (req, res) => {
+  const body = req.body || {};
+  const status = typeof body.status === 'string' ? body.status.trim().toLowerCase() : '';
+  const notice = STATUS_NOTIFICATIONS[status];
+  if (!notice) {
+    return res.status(400).json({ message: 'status phải là confirmed, rejected hoặc completed' });
+  }
+  if (body.reason !== undefined && body.reason !== null && typeof body.reason !== 'string') {
+    return res.status(400).json({ message: 'Lý do phải là chuỗi' });
+  }
+  const reason = typeof body.reason === 'string' ? body.reason.trim() : '';
+  if (status === 'rejected' && !reason) {
+    return res.status(400).json({ message: 'Từ chối lịch hẹn phải ghi lý do' });
+  }
+  if (reason.length > 500) {
+    return res.status(400).json({ message: 'Lý do tối đa 500 ký tự' });
+  }
+
+  const appointmentRef = db.collection('appointments').doc(req.params.id);
+  // Id cố định: mỗi lịch chỉ có 1 thông báo cho mỗi trạng thái.
+  const notificationRef = db.collection('notifications').doc(`${req.params.id}_${status}`);
+
+  const result = await db.runTransaction(async (transaction) => {
+    const appointmentSnap = await transaction.get(appointmentRef);
+    if (!appointmentSnap.exists) throw new ApiError(404, 'Không tìm thấy lịch hẹn');
+    const appointment = appointmentSnap.data();
+    const current = String(appointment.status || '').toLowerCase();
+    if (!canTransition(current, status)) {
+      throw new ApiError(409, `Không thể chuyển lịch hẹn từ "${current || 'không rõ'}" sang "${status}"`);
+    }
+    const notificationSnap = await transaction.get(notificationRef);
+    if (notificationSnap.exists) {
+      throw new ApiError(409, 'Lịch hẹn đã được cập nhật trạng thái này trước đó');
+    }
+    const release = status === 'rejected' ? await readRelease(transaction, appointment) : null;
+
+    const now = new Date();
+    const update = { status, statusUpdatedAt: now, statusUpdatedBy: req.user.uid };
+    if (reason) update.statusReason = reason;
+    transaction.update(appointmentRef, update);
+    if (release) writeRelease(transaction, appointmentSnap.id, release);
+    transaction.set(notificationRef, {
+      userId: appointment.accountId,
+      title: notice.title,
+      body: notice.body(appointment, reason),
+      type: notice.type,
+      refId: appointmentSnap.id,
+      isRead: false,
+      createdAt: now,
+    });
+
+    return { id: appointmentSnap.id, ...appointment, ...update };
+  });
+
+  res.json(result);
+}));
+
 // GET /api/appointments/:id - chỉ chủ tài khoản được xem
 router.get('/:id', auth, asyncHandler(async (req, res) => {
   const snapshot = await db.collection('appointments').doc(req.params.id).get();
@@ -309,40 +452,11 @@ router.patch('/:id/cancel', auth, asyncHandler(async (req, res) => {
     if (!appointment.date || !appointment.startTime || !isFutureAppointment(appointment.date, appointment.startTime)) {
       throw new ApiError(400, 'Chỉ có thể hủy lịch hẹn chưa diễn ra');
     }
-    if (!appointment.doctorId || !appointment.endTime) {
-      throw new ApiError(500, 'Lịch hẹn thiếu doctorId hoặc endTime nên không thể giải phóng slot an toàn');
-    }
-
-    const startMinute = parseTime(appointment.startTime, 'startTime');
-    const endMinute = parseTime(appointment.endTime, 'endTime');
-    const lockRefs = getSlotLockRefs(appointment.doctorId, appointment.date, startMinute, endMinute);
-    const locks = [];
-    for (const lock of lockRefs) {
-      locks.push({ lock, snapshot: await transaction.get(lock.ref) });
-    }
-
-    let voucherRef = null;
-    let voucherSnap = null;
-    if (appointment.voucherCode) {
-      voucherRef = await findVoucherRef(appointment.voucherCode);
-      if (voucherRef) {
-        voucherSnap = await transaction.get(voucherRef);
-      }
-    }
+    const release = await readRelease(transaction, appointment);
 
     const now = new Date();
     transaction.update(appointmentRef, { status: 'cancelled', cancelledAt: now });
-    for (const { lock, snapshot } of locks) {
-      if (snapshot.exists && snapshot.data().appointmentId === appointmentSnap.id) {
-        transaction.delete(lock.ref);
-      }
-    }
-    if (voucherSnap && voucherSnap.exists) {
-      const currentUsed = Number(voucherSnap.data().usedCount || 0);
-      if (currentUsed > 0) {
-        transaction.update(voucherRef, { usedCount: currentUsed - 1 });
-      }
-    }
+    writeRelease(transaction, appointmentSnap.id, release);
     transaction.set(notificationRef, {
       userId: uid,
       title: 'Đã hủy lịch hẹn',

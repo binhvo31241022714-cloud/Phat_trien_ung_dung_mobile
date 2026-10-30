@@ -10,6 +10,17 @@ const INACTIVE_APPOINTMENT_STATUSES = new Set([
   'expired',
 ]);
 
+// booked = chờ xác nhận. Chuyển hợp lệ; còn lại trả 409.
+const APPOINTMENT_STATUSES = ['booked', 'confirmed', 'rejected', 'cancelled', 'completed'];
+const STATUS_TRANSITIONS = {
+  booked: ['confirmed', 'rejected', 'cancelled'],
+  confirmed: ['completed', 'cancelled'],
+};
+
+function canTransition(from, to) {
+  return (STATUS_TRANSITIONS[String(from || '').toLowerCase()] || []).includes(to);
+}
+
 class ApiError extends Error {
   constructor(status, message) {
     super(message);
@@ -455,6 +466,8 @@ function shuffle(items) {
 }
 
 module.exports = {
+  APPOINTMENT_STATUSES,
+  canTransition,
   ApiError,
   asyncHandler,
   db,

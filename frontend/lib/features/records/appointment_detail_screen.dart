@@ -32,7 +32,7 @@ class _AppointmentDetailScreenState extends State<AppointmentDetailScreen> {
     if (isApi) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted) return;
-        _checkCancellation();
+        _refresh();
         final catalog = context.read<CatalogProvider>();
         if (!catalog.loaded && !catalog.loading && catalog.error == null) {
           catalog.load();
@@ -41,7 +41,10 @@ class _AppointmentDetailScreenState extends State<AppointmentDetailScreen> {
     }
   }
 
-  Future<void> _checkCancellation() async {
+  /// Luôn đọc lại lịch từ GET /api/appointments/:id khi mở màn hình, cập nhật
+  /// cả AppointmentsProvider và PatientDataProvider. Trong lúc tải vẫn hiện dữ
+  /// liệu cũ; nút hủy chỉ hiện theo dữ liệu mới.
+  Future<void> _refresh() async {
     final data = context.read<PatientDataProvider>();
     final provider = context.read<AppointmentsProvider>();
     final generation = data.sessionGeneration;
@@ -52,11 +55,17 @@ class _AppointmentDetailScreenState extends State<AppointmentDetailScreen> {
       _cancelError = null;
     });
     try {
-      final info = await provider.cancellationInfo(widget.appointmentId);
+      final info = await provider.refreshOne(widget.appointmentId);
       if (!mounted ||
           !data.isSessionCurrent(generation) ||
           !provider.isSessionCurrent(providerGeneration)) {
         return;
+      }
+      final fresh = provider.appointments
+          .where((a) => a.id == widget.appointmentId)
+          .firstOrNull;
+      if (fresh != null) {
+        data.upsertApiAppointment(fresh, generation: generation);
       }
       setState(() => _cancellation = info);
     } catch (e) {
@@ -65,9 +74,14 @@ class _AppointmentDetailScreenState extends State<AppointmentDetailScreen> {
           !provider.isSessionCurrent(providerGeneration)) {
         return;
       }
+      if (e is ApiException && (e.statusCode == 403 || e.statusCode == 404)) {
+        // Màn hình sẽ báo "Lịch hẹn không còn khả dụng."
+        data.removeApiAppointment(widget.appointmentId, generation: generation);
+        return;
+      }
       setState(() => _cancelError = e is ApiException
           ? e.message
-          : 'Không kiểm tra được điều kiện hủy lịch.');
+          : 'Không tải được thông tin mới nhất của lịch hẹn.');
     } finally {
       if (mounted &&
           data.isSessionCurrent(generation) &&
@@ -157,6 +171,17 @@ class _AppointmentDetailScreenState extends State<AppointmentDetailScreen> {
         : 'Chưa có thông tin bác sĩ';
   }
 
+  Widget _refreshing() => const Padding(
+      padding: EdgeInsets.only(top: 8),
+      child: Row(children: [
+        SizedBox(
+            width: 16,
+            height: 16,
+            child: CircularProgressIndicator(strokeWidth: 2)),
+        SizedBox(width: 8),
+        Text('Đang cập nhật trạng thái lịch hẹn…'),
+      ]));
+
   Widget _catalogStatus(CatalogProvider catalog) {
     if (catalog.error != null) {
       return Row(children: [
@@ -189,7 +214,9 @@ class _AppointmentDetailScreenState extends State<AppointmentDetailScreen> {
           useRecordsState: false,
           children: [
             if (isApi) const AppointmentApiStatus(),
-            if (source?.loading != true && source?.error == null)
+            if (isApi && _checking)
+              _refreshing()
+            else if (source?.loading != true && source?.error == null)
               const RecordEmpty('Lịch hẹn không còn khả dụng.'),
           ]);
     }
@@ -223,12 +250,11 @@ class _AppointmentDetailScreenState extends State<AppointmentDetailScreen> {
               const Text(
                   'Lịch hẹn demo. Thao tác hủy chỉ cập nhật dữ liệu trong ứng dụng.',
                   style: TextStyle(color: Color(0xFF666666))),
-            if (isApi && _checking)
-              const Text('Đang kiểm tra điều kiện hủy lịch…'),
+            if (isApi && _checking) _refreshing(),
             if (isApi && _cancelError != null) ...[
               Text(_cancelError!, style: const TextStyle(color: Colors.red)),
               TextButton(
-                  onPressed: _busy ? null : _checkCancellation,
+                  onPressed: _busy ? null : _refresh,
                   child: const Text('Thử lại')),
             ],
             if (cancellable)
