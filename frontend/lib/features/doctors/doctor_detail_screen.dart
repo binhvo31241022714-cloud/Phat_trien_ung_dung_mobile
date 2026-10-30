@@ -4,6 +4,7 @@ import '../../core/widgets/network_image_or_icon.dart';
 import '../../data/models/doctor.dart';
 import '../../providers/catalog_provider.dart';
 import '../services/service_detail_screen.dart';
+import '../shared/booking_shortcut_button.dart';
 import '../shared/catalog_navigation.dart';
 import '../shared/favorite_button.dart';
 
@@ -68,12 +69,6 @@ class DoctorDetailScreen extends StatelessWidget {
                         Text(doctor.introduction),
                         const SizedBox(height: 16),
                       ],
-                      const Text('Chuyên môn',
-                          style: TextStyle(
-                              fontSize: 18, fontWeight: FontWeight.w600)),
-                      Wrap(spacing: 8, children: [
-                        Chip(label: Text(doctor.specialty)),
-                      ]),
                       if (showRelated && services.isNotEmpty) ...[
                         const SizedBox(height: 12),
                         const Text('Dịch vụ thực hiện',
@@ -91,14 +86,20 @@ class DoctorDetailScreen extends StatelessWidget {
                                     context,
                                     'Chi tiết dịch vụ',
                                     ServiceDetailScreen(
-                                        service: s, showRelated: false))),
+                                        service: s,
+                                        showRelated: false,
+                                        doctorId: doctor.id))),
                         ]),
                         const SizedBox(height: 12),
                       ],
                       // Dữ liệu mock trong đặt lịch không có trên máy chủ nên
                       // không lưu được.
-                      if (doctor.fromApi)
+                      if (doctor.fromApi) ...[
                         FavoriteButton(type: 'doctor', itemId: doctor.id),
+                        BookingShortcutButton(
+                            label: 'Đặt lịch với bác sĩ này',
+                            doctorId: doctor.id),
+                      ],
                     ]))));
   }
 }

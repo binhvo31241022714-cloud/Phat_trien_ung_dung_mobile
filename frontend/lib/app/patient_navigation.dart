@@ -47,7 +47,10 @@ class PatientNavigation {
     String? comboId,
     String? patientId,
   }) {
+    // Mở từ chi tiết là một lựa chọn mới: bỏ giỏ cũ, sau khi đặt thành công
+    // thì tạo lại màn hình đặt lịch (giống đặt lịch tái khám).
     pendingBookingRequest = BookingRequest(
+      replaceSelection: true,
       doctorId: doctorId,
       serviceIds: serviceIds,
       restrictToServiceIds: restrictToServiceIds,

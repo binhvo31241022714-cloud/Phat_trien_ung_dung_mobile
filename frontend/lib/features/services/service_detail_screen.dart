@@ -6,17 +6,24 @@ import '../../data/models/dental_service.dart';
 import '../../data/models/doctor.dart';
 import '../../providers/catalog_provider.dart';
 import '../doctors/doctor_detail_screen.dart';
+import '../shared/booking_shortcut_button.dart';
 import '../shared/catalog_navigation.dart';
 import '../shared/favorite_button.dart';
 
 class ServiceDetailScreen extends StatelessWidget {
   const ServiceDetailScreen(
-      {required this.service, this.showRelated = true, super.key});
+      {required this.service,
+      this.showRelated = true,
+      this.doctorId,
+      super.key});
   final DentalService service;
 
   /// false khi mở từ mục "Dịch vụ thực hiện" của bác sĩ: ẩn "Bác sĩ thực
   /// hiện" để không đi vòng dịch vụ → bác sĩ → dịch vụ mãi.
   final bool showRelated;
+
+  /// Bác sĩ đang xem khi mở từ chi tiết bác sĩ; đặt lịch sẽ chọn sẵn bác sĩ này.
+  final String? doctorId;
   @override
   Widget build(BuildContext context) {
     final catalog = context.watch<CatalogProvider>();
@@ -126,9 +133,17 @@ class ServiceDetailScreen extends StatelessWidget {
                       const SizedBox(height: 12),
                       // Dữ liệu mock trong đặt lịch không có trên máy chủ nên
                       // không lưu được.
-                      if (service.fromApi)
+                      if (service.fromApi) ...[
                         FavoriteButton(
                             type: service.favoriteType, itemId: service.id),
+                        BookingShortcutButton(
+                            label: service.isCombo
+                                ? 'Đặt lịch combo này'
+                                : 'Đặt lịch dịch vụ này',
+                            doctorId: doctorId,
+                            serviceIds: service.isCombo ? null : [service.id],
+                            comboId: service.isCombo ? service.id : null),
+                      ],
                     ]))));
   }
 }
