@@ -53,6 +53,10 @@ Module 1 **không thay** các chỗ này vì màn hình của module khác đang
 | "Dịch vụ nổi bật" đang lấy 6 dịch vụ đầu tiên | **Nhi** (`/api/home`) | Có thể nhờ Phương thêm trường `isFeatured` |
 | Màn hình **Thông báo** khi tắt "Nhận thông báo" còn câu *"...trong phiên demo..."* | **Nhi** | Sửa câu cho đúng khi nối thông báo thật |
 
+## ⚠️ Đã biết, chưa xử lý
+
+- App tính giờ lịch hẹn theo múi giờ thiết bị, chỉ đúng khi thiết bị đặt giờ Việt Nam.
+
 ## 🔑 Mã thật dùng thay mã giả
 
 | Là gì | Mã thật | Mã giả trong app |
