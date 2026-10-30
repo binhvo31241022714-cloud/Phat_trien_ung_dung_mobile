@@ -7,6 +7,7 @@ import 'package:frontend/main.dart' as app;
 import '../test/support/fake_auth_service.dart';
 import '../test/support/fake_catalog_backend.dart';
 import '../test/support/fake_profile_backend.dart';
+import '../test/support/mock_data_source.dart';
 import 'package:frontend/app/main_shell.dart';
 import 'package:frontend/data/providers/patient_data_provider.dart';
 import 'package:frontend/data/models/appointment.dart';
@@ -14,6 +15,7 @@ import 'package:frontend/features/me/me_widgets.dart';
 import 'package:frontend/providers/user_provider.dart';
 
 void main() {
+  useMockDataSource();
   final binding = IntegrationTestWidgetsFlutterBinding.ensureInitialized();
   testWidgets(
       'Android: login, Home, booking, records, family, bookmarks and logout',

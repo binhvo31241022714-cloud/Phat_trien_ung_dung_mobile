@@ -233,8 +233,10 @@ Thấy `Server chạy tại http://localhost:3000` là được. Sửa code back
    ```
    Có nhiều thiết bị thì gõ số đứng trước dòng có chữ `emulator`. Đang chạy: `r` tải lại nhanh, `R` khởi động lại, `q` thoát.
 
+   `flutter run` không cần thêm cờ nào: app mặc định dùng **dữ liệu thật** từ backend (`DATA_SOURCE=api`, máy ảo Android tự gọi `http://10.0.2.2:3000`). Muốn xem **dữ liệu giả** để demo khi không có backend thì chạy `flutter run --dart-define=DATA_SOURCE=mock`.
+
 **Cách khác thay cho `flutter run`:** bấm **Run → Start Debugging (F5)** trên VS Code. Backend **vẫn phải chạy ở Terminal 1**.
-- Nếu VS Code hỏi chọn cấu hình, chọn **`frontend`**.
+- Nếu VS Code hỏi chọn cấu hình, chọn cấu hình API, ví dụ **`MediCare Dental - API (Android Emulator)`** (dữ liệu thật). Cấu hình có `DATA_SOURCE=mock`, ví dụ **`MediCare Dental - Mock (Demo)`**, dùng dữ liệu giả, không cần backend. Cấu hình không truyền `DATA_SOURCE` thì mặc định là dữ liệu thật.
 - Danh sách cấu hình F5 nằm ở `.vscode/launch.json`. Thư mục `.vscode` **không lên GitHub**, nên máy mỗi người có thể khác nhau. Mở file đó ra kiểm tra: nếu còn cấu hình có **`8080`** (backend Dart cũ) thì sửa thành **`3000`**; nếu còn cấu hình chạy **`backend/bin/server.dart`** (file không còn tồn tại) thì xóa đi. Không chắc thì cứ dùng `flutter run` ở Terminal 2.
 
 Không chạy Terminal 1 thì app vẫn mở nhưng báo *"Không kết nối được tới máy chủ"*.

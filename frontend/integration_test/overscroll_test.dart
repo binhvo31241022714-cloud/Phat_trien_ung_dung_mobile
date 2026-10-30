@@ -7,6 +7,7 @@ import 'package:frontend/main.dart' as app;
 import '../test/support/fake_auth_service.dart';
 import '../test/support/fake_catalog_backend.dart';
 import '../test/support/fake_profile_backend.dart';
+import '../test/support/mock_data_source.dart';
 import 'package:frontend/app/main_shell.dart';
 import 'package:frontend/core/theme/app_scroll_behavior.dart';
 import 'package:frontend/data/providers/patient_data_provider.dart';
@@ -17,6 +18,7 @@ import 'package:frontend/features/records/records_widgets.dart';
 import 'package:frontend/routes/app_routes.dart';
 
 void main() {
+  useMockDataSource();
   final binding = IntegrationTestWidgetsFlutterBinding.ensureInitialized();
   testWidgets('Android boundaries across all tabs and secondary routes',
       (tester) async {

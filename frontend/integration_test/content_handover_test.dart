@@ -7,12 +7,14 @@ import 'package:frontend/main.dart' as app;
 import '../test/support/fake_auth_service.dart';
 import '../test/support/fake_catalog_backend.dart';
 import '../test/support/fake_profile_backend.dart';
+import '../test/support/mock_data_source.dart';
 import 'package:frontend/app/main_shell.dart';
 import 'package:frontend/data/providers/patient_data_provider.dart';
 import 'package:frontend/features/me/notifications_screen.dart';
 import 'package:frontend/providers/user_provider.dart';
 
 void main() {
+  useMockDataSource();
   final binding = IntegrationTestWidgetsFlutterBinding.ensureInitialized();
   testWidgets(
       'Mock Android content, bookmarks, notification filters/read/link and logout',

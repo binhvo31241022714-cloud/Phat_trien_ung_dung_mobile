@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:frontend/core/config/app_config.dart';
+import '../test/support/mock_data_source.dart';
 import 'content_handover_test.dart' as content;
 import 'final_flow_test.dart' as demo;
 
@@ -30,6 +31,7 @@ class _BlockedClient implements HttpClient {
 }
 
 void main() {
+  useMockDataSource();
   final guard = _OfflineGuard();
   HttpOverrides? previous;
   setUpAll(() {

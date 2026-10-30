@@ -29,9 +29,9 @@ AppConfig config(String source) =>
     AppConfig.fromValues(source: source, baseUrl: 'http://localhost:8080');
 
 void main() {
-  test('mock default, explicit API and configured URL', () {
-    expect(AppConfig.fromValues().dataSource, DataSource.mock);
-    expect(config('api').dataSource, DataSource.api);
+  test('API default, explicit mock and configured URL', () {
+    expect(AppConfig.fromValues().dataSource, DataSource.api);
+    expect(config('mock').dataSource, DataSource.mock);
     expect(
         AppConfig.fromValues(baseUrl: 'https://example.invalid:9000/')
             .apiBaseUrl,

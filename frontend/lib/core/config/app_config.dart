@@ -9,7 +9,7 @@ class AppConfig {
   const AppConfig._(this.dataSource, this.apiBaseUrl);
 
   factory AppConfig.fromValues({
-    String source = 'mock',
+    String source = 'api',
     String baseUrl = '',
     bool isWeb = false,
     TargetPlatform platform = TargetPlatform.linux,
@@ -37,11 +37,17 @@ class AppConfig {
     return AppConfig._(mode, url);
   }
 
-  static final current = AppConfig.fromValues(
-    source: const String.fromEnvironment('DATA_SOURCE', defaultValue: 'mock'),
+  static AppConfig _current = AppConfig.fromValues(
+    source: const String.fromEnvironment('DATA_SOURCE', defaultValue: 'api'),
     baseUrl: const String.fromEnvironment('API_BASE_URL',
         defaultValue: String.fromEnvironment('API_URL')),
     isWeb: kIsWeb,
     platform: defaultTargetPlatform,
   );
+
+  static AppConfig get current => _current;
+
+  /// Test tự chọn nguồn dữ liệu (xem test/flutter_test_config.dart).
+  @visibleForTesting
+  static set current(AppConfig value) => _current = value;
 }
