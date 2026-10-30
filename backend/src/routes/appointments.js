@@ -81,7 +81,7 @@ router.post('/', auth, asyncHandler(async (req, res) => {
     return res.status(400).json({ message: 'Lịch hẹn không được vượt qua ngày kế tiếp' });
   }
 
-  const scheduling = await loadSchedulingData();
+  const scheduling = await loadSchedulingData(date);
   const allDoctors = scheduling.doctors;
   let candidateDoctors;
   if (requestedDoctorId) {

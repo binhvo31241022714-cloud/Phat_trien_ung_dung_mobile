@@ -47,7 +47,7 @@ router.get('/', asyncHandler(async (req, res) => {
     return res.status(400).json({ message: 'durationMinutes phải là số nguyên dương (hoặc truyền comboId để tự tính)' });
   }
 
-  const scheduling = await loadSchedulingData();
+  const scheduling = await loadSchedulingData(date);
   let candidateDoctors = scheduling.doctors.filter((doctor) => doctor.isActive !== false);
 
   if (requestedDoctorId) {

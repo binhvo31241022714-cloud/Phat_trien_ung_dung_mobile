@@ -361,15 +361,24 @@ async function buildQuoteWithVoucher(input, transaction = null, knownVoucherRef 
   };
 }
 
-async function loadSchedulingData() {
+// Chỉ đọc lịch làm việc, lịch hẹn, slot của đúng ngày dateKey (giờ Việt Nam).
+// Ca lỗi định dạng bị bỏ qua kèm cảnh báo, không làm hỏng cả ngày.
+async function loadSchedulingData(dateKey) {
+  if (!isValidDateKey(dateKey)) throw new ApiError(400, 'date phải theo định dạng YYYY-MM-DD');
+  const dayStart = makeVietnamDateTime(dateKey, '00:00');
+  const dayEnd = new Date(dayStart.getTime() + 24 * 60 * 60 * 1000);
   const [scheduleSnap, doctorSnap, appointmentSnap, lockSnap] = await Promise.all([
-    db.collection('doctor_schedules').get(),
+    db.collection('doctor_schedules')
+      .where('startAt', '>=', dayStart)
+      .where('startAt', '<', dayEnd)
+      .get(),
     db.collection('doctors').get(),
-    db.collection('appointments').get(),
-    db.collection('appointment_slots').get(),
+    db.collection('appointments').where('date', '==', dateKey).get(),
+    db.collection('appointment_slots').where('date', '==', dateKey).get(),
   ]);
-  const schedules = scheduleSnap.docs.map((doc) => ({ id: doc.id, ref: doc.ref, ...doc.data() }));
-  for (const schedule of schedules) {
+  const schedules = [];
+  for (const doc of scheduleSnap.docs) {
+    const schedule = { id: doc.id, ref: doc.ref, ...doc.data() };
     const missing = [];
     if (!schedule.doctorId) missing.push('doctorId');
     if (!parseFirestoreDate(schedule.startAt)) missing.push('startAt');
@@ -379,8 +388,10 @@ async function loadSchedulingData() {
     }
     if (typeof schedule.isAvailable !== 'boolean') missing.push('isAvailable');
     if (missing.length > 0) {
-      throw new ApiError(500, `doctor_schedules/${schedule.id} thiếu/sai trường: ${missing.join(', ')}`);
+      console.warn(`Bỏ qua doctor_schedules/${schedule.id}: thiếu/sai trường ${missing.join(', ')}`);
+      continue;
     }
+    schedules.push(schedule);
   }
 
   return {
