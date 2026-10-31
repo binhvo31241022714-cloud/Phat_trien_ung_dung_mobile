@@ -429,7 +429,7 @@ Content-Type: application/json
 { "serviceIds": ["svc_01"], "date": "{{a01Date}}", "startTime": "10:00" }
 
 ### A01-4. Nhân viên xem lịch chờ xác nhận trong ngày (mong đợi 200, có 2 lịch vừa đặt)
-GET {{baseUrl}}/api/appointments/staff?status=booked&date={{a01Date}}
+GET {{baseUrl}}/api/appointments/staff?status=booked
 Authorization: Bearer {{staffToken}}
 
 ### A01-5. Bệnh nhân tự xác nhận (mong đợi 403 "Chỉ nhân viên phòng khám...")
