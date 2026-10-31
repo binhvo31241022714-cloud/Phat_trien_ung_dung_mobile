@@ -1,3 +1,5 @@
+import 'support/data_source_scope.dart';
+import 'package:frontend/core/config/app_config.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:provider/provider.dart';
@@ -18,8 +20,9 @@ import 'package:frontend/providers/user_provider.dart';
 import 'package:frontend/data/services/settings_store.dart';
 import 'package:frontend/features/me/me_widgets.dart';
 
-
 import 'support/fake_auth_service.dart';
+import 'support/empty_content_provider.dart';
+import 'package:frontend/providers/content_provider.dart';
 import 'support/fake_catalog_backend.dart';
 import 'support/fake_profile_backend.dart';
 
@@ -30,21 +33,29 @@ Widget providers(
   ProfileProvider? profile,
   CatalogProvider? catalog,
 }) {
+  final resolvedCatalog = catalog ?? FakeCatalogBackend().provider();
   return MultiProvider(
     providers: [
+      ChangeNotifierProvider<ContentProvider>(create: (_) {
+        final content = emptyContentProvider();
+        if (AppConfig.current.dataSource == DataSource.api) {
+          content.bindUser(users, resolvedCatalog);
+        }
+        return content;
+      }),
       ChangeNotifierProvider.value(value: users),
       ChangeNotifierProvider.value(value: data),
       ChangeNotifierProvider<ProfileProvider>.value(
         value: profile ?? FakeProfileBackend().provider(),
       ),
       ChangeNotifierProvider<CatalogProvider>.value(
-        value: catalog ?? FakeCatalogBackend().provider(),
+        value: resolvedCatalog,
       ),
       // PatientNavigation.logout đọc AppointmentsProvider trực tiếp.
       // Dùng fake để test không gọi API thật.
       ChangeNotifierProvider<AppointmentsProvider>(
-  create: (_) => FakeAppointmentsProvider(),
-),
+        create: (_) => FakeAppointmentsProvider(),
+      ),
     ],
     child: child,
   );
@@ -151,7 +162,8 @@ void main() {
     expect(u.receiveNotifications, isFalse);
   });
 
-  test('settings are saved to the device store and read back on start', () async {
+  test('settings are saved to the device store and read back on start',
+      () async {
     final store = MemorySettingsStore();
     final first = UserProvider(settings: store);
     await first.loadSettings();
@@ -308,7 +320,8 @@ void main() {
         await tester.enterText(find.byType(TextFormField).at(1), '123');
         await openMe(tester, 'Lưu thay đổi');
         expect(find.text('Họ và tên không được để trống'), findsOneWidget);
-        expect(find.text('Số điện thoại Việt Nam không hợp lệ'), findsOneWidget);
+        expect(
+            find.text('Số điện thoại Việt Nam không hợp lệ'), findsOneWidget);
         // Ngày sinh không bắt buộc.
         expect(find.text('Vui lòng chọn ngày sinh'), findsNothing);
         expect(backend.me['fullName'], 'Trần Thị Test');
@@ -334,9 +347,21 @@ void main() {
         );
         expect(find.text('Tên tài khoản mới'), findsOneWidget);
         expect(d.primaryPatient.fullName, 'Tên tài khoản mới');
-        expect(d.primaryPatient.id, 'patient-001');
-        expect(d.patients.last, same(relative));
-        expect(d.appointments.map((a) => a.id).toList(), ids);
+        expect(
+            d.primaryPatient.id,
+            AppConfig.current.dataSource == DataSource.api
+                ? backend.me['id']
+                : 'patient-001');
+        if (AppConfig.current.dataSource == DataSource.api) {
+          expect(d.patients, hasLength(1));
+        } else {
+          expect(d.patients.last, same(relative));
+        }
+        if (AppConfig.current.dataSource == DataSource.api) {
+          expect(d.appointments, isEmpty);
+        } else {
+          expect(d.appointments.map((a) => a.id).toList(), ids);
+        }
         expect(tester.takeException(), isNull);
       },
     );
@@ -405,7 +430,8 @@ void main() {
     expect(backend.family, isEmpty);
     expect(find.text('Chưa có người thân'), findsOneWidget);
     // Người thân API không trộn vào dữ liệu mock của đặt lịch/hồ sơ khám.
-    expect(d.patients.length, mockPatients);
+    expect(d.patients.length,
+        AppConfig.current.dataSource == DataSource.api ? 1 : mockPatients);
     expect(tester.takeException(), isNull);
   });
 
@@ -430,12 +456,15 @@ void main() {
   testWidgets(
     'notifications filter, mark read, preserve category and open linked appointment',
     (tester) async {
+      // This test asserts local demo article/notification state, not API state.
+      useDataSourceForTest(DataSource.mock);
       final u = demoUsers();
       final d = PatientDataProvider();
       await pumpMe(tester, u, d);
       await openMe(tester, 'Thông báo');
       await openMe(tester, 'Ưu đãi');
-      expect(find.text('Chưa có thông báo trong danh mục này.'), findsOneWidget);
+      expect(
+          find.text('Chưa có thông báo trong danh mục này.'), findsOneWidget);
       await openMe(tester, 'Hệ thống');
       expect(find.text(d.notifications.last.title), findsOneWidget);
       expect(find.text(d.notifications.first.title), findsNothing);
@@ -458,6 +487,8 @@ void main() {
 
   testWidgets('saved items load from /api/favorites, open details and remove',
       (tester) async {
+    // This test asserts local demo article/notification state, not API state.
+    useDataSourceForTest(DataSource.mock);
     final u = demoUsers();
     final d = PatientDataProvider();
     final backend = FakeCatalogBackend();
@@ -511,6 +542,8 @@ void main() {
 
   testWidgets('saved tabs filter, show counts and update after removal',
       (tester) async {
+    // This test asserts local demo article/notification state, not API state.
+    useDataSourceForTest(DataSource.mock);
     final u = demoUsers();
     final d = PatientDataProvider();
     final backend = FakeCatalogBackend();
@@ -600,7 +633,11 @@ void main() {
       await tester.binding.handlePopRoute();
       await tester.pumpAndSettle();
       expect(find.byType(MainShell), findsNothing);
-      expect(d.appointments, isNotEmpty);
+      expect(
+          d.appointments,
+          AppConfig.current.dataSource == DataSource.api
+              ? isEmpty
+              : isNotEmpty);
       await login();
       expect(find.byType(MainShell), findsOneWidget);
       expect(find.byType(NavigationBar), findsOneWidget);

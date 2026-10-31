@@ -29,7 +29,11 @@ class VisitHistoryScreen extends StatelessWidget {
                     '${formatVietnameseDate(v.visitedAt)} · ${names.visitDoctor(v)}',
                     style: const TextStyle(color: Color(0xFF666666))),
                 const SizedBox(height: 6),
-                const RecordBadge('Đã hoàn thành', color: Colors.green),
+                RecordBadge(
+                    names.apiMode
+                        ? 'Trạng thái chưa cập nhật'
+                        : 'Đã hoàn thành',
+                    color: Colors.grey),
               ]),
       ]);
     });

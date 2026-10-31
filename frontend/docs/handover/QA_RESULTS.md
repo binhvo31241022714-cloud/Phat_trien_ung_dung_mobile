@@ -1,3 +1,5 @@
+> Cập nhật tích hợp 31/10/2026: backend hiện tại là Node.js/Express + Firebase Admin; `DATA_SOURCE` mặc định là `api`. Phần baseline/mock/backend Dart bên dưới là lịch sử, không phải bằng chứng nghiệm thu hiện tại. Xem [báo cáo và runbook hiện hành](INTEGRATION_AUDIT_962a981.md).
+
 # Prompt 11 — Kết quả bàn giao frontend
 
 ## Phạm vi và thay đổi

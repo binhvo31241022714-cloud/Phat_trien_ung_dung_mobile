@@ -38,7 +38,8 @@ class Server {
     'status': 'booked',
   };
   int listCalls = 0, detailCalls = 0;
-  int? detailCode;
+  int? detailCode, readCode;
+  String notificationType = 'appointment_confirmed';
   Completer<void>? detailGate;
   http.Response ok(Object value) => http.Response(jsonEncode(value), 200,
       headers: {'content-type': 'application/json; charset=utf-8'});
@@ -65,7 +66,7 @@ class Server {
           'userId': 'A',
           'title': 'Lịch hẹn đã được xác nhận',
           'body': 'Lịch hẹn đã được phòng khám xác nhận.',
-          'type': 'appointment_confirmed',
+          'type': notificationType,
           'refId': 'appt_1',
           'isRead': false,
           'createdAt': {'_seconds': 1790812800},
@@ -73,6 +74,7 @@ class Server {
       ]);
     }
     if (path == '/api/notifications/n1/read') {
+      if (readCode != null) return http.Response('{}', readCode!);
       return ok({'id': 'n1', 'isRead': true});
     }
     if (path == '/api/notifications/unread-count') return ok({'count': 0});
@@ -228,10 +230,68 @@ void main() {
     expect(s.listCalls, 0);
     await t.tap(find.text('Lịch hẹn đã được xác nhận'));
     await t.pumpAndSettle();
-    expect(s.listCalls, 1);
+    expect(s.detailCalls, 1);
     // Màn Hồ sơ đọc PatientDataProvider: đã có trạng thái mới trước khi mở.
     expect(statusIn(d.appointments), AppointmentStatus.confirmed);
     expect(statusIn(p.appointments), AppointmentStatus.confirmed);
     expect(d.recordsAppointmentId, 'appt_1');
   }, skip: AppConfig.current.dataSource != DataSource.api);
+  for (final type in [
+    'appointment_booked',
+    'appointment_confirmed',
+    'appointment_rejected',
+    'appointment_cancelled',
+    'appointment_completed'
+  ]) {
+    testWidgets('A19: $type opens uncached detail despite mark-read failure',
+        (t) async {
+      final s = Server()
+        ..readCode = 500
+        ..notificationType = type;
+      final (d, p) = s.providers('confirmed');
+      p.clear();
+      d.replaceAppointments([]);
+      final content = ContentProvider(service: ContentService(client: s.client))
+        ..setAccount('A');
+      await mount(t, d, p, const ApiNotificationsView(), content: content);
+      await t.tap(find.text('Lịch hẹn đã được xác nhận'));
+      await t.pumpAndSettle();
+      expect(s.detailCalls, 1);
+      expect(d.recordsAppointmentId, 'appt_1');
+      expect(content.notifications.single.isRead, isFalse);
+      expect(content.errors['read'], isNotNull);
+      expect(t.takeException(), isNull);
+    });
+  }
+  for (final code in [401, 403, 404]) {
+    testWidgets('A19: detail $code never opens cached appointment', (t) async {
+      final s = Server()..detailCode = code;
+      final (d, p) = s.providers('confirmed');
+      final content = ContentProvider(service: ContentService(client: s.client))
+        ..setAccount('A');
+      await mount(t, d, p, const ApiNotificationsView(), content: content);
+      await t.tap(find.text('Lịch hẹn đã được xác nhận'));
+      await t.pumpAndSettle();
+      expect(d.recordsAppointmentId, isNull);
+      if (code != 401) expect(d.appointments, isEmpty);
+      expect(t.takeException(), isNull);
+    });
+  }
+  testWidgets('A19: account switch during detail request prevents navigation',
+      (t) async {
+    final s = Server()..detailGate = Completer<void>();
+    final (d, p) = s.providers('confirmed');
+    final content = ContentProvider(service: ContentService(client: s.client))
+      ..setAccount('A');
+    await mount(t, d, p, const ApiNotificationsView(), content: content);
+    await t.tap(find.text('Lịch hẹn đã được xác nhận'));
+    await t.pump();
+    content.setAccount('B');
+    p.clear();
+    s.detailGate!.complete();
+    await t.pumpAndSettle();
+    expect(d.recordsAppointmentId, isNull);
+    expect(p.appointments, isEmpty);
+    expect(t.takeException(), isNull);
+  });
 }

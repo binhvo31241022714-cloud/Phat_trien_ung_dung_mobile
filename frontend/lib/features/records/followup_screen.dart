@@ -22,16 +22,18 @@ class FollowupScreen extends StatelessWidget {
         for (final f in followups)
           RecordCard(children: [
             RecordBadge(
-                f.scheduledAt.isAfter(DateTime.now())
-                    ? 'Sắp tới'
-                    : 'Ngày đề xuất đã qua',
+                f.scheduledAt == null
+                    ? 'Chưa có ngày đề xuất'
+                    : (f.scheduledAt?.isAfter(DateTime.now()) ?? false)
+                        ? 'Sắp tới'
+                        : 'Ngày đề xuất đã qua',
                 color: Colors.deepOrange),
             RecordHeading(f.note.isEmpty ? 'Lịch tái khám' : f.note),
             Text(recordDateTime(f.scheduledAt)),
             const SizedBox(height: 8),
             Text(names.doctor(f.doctorId, name: f.doctorName)),
             _bookingAction(context, names, data, f, generation),
-            if (!f.scheduledAt.isAfter(DateTime.now()))
+            if (!(f.scheduledAt?.isAfter(DateTime.now()) ?? false))
               const Text('Vui lòng chọn ngày khám mới trong bước đặt lịch.',
                   style: TextStyle(color: Color(0xFF666666))),
           ]),
@@ -92,9 +94,10 @@ class FollowupScreen extends StatelessWidget {
         serviceIds: names.apiMode ? [serviceId] : null,
         restrictToServiceIds: names.apiMode,
         doctorId: names.apiMode ? doctorId : null,
-        suggestedDate: names.apiMode && f.scheduledAt.isAfter(DateTime.now())
-            ? f.scheduledAt
-            : null,
+        suggestedDate:
+            names.apiMode && (f.scheduledAt?.isAfter(DateTime.now()) ?? false)
+                ? f.scheduledAt
+                : null,
         patientId: patientId,
       );
       PatientNavigation.selectTab(context, 1);

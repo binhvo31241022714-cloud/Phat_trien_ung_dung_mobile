@@ -1,0 +1,68 @@
+{
+  "users/account-fixture/family_members/relative-fixture": {
+    "fullName": "Người thân fixture",
+    "isArchived": true
+  },
+  "appointments/appointment-fixture": {
+    "accountId": "account-fixture",
+    "patientId": "relative-fixture",
+    "status": "completed",
+    "date": "2026-10-30",
+    "startTime": "09:00",
+    "endTime": "09:30",
+    "serviceIds": [
+      "service-fixture"
+    ],
+    "doctorId": "doctor-fixture"
+  },
+  "visits/visit-fixture": {
+    "accountId": "account-fixture",
+    "patientId": "relative-fixture",
+    "appointmentId": "appointment-fixture",
+    "visitedAt": "2026-10-30T02:00:00Z",
+    "diagnosis": "Dữ liệu kiểm thử"
+  },
+  "prescriptions/prescription-fixture": {
+    "accountId": "account-fixture",
+    "patientId": "relative-fixture",
+    "visitId": "visit-fixture",
+    "issuedAt": "2026-10-30T02:30:00Z",
+    "items": [
+      {
+        "name": "Thuốc fixture, không dùng điều trị",
+        "dosage": "fixture"
+      }
+    ]
+  },
+  "invoices/invoice-fixture": {
+    "accountId": "account-fixture",
+    "patientId": "relative-fixture",
+    "visitId": "visit-fixture",
+    "appointmentId": "appointment-fixture",
+    "issuedAt": "2026-10-30T02:30:00Z",
+    "totalAmount": 100000,
+    "paymentStatus": "paid"
+  },
+  "treatments/treatment-fixture": {
+    "accountId": "account-fixture",
+    "patientId": "relative-fixture",
+    "name": "Liệu trình fixture",
+    "totalSessions": 2
+  },
+  "treatment_sessions/session-fixture": {
+    "treatmentId": "treatment-fixture",
+    "patientId": "relative-fixture",
+    "visitId": "visit-fixture",
+    "appointmentId": "appointment-fixture",
+    "sessionNumber": 1,
+    "status": "completed"
+  },
+  "follow_ups/followup-fixture": {
+    "accountId": "account-fixture",
+    "patientId": "relative-fixture",
+    "serviceId": "service-fixture",
+    "doctorId": "doctor-fixture",
+    "scheduledAt": "2026-11-10T02:00:00Z",
+    "reason": "Chỉ dữ liệu kiểm thử"
+  }
+}

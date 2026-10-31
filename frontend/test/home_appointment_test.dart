@@ -29,10 +29,10 @@ void main() {
   test('Home endTime is preferred over duration', () {
     final a = HomeAppointment.read(
         appointment({'endTime': '10:15', 'durationMinutes': 45}))!;
-    expect(a.endAt, DateTime(2099, 1, 1, 10, 15));
+    expect(a.endAt, DateTime.utc(2099, 1, 1, 3, 15));
   });
   test('Home endAt Timestamp takes precedence over endTime and duration', () {
-    final end = DateTime(2099, 1, 1, 11).toUtc();
+    final end = DateTime.utc(2099, 1, 1, 4);
     final a = HomeAppointment.read(appointment({
       'endAt': {'_seconds': end.millisecondsSinceEpoch ~/ 1000},
       'endTime': '10:00',
@@ -42,7 +42,7 @@ void main() {
   });
   test('Home uses valid explicit duration when end is missing', () {
     final a = HomeAppointment.read(appointment({'durationMinutes': 75}))!;
-    expect(a.endAt, DateTime(2099, 1, 1, 10, 15));
+    expect(a.endAt, DateTime.utc(2099, 1, 1, 3, 15));
   });
   test('Home never invents thirty minutes for missing or invalid duration', () {
     for (final value in [
@@ -69,7 +69,7 @@ void main() {
         HomeAppointment.read(
                 appointment({'endAt': 'bad', 'durationMinutes': 60}))!
             .endAt,
-        DateTime(2099, 1, 1, 10));
+        DateTime.utc(2099, 1, 1, 3));
   });
   test('invalid/missing start date is safe and does not default to now', () {
     for (final extra in [

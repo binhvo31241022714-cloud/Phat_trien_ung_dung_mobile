@@ -256,9 +256,10 @@ String visitDoctor(PatientDataProvider data, Visit v) {
   return id == null ? missingRecordInfo : doctorName(data, id);
 }
 
-String recordDateTime(DateTime date) =>
-    '${formatVietnameseDate(date)} · ${formatVietnameseTime(date)}';
+String recordDateTime(DateTime? date) => date == null
+    ? 'Chưa cập nhật'
+    : '${formatVietnameseDate(date)} · ${formatVietnameseTime(date)}';
 
 String appointmentDateText(Appointment a) => a.hasValidScheduledAt
-    ? recordDateTime(a.scheduledAt)
+    ? recordDateTime(a.displayScheduledAt)
     : 'Chưa có thông tin ngày giờ';

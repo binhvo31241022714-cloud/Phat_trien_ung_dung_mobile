@@ -31,19 +31,19 @@ class HomeAppointment extends Appointment {
         !RegExp(r'^([01]\d|2[0-3]):[0-5]\d$').hasMatch(time)) {
       return null;
     }
-    final date = DateTime.tryParse('${day}T$time:00');
+    final date = DateTime.tryParse('${day}T$time:00Z');
     if (date == null ||
         date.year != int.parse(day.substring(0, 4)) ||
         date.month != int.parse(day.substring(5, 7)) ||
         date.day != int.parse(day.substring(8, 10))) {
       return null;
     }
-    return date;
+    return date.subtract(const Duration(hours: 7));
   }
 
   static HomeAppointment? read(Map<String, dynamic> json) {
-    final start = _slot(json['date'], json['startTime']) ??
-        contentDate(json['scheduledAt']);
+    final mapped = Appointment.fromJson(json);
+    final start = mapped.hasValidScheduledAt ? mapped.scheduledAt : null;
     if (start == null) return null;
     final rawDuration = json['durationMinutes'];
     // Backend appointments cannot span more than a day. Reject malformed values.
@@ -63,10 +63,9 @@ class HomeAppointment extends Appointment {
     // Sanitize fields before using the shared mapper; it must not infer a duration.
     final source = Appointment.fromJson({
       ...json,
-      'date':
-          '${start.year.toString().padLeft(4, '0')}-${start.month.toString().padLeft(2, '0')}-${start.day.toString().padLeft(2, '0')}',
-      'startTime':
-          '${start.hour.toString().padLeft(2, '0')}:${start.minute.toString().padLeft(2, '0')}',
+      'date': null,
+      'startTime': null,
+      'scheduledAt': start.toUtc().toIso8601String(),
       'endTime': null,
       'durationMinutes': duration ?? 0
     });

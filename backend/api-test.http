@@ -569,3 +569,65 @@ Authorization: Bearer {{token}}
 ######################################################################
 
 # Nhi dán request của module vào đây, không ghi mật khẩu
+
+### Module 4 — local variables (replace placeholders locally; never share tokens)
+@module4Base = http://localhost:3000
+@module4Token = REPLACE_WITH_FIREBASE_ID_TOKEN
+@module4ArticleId = REPLACE_WITH_PUBLISHED_ARTICLE_ID
+@module4DraftId = REPLACE_WITH_DRAFT_ARTICLE_ID
+@module4NotificationId = REPLACE_WITH_OWN_NOTIFICATION_ID
+@module4ForeignNotificationId = REPLACE_WITH_OTHER_ACCOUNT_NOTIFICATION_ID
+
+### Articles public: published only, newest first
+GET {{module4Base}}/api/articles
+
+### Category: replace example with a real category (URL-encode if needed)
+GET {{module4Base}}/api/articles?category=example
+
+### Published article detail: 200
+GET {{module4Base}}/api/articles/{{module4ArticleId}}
+
+### Draft detail: 404, no draft content
+GET {{module4Base}}/api/articles/{{module4DraftId}}
+
+### Missing article: 404 (use an id confirmed absent)
+GET {{module4Base}}/api/articles/module4-confirmed-missing-id
+
+### Home without token: 401
+GET {{module4Base}}/api/home
+
+### Home: four fields; upcomingAppointment belongs to this account, or null
+GET {{module4Base}}/api/home
+Authorization: Bearer {{module4Token}}
+
+### Notifications without token: 401
+GET {{module4Base}}/api/notifications
+
+### Notifications: owner only, newest first
+GET {{module4Base}}/api/notifications
+Authorization: Bearer {{module4Token}}
+
+### Count: { count: number }
+GET {{module4Base}}/api/notifications/unread-count
+Authorization: Bearer {{module4Token}}
+
+### Missing token on read: 401, no write
+PATCH {{module4Base}}/api/notifications/{{module4NotificationId}}/read
+
+### Foreign notification: 403, no write (only use an authorized test account/id)
+PATCH {{module4Base}}/api/notifications/{{module4ForeignNotificationId}}/read
+Authorization: Bearer {{module4Token}}
+
+### Missing notification: 404 (use an id confirmed absent)
+PATCH {{module4Base}}/api/notifications/module4-confirmed-missing-id/read
+Authorization: Bearer {{module4Token}}
+
+### WRITE: run manually only if you intend to mark this real notification read.
+### Repeat should return 200 with { id, isRead: true }.
+PATCH {{module4Base}}/api/notifications/{{module4NotificationId}}/read
+Authorization: Bearer {{module4Token}}
+
+### WRITE: run manually only if you intend to mark all your real notifications read.
+### Response: { updatedCount: number }; repeat returns updatedCount: 0.
+PATCH {{module4Base}}/api/notifications/read-all
+Authorization: Bearer {{module4Token}}

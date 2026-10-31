@@ -111,7 +111,7 @@ class BookingSuccessScreen extends StatelessWidget {
                       Text('Người khám: $patientName'),
                       const SizedBox(height: 8),
                       Text(
-                        'Ngày giờ: ${appointment.hasValidScheduledAt ? formatVietnameseDateTime(appointment.scheduledAt) : "Chưa có thông tin ngày giờ"}',
+                        'Ngày giờ: ${appointment.hasValidScheduledAt ? formatVietnameseDateTime(appointment.displayScheduledAt) : "Chưa có thông tin ngày giờ"}',
                       ),
                       const SizedBox(height: 8),
                       BookingDoctorName(

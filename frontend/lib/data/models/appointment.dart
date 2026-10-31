@@ -1,3 +1,4 @@
+import '../../core/utils/clinic_time.dart';
 import 'content_date.dart';
 
 enum AppointmentStatus {
@@ -69,6 +70,14 @@ class Appointment {
     this.isDemo = true,
   }) : serviceIds = List.unmodifiable(serviceIds);
 
+  DateTime get displayScheduledAt =>
+      isDemo ? scheduledAt : clinicWallTime(scheduledAt);
+  DateTime? get displayEndAt => endAt == null
+      ? null
+      : isDemo
+          ? endAt
+          : clinicWallTime(endAt!);
+
   factory Appointment.fromJson(Map<String, dynamic> json) {
     final date = json['date']?.toString();
     final startTime = json['startTime']?.toString();
@@ -80,14 +89,15 @@ class Appointment {
           !RegExp(r'^([01]\d|2[0-3]):[0-5]\d$').hasMatch(time)) {
         return null;
       }
-      final result = DateTime.tryParse('${dateKey}T$time:00');
+      final result = DateTime.tryParse('${dateKey}T$time:00Z');
       if (result == null ||
           result.year != int.parse(dateKey.substring(0, 4)) ||
           result.month != int.parse(dateKey.substring(5, 7)) ||
           result.day != int.parse(dateKey.substring(8, 10))) {
         return null;
       }
-      return result;
+      return clinicInstant(
+          result.year, result.month, result.day, result.hour, result.minute);
     }
 
     DateTime? timestamp(Object? value) {
@@ -103,7 +113,13 @@ class Appointment {
           return null;
         }
       }
-      return contentDate(value);
+      if (value is String &&
+          !RegExp(r'(Z|[+-]\d{2}:?\d{2})$').hasMatch(value)) {
+        final parts =
+            RegExp(r'^(\d{4}-\d{2}-\d{2})T(\d{2}:\d{2})').firstMatch(value);
+        return parts == null ? null : parseDateTime(parts[1], parts[2]);
+      }
+      return contentDate(value)?.toUtc();
     }
 
     final start =

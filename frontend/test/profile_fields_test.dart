@@ -1,3 +1,4 @@
+import 'package:frontend/core/config/app_config.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:frontend/data/providers/patient_data_provider.dart';
@@ -40,8 +41,9 @@ void main() {
     await pumpMe(tester, demoUsers(), PatientDataProvider(),
         profile: backend.provider());
     await openMe(tester, 'Quản lý người thân');
-    final card =
-        find.ancestor(of: find.text('Bé Na'), matching: find.byType(Card)).first;
+    final card = find
+        .ancestor(of: find.text('Bé Na'), matching: find.byType(Card))
+        .first;
     await tester.tap(find.descendant(of: card, matching: find.text('Sửa')));
     await tester.pumpAndSettle();
     await tester.enterText(phoneField(), spacedPhone);
@@ -86,8 +88,8 @@ void main() {
 
     expect(await validate(null), isNull);
     expect(await validate(DateTime(2000, 1, 1)), isNull);
-    expect(await validate(DateTime.now().add(const Duration(days: 1))),
-        'future');
+    expect(
+        await validate(DateTime.now().add(const Duration(days: 1))), 'future');
   });
 
   testWidgets('notification switch says it is a local option only (A18)',
@@ -106,7 +108,12 @@ void main() {
     Navigator.of(tester.element(find.text('Cài đặt').last)).pop();
     await tester.pumpAndSettle();
     await openMe(tester, 'Thông báo');
-    expect(find.textContaining('chưa gửi thông báo đẩy'), findsOneWidget);
+    if (AppConfig.current.dataSource == DataSource.mock) {
+      expect(find.textContaining('chưa gửi thông báo đẩy'), findsOneWidget);
+    } else {
+      expect(
+          find.text('Chưa có thông báo trong danh mục này.'), findsOneWidget);
+    }
     expect(find.textContaining('tắt nhận thông báo trong phiên demo'),
         findsNothing);
     expect(tester.takeException(), isNull);

@@ -13,8 +13,16 @@ class PaymentReceiptScreen extends StatelessWidget {
     final data = context.watch<PatientDataProvider>();
     final appointments =
         data.appointments.where((a) => a.id == receipt.appointmentId);
-    final patientIds = appointments.map((a) => a.patientId).toSet();
-    final patients = data.patients.where((p) => patientIds.contains(p.id));
+    final patientIds = receipt.patientId.isNotEmpty
+        ? {receipt.patientId}
+        : <String>{
+            ...appointments.map((a) => a.patientId),
+            ...data.visits
+                .where((v) => v.id == receipt.visitId)
+                .map((v) => v.patientId),
+          };
+    final patients = data.patients
+        .where((p) => patientIds.length == 1 && patientIds.contains(p.id));
     return RecordsPage(title: 'Phiếu thanh toán', children: [
       RecordCard(children: [
         RecordLine('Mã hóa đơn', receipt.id),
