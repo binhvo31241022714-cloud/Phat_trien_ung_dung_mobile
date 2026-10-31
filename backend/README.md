@@ -56,7 +56,7 @@ App Flutter lấy ID token từ Firebase Auth rồi gửi kèm header:
 Authorization: Bearer <idToken>
 ```
 
-Khi test bằng `api-test.http`: bật server, bấm request **1. Đăng nhập** trước để có `{{token}}`, sau đó mới bấm các request khác.
+Khi test bằng `api-test.http`: tạo `backend/.env` theo `backend/.env.example` (mật khẩu hỏi Bình), bật server, bấm request ở mục **ĐĂNG NHẬP (dùng chung)** trước để có `{{token}}` (và `{{staffToken}}`), sau đó mới bấm các request khác. File không chứa mật khẩu, mật khẩu đọc bằng `{{$dotenv ...}}`.
 
 ## API Module 1 - Tài khoản và dữ liệu cơ bản
 
@@ -219,4 +219,4 @@ confirmed → completed | cancelled
 - Test tự động: `node --test test/module2/*.test.cjs` (Firestore giả dùng chung ở `test/module2/support/fakeFirestore.cjs`, có mô phỏng xung đột transaction).
 - Việc tạo lịch dùng Firestore Transaction và collection nội bộ `appointment_slots` để giữ từng đoạn thời gian 15 phút; lịch đã hủy sẽ giải phóng slot. Khi dùng voucher, `usedCount` được tăng trong cùng transaction với đặt lịch.
 - Notification mới có các trường `userId`, `title`, `body`, `type`, `refId`, `isRead`, `createdAt` theo quy ước ở README gốc.
-- Request test nằm tại `backend/api-test.http`; trước khi chạy, thay token Firebase, ngày/giờ và mã bác sĩ theo dữ liệu thật trong Firestore.
+- Request test nằm ở mục **MODULE 2** trong `backend/api-test.http`; token và id lịch lấy tự động từ response, chỉ cần chỉnh ngày (`@a01Date`, `@a11Date`) vào ngày đã có lịch làm việc.

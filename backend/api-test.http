@@ -1,18 +1,39 @@
-@apiKey = DAN_WEB_API_KEY_VAO_DAY
+@apiKey = AIzaSyDtSTRsa8uvBs4UcT6xaeiNA-AByjCJ9ps
 @baseUrl = http://localhost:3000
-
 @staffEmail = staff@nhakhoa.com
-@staffPassword = MAT_KHAU_STAFF
 
-### 1. Đăng nhập lấy token
+# Mật khẩu KHÔNG ghi trong file này. Tạo backend/.env theo backend/.env.example
+# (TEST_PASSWORD, STAFF_PASSWORD; mật khẩu hỏi Bình). REST Client đọc qua {{$dotenv ...}}.
+# Không dán token, id lịch, id người thân cứng vào file: dùng biến lấy từ response (# @name).
+
+######################################################################
+# ĐĂNG NHẬP (dùng chung)
+######################################################################
+
+### Đăng nhập bệnh nhân test123 (bấm trước mọi request cần token)
 # @name login
 POST https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key={{apiKey}}
 Content-Type: application/json
 
-{ "email": "test123@gmail.com", "password": "MAT_KHAU_TEST", "returnSecureToken": true }
+{ "email": "test123@gmail.com", "password": "{{$dotenv TEST_PASSWORD}}", "returnSecureToken": true }
 
 ###
 @token = {{login.response.body.$.idToken}}
+
+### Đăng nhập nhân viên (staff), cần cho phần xác nhận lịch Module 2
+# Tài khoản phải được gán quyền: cd backend, node scripts/set-staff.js {{staffEmail}}
+# @name staffLogin
+POST https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key={{apiKey}}
+Content-Type: application/json
+
+{ "email": "{{staffEmail}}", "password": "{{$dotenv STAFF_PASSWORD}}", "returnSecureToken": true }
+
+###
+@staffToken = {{staffLogin.response.body.$.idToken}}
+
+######################################################################
+# MODULE 1 - Bình
+######################################################################
 
 ### 2. Tạo/đồng bộ hồ sơ
 POST {{baseUrl}}/api/users/sync
@@ -381,21 +402,15 @@ Content-Type: application/json
 DELETE {{baseUrl}}/api/family-members/{{a17Member.response.body.$.id}}
 Authorization: Bearer {{token}}
 
+######################################################################
+# MODULE 2 - Phương
+######################################################################
+
 ### ===== A01: Nhân viên xác nhận lịch hẹn (Module 2) =====
 # Trước khi chạy: node scripts/set-staff.js {{staffEmail}} (đã gán cho staff@nhakhoa.com).
-# Chạy request 1 (bệnh nhân test123) trước, rồi lần lượt A01-1 đến A01-14.
+# Bấm 2 request ở mục ĐĂNG NHẬP (test123 và staff) trước, rồi lần lượt A01-2 đến A01-14.
 # @a01Date phải là thứ 2 đến thứ 7 trong khoảng đã có lịch làm việc (xem scripts/seed-schedules.js).
 @a01Date = 2026-10-31
-
-### A01-1. Đăng nhập nhân viên
-# @name staffLogin
-POST https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key={{apiKey}}
-Content-Type: application/json
-
-{ "email": "{{staffEmail}}", "password": "{{staffPassword}}", "returnSecureToken": true }
-
-###
-@staffToken = {{staffLogin.response.body.$.idToken}}
 
 ### A01-2. Bệnh nhân đặt lịch thứ nhất (để xác nhận rồi hoàn tất)
 # @name a01Appt
@@ -535,10 +550,22 @@ Content-Type: application/json
 GET {{baseUrl}}/api/appointments/{{a11Appt.response.body.$.id}}
 Authorization: Bearer {{token}}
 
-### A13-4. Staff xem lịch chờ trong ngày, thấy note (cần chạy A01-1 đăng nhập staff trước)
+### A13-4. Staff xem lịch chờ trong ngày, thấy note (cần đăng nhập staff ở mục ĐĂNG NHẬP trước)
 GET {{baseUrl}}/api/appointments/staff?status=booked&date={{a11Date}}
 Authorization: Bearer {{staffToken}}
 
 ### A11-5. Dọn dẹp: hủy lịch A11-1
 PATCH {{baseUrl}}/api/appointments/{{a11Appt.response.body.$.id}}/cancel
 Authorization: Bearer {{token}}
+
+######################################################################
+# MODULE 3 - Ngân
+######################################################################
+
+# Ngân dán request của module vào đây, không ghi mật khẩu
+
+######################################################################
+# MODULE 4 - Nhi
+######################################################################
+
+# Nhi dán request của module vào đây, không ghi mật khẩu

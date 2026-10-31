@@ -38,6 +38,4 @@ frontend/ios/.symlinks/
 frontend/ios/Flutter/Flutter.framework
 frontend/ios/Flutter/Generated.xcconfig
 xcuserdata/ 
-*.http
 backend/serviceAccountKey.json
-!*.example.http

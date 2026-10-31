@@ -84,7 +84,7 @@ node --test test/module2/*.test.cjs test/module3/*.cjs test/module4/*.cjs
    node scripts/set-staff.js <email> --remove   # gỡ quyền
    ```
 3. Tài khoản đó **đăng nhập lại** thì mới có quyền.
-4. Xác nhận, từ chối, hoàn tất lịch bằng các request **A01** trong `backend/api-test.http` (email, mật khẩu staff điền vào biến `@staffEmail`, `@staffPassword` trong file đó, file này không lên GitHub).
+4. Xác nhận, từ chối, hoàn tất lịch bằng các request **A01** trong `backend/api-test.http` (đăng nhập staff ở mục ĐĂNG NHẬP; mật khẩu staff đặt ở `STAFF_PASSWORD` trong `backend/.env`, xem mục 3.4).
 
 ## 📋 Việc cần làm trước hôm demo
 
@@ -311,7 +311,7 @@ git commit -m "Moc truoc khi lam ..."
 ```powershell
 git status
 ```
-Kiểm tra **không có** `serviceAccountKey.json`, `api-test.http`, `node_modules`, `build`. Ổn thì:
+Kiểm tra **không có** `serviceAccountKey.json`, `.env`, `node_modules`, `build`, và `api-test.http` không chứa mật khẩu. Ổn thì:
 ```powershell
 git add .
 git commit -m "Mo ta viec da lam"
@@ -327,20 +327,19 @@ Rồi nhắn nhóm *"Mình push xong rồi"*.
 **❌ Không bao giờ:** `git push --force`, tạo nhánh riêng, push code đang lỗi, để Claude chạy lệnh git.
 
 ## 3.4. Test API (không cần mở app)
+Cả nhóm dùng chung **một file `backend/api-test.http`** (có trên GitHub, **không chứa mật khẩu**). Mật khẩu nằm trong `backend/.env` trên máy mỗi người (không lên GitHub).
+
 1. Cài extension **REST Client** trong VS Code.
-2. Copy file mẫu `backend/api-test.example.http` thành **`backend/api-test.http`** (file này bị chặn khỏi GitHub, điền bí mật vào đây, không sửa file mẫu):
+2. Tạo `backend/.env` theo mẫu `backend/.env.example`, điền mật khẩu (**hỏi Bình**):
    ```powershell
-   Copy-Item backend/api-test.example.http backend/api-test.http
+   Copy-Item backend/.env.example backend/.env
    ```
-3. Mở `backend/api-test.http`, thay các chữ giữ chỗ:
-
-| Chữ giữ chỗ | Lấy ở đâu |
-|---|---|
-| `DAN_WEB_API_KEY_VAO_DAY` (dòng `@apiKey`) | `frontend/lib/firebase_options.dart`, đoạn `web`, dòng `apiKey` |
-| `MAT_KHAU_TEST` (tài khoản `test123@gmail.com`) | Hỏi Bình |
-| `MAT_KHAU_STAFF` (dòng `@staffPassword`) | Hỏi Bình |
-
-4. Bật backend, bấm request **1. Đăng nhập** trước (và **A01-1** nếu test phần nhân viên), sau đó mới bấm các request khác.
+   ```
+   TEST_PASSWORD=...   # mật khẩu test123@gmail.com
+   STAFF_PASSWORD=...  # mật khẩu staff@nhakhoa.com
+   ```
+3. Mở `backend/api-test.http`, bật backend, bấm 2 request ở mục **ĐĂNG NHẬP (dùng chung)** trước (staff chỉ cần khi test phần nhân viên), sau đó bấm request của module mình. Sửa `.env` xong mà REST Client chưa nhận thì đóng mở lại VS Code.
+4. Thêm request của module mình vào đúng mục **MODULE 1/2/3/4**. **Không ghi mật khẩu**, không dán token, id lịch, id người thân cứng: dùng biến lấy từ response (`# @name ...` rồi `{{ten.response.body.$.id}}`). Mật khẩu mới thì thêm vào `.env` và `.env.example` (để trống), đọc bằng `{{$dotenv TEN_BIEN}}`.
 
 ---
 
