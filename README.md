@@ -19,9 +19,36 @@ Hướng dẫn chi tiết cách viết API: [`backend/README.md`](backend/README
 
 Widget tests kiểm tra thêm layout theo kích thước logic của Android Emulator 1080×2400, density 420, gồm độ rộng card/viewport, điều hướng và không có RenderFlex overflow.
 
-**Chưa hoàn tất:** A05 (lịch sử người thân archived), A08 (`followUpId`), A10 (điều kiện hoàn tất session), A21 (clinical status), staff UI và pipeline completed → visit còn chờ chốt hợp đồng. Chưa nghiệm thu Firebase sandbox, chưa kết luận END-TO-END READY cho demo 03/11/2026.
+**Chưa hoàn tất (tại thời điểm bản sửa này):** A05 (lịch sử người thân archived), A08 (`followUpId`), A10 (điều kiện hoàn tất session), A21 (clinical status), staff UI và pipeline completed → visit còn chờ chốt hợp đồng. *A08, A10, A21 và pipeline completed → visit đã làm xong sau đó, xem "Nhật ký sửa ngày 31/10/2026" bên dưới.* Chưa nghiệm thu Firebase sandbox, chưa kết luận END-TO-END READY cho demo 03/11/2026.
 
 Chi tiết: [Audit Booking](frontend/docs/handover/BOOKING_FLOW_AUDIT.md), [bản đồ tích hợp và các quyết định cần duyệt](frontend/docs/handover/BOOKING_TO_FOLLOWUP_INTEGRATION.md). Hai báo cáo này là snapshot trước các chỉnh sửa UI/carousel tiếp theo; số liệu kiểm thử mới nhất của bản push nằm ở mục này.
+
+## 📝 Nhật ký sửa ngày 31/10/2026
+
+Bình sửa toàn bộ theo báo cáo audit, chia giai đoạn; mỗi giai đoạn test xong mới push.
+
+| Nhóm | Đã làm | Mục audit |
+|---|---|---|
+| Module 2: đặt lịch | Ghi chú cho phòng khám tối đa 500 ký tự | A13 |
+| | Chống tạo lịch trùng khi gửi lại: `Idempotency-Key`; mất mạng thì khóa lựa chọn, chỉ cho **Thử lại** (gửi lại không trùng) hoặc **Chọn lại** (kiểm tra lịch đã tạo chưa) | A11 |
+| | Test backend luồng đặt lịch trên Firestore giả: đặt, trùng giờ, đặt đồng thời, voucher, hủy, từ chối | A12 |
+| Dùng chung file test API | Cả nhóm dùng một file `backend/api-test.http` (đã push), mật khẩu đọc từ `backend/.env` (không push); id lấy tự động từ response | |
+| Giai đoạn 1: hồ sơ khám thật | Staff hoàn tất lịch (`PATCH /api/appointments/:id/status`, `completed`) tạo **visit, đơn thuốc, hóa đơn** trong cùng transaction và 1 thông báo `visit_result`; gọi lại không tạo trùng | A09 |
+| | Staff tạo liệu trình kèm các buổi, đánh dấu buổi đã làm (liệu trình tự chuyển Đang điều trị, Đã hoàn thành), đề xuất tái khám | A09 |
+| | Hóa đơn tách `visitId` và `appointmentId`; gắn lần khám vào liệu trình chỉ nhận lần khám đã hoàn tất; ngày thiếu hoặc sai hiện "Chưa có thời gian" (không còn 1970); nhãn trạng thái theo dữ liệu thật | A06, A10, A16, A21 |
+| | Các màn Lịch sử khám, Kết quả khám, Đơn thuốc, Hóa đơn, Liệu trình, Tái khám dùng API theo người khám đang chọn, có đang tải, lỗi, trống, kéo để tải lại | |
+| Giai đoạn 2: ảnh | Ảnh đại diện bản thân và người thân (tab Tôi, Thông tin cá nhân, người thân, tab Hồ sơ, Đặt lịch) | |
+| | Ảnh trước, sau điều trị: bệnh nhân tự chụp hoặc chọn, staff cũng tải được; xem lớn, xóa ảnh của mình; tối đa 30 ảnh mỗi liệu trình | |
+| | Lưu **base64 trong Firestore qua backend** (collection `media`, không dùng Firebase Storage), chỉ JPEG/PNG tối đa 700 KB; chọn từ camera, thư viện hoặc tệp (thư mục Download); app tự thu nhỏ 1024px, nén JPEG 70 | |
+| Giai đoạn 3: thông báo | Nhắc lịch hẹn trước 24 giờ, nhắc tái khám trước 3 ngày: tác vụ tự chạy khi bật backend và mỗi 10 phút, staff chạy ngay bằng `POST /api/notifications/run-reminders`; chạy lại không trùng, lịch hủy hoặc từ chối không nhắc | A03 |
+| | Công tắc "Nhận thông báo" lưu trên máy chủ (`notificationsEnabled`): tắt thì không nhận nhắc, các thông báo khác vẫn có | A18 |
+| | Đặt lịch từ đề xuất tái khám: đề xuất chuyển Đã đặt lịch, hủy hoặc bị từ chối thì về Đã đề xuất, hoàn tất thì Đã tái khám | A08 |
+| | Bấm thông báo mở đúng màn (lịch hẹn, nhắc lịch, kết quả khám, tái khám), tải dữ liệu mới trước khi mở; số chưa đọc cập nhật khi quay lại app | A19 |
+| | Khối **DEMO THUYẾT TRÌNH** trong `backend/api-test.http`: staff xác nhận, hoàn tất, tạo liệu trình, đề xuất tái khám cho lịch đặt bằng bất kỳ tài khoản nào | |
+
+**Kiểm tra hiện tại:** test backend **171 qua, 0 lỗi** (Firestore giả); `flutter analyze` **không có lỗi**. Mỗi giai đoạn đã chạy các file test Flutter liên quan (chế độ API) và đều qua; chạy toàn bộ test Flutter cả 2 chế độ để dành cho giai đoạn 5.
+
+Lịch sử commit: `git log --oneline` từ `56a535a` (A13, A11) tới `947db6e` (giai đoạn 3).
 
 ---
 
@@ -32,10 +59,11 @@ Chi tiết: [Audit Booking](frontend/docs/handover/BOOKING_FLOW_AUDIT.md), [bả
 | Firebase + dữ liệu mẫu | Phương | 21 đến 23/10 | ✅ Xong |
 | Màn hình Flutter (dữ liệu mẫu) | Nhi | 21 đến 23/10 | ✅ Xong |
 | **Module 1**: Tài khoản và dữ liệu cơ bản | Bình | 24/10 | ✅ **Xong** |
-| **Module 2**: Đặt lịch nha khoa | Phương (Bình sửa theo audit) | 25/10 đến 31/10 | ✅ **Xong phần chính**, còn A08 |
-| **Module 3**: Hồ sơ nha khoa | Ngân | 27 đến 28/10 | ⏳ Chưa làm |
-| **Module 4**: Nội dung và thông báo | Nhi | 29 đến 31/10 | ⏳ Chưa làm |
-| Hoàn thiện UI/UX, kiểm thử, slide | Ngân + cả nhóm | 01 đến 02/11 | ⏳ |
+| **Module 2**: Đặt lịch nha khoa | Phương (Bình sửa theo audit) | 25/10 đến 31/10 | ✅ **Xong**, kể cả A08 đặt lịch từ tái khám. Giai đoạn 4 rà soát lại logic đặt lịch |
+| **Module 3**: Hồ sơ nha khoa | Ngân (Bình làm phần staff tạo hồ sơ) | 27/10 đến 31/10 | ✅ **Xong** phần xem hồ sơ và staff tạo hồ sơ (qua `api-test.http`), ảnh trước sau. Chưa có màn hình staff trong app |
+| **Module 4**: Nội dung và thông báo | Nhi (Bình làm nhắc lịch) | 29/10 đến 31/10 | ✅ **Xong** bài viết, thông báo, nhắc lịch, nhắc tái khám. Chưa có thông báo đẩy (FCM) |
+| Rà soát đặt lịch, phiên hết hạn (giai đoạn 4) | Phương | 01/11 | ⏳ |
+| Kiểm thử toàn bộ, dữ liệu demo, tài liệu (giai đoạn 5) | Phương + cả nhóm | 01 đến 02/11 | ⏳ |
 
 ## ✅ Module 1 đã xong những gì
 
@@ -53,7 +81,8 @@ Chi tiết: [Audit Booking](frontend/docs/handover/BOOKING_FLOW_AUDIT.md), [bả
 | "Bác sĩ thực hiện" ở chi tiết dịch vụ; combo **chỉ hiện bác sĩ làm đủ mọi dịch vụ** của combo | ✅ | `/api/doctors` (`serviceIds`) | Xong |
 | Nút "Đặt lịch với bác sĩ này / dịch vụ này / combo này" mở Đặt lịch chọn sẵn | ✅ | Không cần | Xong |
 | Đã lưu: lưu/bỏ lưu dịch vụ, combo, bác sĩ, bài viết; màn hình "Đã lưu" có tab lọc | ✅ | `/api/favorites` | Xong |
-| Cài đặt "Ngôn ngữ", "Nhận thông báo" **lưu trên máy** (A18, có ghi rõ trên màn hình); màn hình Quyền riêng tư | ✅ | Không cần | Xong |
+| Cài đặt "Ngôn ngữ" lưu trên máy; "Nhận thông báo" **lưu trên máy chủ** (tắt thì không nhận nhắc lịch, nhắc tái khám); màn hình Quyền riêng tư | ✅ | `PATCH /api/users/me` (`notificationsEnabled`) | Xong |
+| Ảnh đại diện bản thân và người thân: chụp, chọn thư viện, chọn tệp, gỡ ảnh | ✅ | `PUT/DELETE /api/users/me/avatar`, `/api/family-members/:id/avatar`, `GET /api/media/:id` | Xong |
 | `DATA_SOURCE` mặc định `api` (dữ liệu thật); `--dart-define=DATA_SOURCE=mock` để xem dữ liệu giả | ✅ | | Xong |
 | File gọi API dùng chung, tự gắn token: `frontend/lib/data/api_client.dart` | ✅ | | Xong |
 
@@ -70,9 +99,10 @@ Chi tiết: [Audit Booking](frontend/docs/handover/BOOKING_FLOW_AUDIT.md), [bả
 | Chống tạo trùng bằng `Idempotency-Key` (A11): mất mạng thì khóa lựa chọn, chỉ cho **Thử lại** (gửi lại không tạo trùng) hoặc **Chọn lại** (kiểm tra lịch đã tạo chưa) | ✅ | header `Idempotency-Key` | Xong |
 | Danh sách, chi tiết, hủy lịch; ô "Lịch hẹn sắp tới" ở trang chủ | ✅ | `GET /api/appointments`, `GET /:id`, `PATCH /:id/cancel` | Xong |
 | Trạng thái thống nhất 5 giá trị, trạng thái lạ hiện "Không xác định" (A14) | ✅ | | Xong |
-| Nhân viên xác nhận / từ chối (bắt buộc lý do) / hoàn tất lịch, mỗi lần đổi tạo 1 thông báo cho bệnh nhân (A01) | Thông báo ✅ | `PATCH /:id/status`, `GET /api/appointments/staff` | Xong |
+| Nhân viên xác nhận / từ chối (bắt buộc lý do) / hoàn tất lịch, mỗi lần đổi tạo 1 thông báo cho bệnh nhân (A01); hoàn tất tạo luôn hồ sơ khám (xem Nhật ký) | Thông báo ✅ | `PATCH /:id/status`, `GET /api/appointments/staff?sort=newest` | Xong |
+| Đặt lịch từ đề xuất tái khám, đề xuất đổi trạng thái theo lịch (A08) | ✅ | `followUpId` | Xong |
 | Chi tiết lịch luôn tải lại từ máy chủ; danh sách kéo để tải lại, tự tải lại khi vào tab Hồ sơ (A07) | ✅ | | Xong |
-| Test backend (A12): 87 test, trong đó 33 test Module 2 (đặt lịch, trùng giờ, đặt đồng thời, voucher, hủy, từ chối, chống tạo trùng) chạy trên Firestore giả | | | Xong |
+| Test backend (A12) trên Firestore giả: đặt lịch, trùng giờ, đặt đồng thời, voucher, hủy, từ chối, chống tạo trùng. Hiện cả backend có 171 test | | | Xong |
 
 **Trạng thái lịch hẹn:** `booked` (Chờ xác nhận), `confirmed` (Đã xác nhận), `rejected` (Bị từ chối), `cancelled` (Đã hủy), `completed` (Đã hoàn tất).
 
@@ -101,7 +131,7 @@ node --test test/module2/*.test.cjs test/module3/*.cjs test/module4/*.cjs
    node scripts/set-staff.js <email> --remove   # gỡ quyền
    ```
 3. Tài khoản đó **đăng nhập lại** thì mới có quyền.
-4. Xác nhận, từ chối, hoàn tất lịch bằng các request **A01** trong `backend/api-test.http` (đăng nhập staff ở mục ĐĂNG NHẬP; mật khẩu staff đặt ở `STAFF_PASSWORD` trong `backend/.env`, xem mục 3.4).
+4. Xác nhận, từ chối, hoàn tất lịch bằng các request **A01** hoặc khối **DEMO THUYẾT TRÌNH** trong `backend/api-test.http` (đăng nhập staff ở mục ĐĂNG NHẬP; mật khẩu staff đặt ở `STAFF_PASSWORD` trong `backend/.env`, xem mục 3.4).
 
 ## 📋 Việc cần làm trước hôm demo
 
@@ -111,17 +141,36 @@ node --test test/module2/*.test.cjs test/module3/*.cjs test/module4/*.cjs
 | Dọn lịch test, người thân test của tài khoản demo | Hủy lịch test trên app; xóa người thân tên "test" |
 | Sửa dữ liệu mẫu cho hợp lý | Ví dụ ngày sinh người thân, tên, số điện thoại |
 
+## 🎤 Kịch bản thuyết trình
+
+| Bước | Làm gì | Khán giả thấy |
+|---|---|---|
+| Chuẩn bị | Trước buổi: `cd backend` → `node scripts/seed-schedules.js --apply`; bật backend (`npm start`), mở `backend/api-test.http`, bấm đăng nhập staff ở mục ĐĂNG NHẬP | |
+| 1 | Trên app: **đăng ký tài khoản mới**, điền họ tên, thêm ảnh đại diện | Tài khoản thật trên Firebase |
+| 2 | Đặt lịch **ngày mai** (buổi sáng), có ghi chú | Lịch "Chờ xác nhận", thông báo đặt lịch |
+| 3 | Khối DEMO: **D1** (lịch chờ mới nhất, kiểm tra `patientName`) → **D2** xác nhận | App: lịch "Đã xác nhận", có thông báo |
+| 4 | **D7** chạy nhắc lịch (làm trước D4 để lịch còn trong 24 giờ tới) | App: "Nhắc lịch hẹn", bấm mở chi tiết lịch |
+| 5 | **D3** → **D4** hoàn tất kèm chẩn đoán, 2 thuốc | App: "Đã có kết quả khám" → chi tiết lần khám, đơn thuốc, hóa đơn |
+| 6 | **D5**, **D5b** tạo liệu trình 3 buổi, xong buổi 1; **D6** đề xuất tái khám 2 tuần sau | App: liệu trình "Đang điều trị"; thông báo tái khám → màn Lịch tái khám |
+| 7 | Trên app: thêm ảnh trước/sau ở liệu trình; đặt lịch tái khám từ đề xuất | Đề xuất chuyển "Đã đặt lịch", có nút "Xem lịch đã đặt" |
+
 ## ⏳ Chưa xong và cách giải quyết
 
-| Mã | Vấn đề | Ai | Cách giải quyết | Ưu tiên |
-|---|---|---|---|---|
-| A08 | Lịch tái khám chưa liên kết với lịch đặt | Ngân + Phương, Nhi | Ngân và Phương chốt `followUpId` và trạng thái tái khám, Phương thêm vào đặt lịch, Nhi hiển thị. Không kịp thì demo vẫn chạy (đặt như lịch thường) | Cao |
-| A02, A03 | Thông báo xác nhận và nhắc lịch | Nhi | Đã có thông báo `appointment_confirmed` / `rejected` / `completed`. Nhi làm tiếp nhắc lịch dựa trên lịch `confirmed` | Trung bình |
-| A15 | App tính giờ lịch hẹn theo múi giờ thiết bị, chỉ đúng khi thiết bị để giờ Việt Nam | | Để sau demo | Thấp |
-| | 52 test Flutter lỗi sẵn khi chạy `flutter test --dart-define=DATA_SOURCE=api` (test thiếu provider giả, không ảnh hưởng app) | | Bổ sung provider giả vào các test đó | Thấp |
-| | Hồ sơ cũ của người thân đã xóa không xem được trên app (chỉ xem qua API) | | Đã chọn để vậy | |
-| A06, A09, A10, A16, A19, A21... | Các mục audit còn lại của Module 3, 4 | Ngân (Module 3), Nhi (Module 4) | Xem chi tiết và người phụ trách từng mục trong báo cáo audit | |
-| | Dữ liệu giả trong `frontend/lib/data/mock_data.dart` (`patient-001`, "Nguyễn Hải Nam"...) | | Chỉ dùng khi `DATA_SOURCE=mock`, không ảnh hưởng dữ liệu thật | |
+| Việc | Ai | Cách làm | Ưu tiên |
+|---|---|---|---|
+| **Giai đoạn 4:** rà soát logic đặt lịch (cùng bệnh nhân đặt 2 lịch chồng giờ, đặt giờ đã qua trong ngày, giới hạn số ngày đặt trước, chọn bác sĩ ngẫu nhiên với combo, thời lượng combo vừa ca, hủy sát giờ, giá và voucher khớp backend, đổi người khám/dịch vụ giữa chừng) | Phương | Rà soát backend và app, gửi danh sách vấn đề, chọn mục cần sửa rồi mới sửa. Giữ quy tắc đặt là giữ chỗ ngay | Cao |
+| **Giai đoạn 4:** phiên đăng nhập hết hạn (API trả 401) | Phương | App làm mới token Firebase 1 lần rồi gọi lại; vẫn 401 thì đăng xuất, về màn đăng nhập kèm thông báo phiên hết hạn | Cao |
+| **Giai đoạn 5:** chạy toàn bộ test Flutter cả 2 chế độ (mặc định và `--dart-define=DATA_SOURCE=api`), `flutter analyze`, test backend | Phương | Sửa test còn lỗi cho tới khi cả 2 chế độ 0 lỗi | Cao |
+| **Giai đoạn 5:** script `backend/scripts/cleanup-test-data.js` | Phương | Dọn dữ liệu test của một tài khoản (theo email): lịch, slot, visit, đơn thuốc, hóa đơn, liệu trình, buổi, tái khám, ảnh, thông báo. Chạy thử trước, `--apply` mới xóa | Trung bình |
+| **Giai đoạn 5:** script `backend/scripts/seed-demo.js` | Phương | Tạo tài khoản demo có người thân, lịch đã khám kèm hồ sơ, 1 liệu trình đang điều trị, 1 đề xuất tái khám, 1 lịch sắp tới. Không xóa dữ liệu có sẵn | Trung bình |
+| **Giai đoạn 5:** README, bảng API đầy đủ; tài liệu cũ còn nói backend Dart (A22) | Phương | Cập nhật README gốc, `backend/README.md`; đánh dấu tài liệu cũ là lịch sử | Trung bình |
+| Đã biết, chưa làm: múi giờ (A15) | | App hiển thị và đặt lịch theo giờ phòng khám (UTC+7, `frontend/lib/core/utils/clinic_time.dart`), nhưng chưa thử trên thiết bị đặt múi giờ khác | Thấp |
+| Đã biết, chưa làm: không có thông báo đẩy (FCM) | | Thông báo chỉ hiện trong mục Thông báo của app, không bật ra ngoài màn hình | Thấp |
+| Đã biết, chưa làm: không có màn hình staff trong app | | Staff thao tác bằng `backend/api-test.http` (khối DEMO, mục MODULE 3) | Thấp |
+| Đã biết: nhắc lịch chỉ chạy khi backend đang bật | | Bật backend trước buổi demo; cần nhắc ngay thì bấm D7 | Thấp |
+| Đã biết: giới hạn ảnh | | Mỗi ảnh tối đa 700 KB (app tự nén), tối đa 30 ảnh mỗi liệu trình | Thấp |
+| Đã biết: hồ sơ cũ của người thân đã xóa | | Không xem được trên app, chỉ xem qua API | Thấp |
+| Dữ liệu giả trong `frontend/lib/data/mock_data.dart` | | Chỉ dùng khi `DATA_SOURCE=mock`, không ảnh hưởng dữ liệu thật | |
 
 ## 🔑 Mã thật dùng thay mã giả
 
