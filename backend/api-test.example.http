@@ -1,0 +1,544 @@
+@apiKey = DAN_WEB_API_KEY_VAO_DAY
+@baseUrl = http://localhost:3000
+
+@staffEmail = staff@nhakhoa.com
+@staffPassword = MAT_KHAU_STAFF
+
+### 1. Đăng nhập lấy token
+# @name login
+POST https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key={{apiKey}}
+Content-Type: application/json
+
+{ "email": "test123@gmail.com", "password": "MAT_KHAU_TEST", "returnSecureToken": true }
+
+###
+@token = {{login.response.body.$.idToken}}
+
+### 2. Tạo/đồng bộ hồ sơ
+POST {{baseUrl}}/api/users/sync
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "fullName": "Nguyễn Văn Test", "phone": "0900000000" }
+
+### 3. Xem thông tin cá nhân
+GET {{baseUrl}}/api/users/me
+Authorization: Bearer {{token}}
+
+### 4. Thêm người thân
+POST {{baseUrl}}/api/family-members
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "fullName": "Nguyễn Thị Mẹ", "relationship": "Mẹ", "phone": "0911111111" }
+
+### 5. Xem danh sách người thân
+GET {{baseUrl}}/api/family-members
+Authorization: Bearer {{token}}
+
+### 6. Danh sách dịch vụ
+GET {{baseUrl}}/api/services
+
+### 7. Chi tiết dịch vụ
+GET {{baseUrl}}/api/services/svc_01
+
+### 8. Dịch vụ không tồn tại (mong đợi 404)
+GET {{baseUrl}}/api/services/khong_co
+
+### 9. Danh sách combo
+GET {{baseUrl}}/api/combos
+
+### 10. Chi tiết combo
+GET {{baseUrl}}/api/combos/combo_01
+
+### 11. Danh sách bác sĩ
+GET {{baseUrl}}/api/doctors
+
+### 12. Chi tiết bác sĩ
+GET {{baseUrl}}/api/doctors/doc_01
+
+### 13. Lưu một dịch vụ vào yêu thích
+POST {{baseUrl}}/api/favorites
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "type": "service", "itemId": "svc_01" }
+
+### 14. Lưu lại lần nữa (vẫn chỉ có 1 mục service_svc_01)
+POST {{baseUrl}}/api/favorites
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "type": "service", "itemId": "svc_01" }
+
+### 15. Lưu một bài viết
+POST {{baseUrl}}/api/favorites
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "type": "article", "itemId": "article_01" }
+
+### 16. type sai (mong đợi 400)
+POST {{baseUrl}}/api/favorites
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "type": "abc", "itemId": "svc_01" }
+
+### 17. itemId không tồn tại (mong đợi 404)
+POST {{baseUrl}}/api/favorites
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "type": "doctor", "itemId": "khong_co" }
+
+### 18. Xem danh sách yêu thích
+GET {{baseUrl}}/api/favorites
+Authorization: Bearer {{token}}
+
+### 19. Xóa một mục yêu thích
+DELETE {{baseUrl}}/api/favorites/service_svc_01
+Authorization: Bearer {{token}}
+
+### 20. Không gửi token (mong đợi 401)
+GET {{baseUrl}}/api/favorites
+
+
+### 21. Sửa giới tính và thông tin sức khỏe của mình
+PATCH {{baseUrl}}/api/users/me
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "gender": "female", "allergies": "Penicillin, Lidocaine", "medicalConditions": ["diabetes", "asthma"], "currentMedications": "Metformin 500mg", "isPregnant": true, "healthNotes": "Sợ kim tiêm" }
+
+### 22. Xem lại hồ sơ (có đủ các trường sức khỏe)
+GET {{baseUrl}}/api/users/me
+Authorization: Bearer {{token}}
+
+### 23. Bệnh nền không hợp lệ (mong đợi 400)
+PATCH {{baseUrl}}/api/users/me
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "medicalConditions": ["diabetes", "cam_cum"] }
+
+### 24. isPregnant sai kiểu (mong đợi 400)
+PATCH {{baseUrl}}/api/users/me
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "isPregnant": "true" }
+
+### 25. medicalConditions không phải mảng (mong đợi 400)
+PATCH {{baseUrl}}/api/users/me
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "medicalConditions": "diabetes" }
+
+### 26. Giới tính không hợp lệ (mong đợi 400)
+PATCH {{baseUrl}}/api/users/me
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "gender": "nam" }
+
+### 27. Thêm người thân kèm giới tính và sức khỏe
+# @name addFamilyHealth
+POST {{baseUrl}}/api/family-members
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "fullName": "Người thân test sức khỏe", "relationship": "Bố", "gender": "male", "allergies": "Aspirin", "medicalConditions": ["hypertension", "heart_disease"] }
+
+### 28. Sửa người thân: giới tính sai (mong đợi 400)
+PATCH {{baseUrl}}/api/family-members/{{addFamilyHealth.response.body.$.id}}
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "gender": "unknown" }
+
+### 29. Sửa người thân: ghi chú quá 500 ký tự (mong đợi 400)
+PATCH {{baseUrl}}/api/family-members/{{addFamilyHealth.response.body.$.id}}
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "healthNotes": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa" }
+
+### 30. Xem danh sách người thân (người thân cũ cũng có đủ trường mặc định)
+GET {{baseUrl}}/api/family-members
+Authorization: Bearer {{token}}
+
+### 31. Xóa người thân test sức khỏe
+DELETE {{baseUrl}}/api/family-members/{{addFamilyHealth.response.body.$.id}}
+Authorization: Bearer {{token}}
+
+### ===== A05: Xóa mềm người thân (Module 1) =====
+# Chạy lần lượt từ A05-1 đến A05-12. Trước A05-3, chọn một khung giờ còn trống
+# ở A05-2 rồi điền vào @a05Date và @a05Time bên dưới.
+@a05Date = 2026-10-31
+@a05Time = 09:00
+
+### A05-1. Thêm người thân để test xóa
+# @name a05Member
+POST {{baseUrl}}/api/family-members
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "fullName": "Người thân test xóa", "relationship": "Em" }
+
+### A05-2. Xem khung giờ còn trống của Khám tổng quát (svc_01) ngày @a05Date
+GET {{baseUrl}}/api/availability?date={{a05Date}}&serviceIds=svc_01
+
+### A05-3. Đặt lịch sắp tới cho người thân này
+# @name a05Appointment
+POST {{baseUrl}}/api/appointments
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "patientId": "{{a05Member.response.body.$.id}}", "serviceIds": ["svc_01"], "date": "{{a05Date}}", "startTime": "{{a05Time}}" }
+
+### A05-4. Xóa khi còn lịch hẹn sắp tới (mong đợi 409, câu báo tiếng Việt)
+DELETE {{baseUrl}}/api/family-members/{{a05Member.response.body.$.id}}
+Authorization: Bearer {{token}}
+
+### A05-5. Hủy lịch hẹn vừa đặt
+PATCH {{baseUrl}}/api/appointments/{{a05Appointment.response.body.$.id}}/cancel
+Authorization: Bearer {{token}}
+
+### A05-6. Xóa lại (mong đợi 200 "Đã xóa"; document vẫn còn, có isArchived: true và archivedAt)
+DELETE {{baseUrl}}/api/family-members/{{a05Member.response.body.$.id}}
+Authorization: Bearer {{token}}
+
+### A05-7. Danh sách người thân (mong đợi KHÔNG còn "Người thân test xóa")
+GET {{baseUrl}}/api/family-members
+Authorization: Bearer {{token}}
+
+### A05-8. Sửa người thân đã xóa (mong đợi 404)
+PATCH {{baseUrl}}/api/family-members/{{a05Member.response.body.$.id}}
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "fullName": "Đổi tên" }
+
+### A05-9. Xóa lần nữa (mong đợi 404)
+DELETE {{baseUrl}}/api/family-members/{{a05Member.response.body.$.id}}
+Authorization: Bearer {{token}}
+
+### A05-10. Đặt lịch mới cho người thân đã xóa (mong đợi 400 "Người thân này đã bị xóa khỏi danh sách...")
+POST {{baseUrl}}/api/appointments
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "patientId": "{{a05Member.response.body.$.id}}", "serviceIds": ["svc_01"], "date": "{{a05Date}}", "startTime": "{{a05Time}}" }
+
+### A05-11. Vẫn xem được hồ sơ khám cũ của người thân đã xóa (mong đợi 200, danh sách có thể rỗng)
+GET {{baseUrl}}/api/patients/{{a05Member.response.body.$.id}}/visits
+Authorization: Bearer {{token}}
+
+### A05-12. Vẫn xem được lịch hẹn đã hủy của người thân đã xóa (mong đợi 200, status cancelled)
+GET {{baseUrl}}/api/appointments/{{a05Appointment.response.body.$.id}}
+Authorization: Bearer {{token}}
+
+### ===== A17: Kiểm tra trường hồ sơ cơ bản (Module 1) =====
+# Đúng: 200/201. Sai: 400 kèm câu báo tiếng Việt ghi trong tiêu đề.
+
+### A17-1. Sửa hồ sơ hợp lệ (mong đợi 200; họ tên được bỏ khoảng trắng thừa)
+PATCH {{baseUrl}}/api/users/me
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "fullName": "  Nguyễn Văn Test  ", "phone": "0900000000", "birthday": "1995-05-20", "address": "12 Lê Lợi, Quận 1" }
+
+### A17-2. Xóa trống số điện thoại và ngày sinh (mong đợi 200, cho phép rỗng)
+PATCH {{baseUrl}}/api/users/me
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "phone": "", "birthday": "" }
+
+### A17-3. Họ tên rỗng (mong đợi 400 "Họ tên không được để trống")
+PATCH {{baseUrl}}/api/users/me
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "fullName": "   " }
+
+### A17-4. Họ tên 101 ký tự (mong đợi 400 "Họ tên tối đa 100 ký tự")
+PATCH {{baseUrl}}/api/users/me
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "fullName": "Nguyễn Văn Test Nguyễn Văn Test Nguyễn Văn Test Nguyễn Văn Test Nguyễn Văn Test Nguyễn Văn Test Nguyễ" }
+
+### A17-5. Số điện thoại có chữ (mong đợi 400 "Số điện thoại chỉ gồm chữ số, từ 9 đến 11 số")
+PATCH {{baseUrl}}/api/users/me
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "phone": "09abc12345" }
+
+### A17-6. Số điện thoại 8 số (mong đợi 400)
+PATCH {{baseUrl}}/api/users/me
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "phone": "09123456" }
+
+### A17-7. Số điện thoại sai kiểu (mong đợi 400 "Số điện thoại phải là chuỗi")
+PATCH {{baseUrl}}/api/users/me
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "phone": 912345678 }
+
+### A17-8. Ngày sinh sai định dạng (mong đợi 400 "Ngày sinh phải là ngày hợp lệ dạng YYYY-MM-DD")
+PATCH {{baseUrl}}/api/users/me
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "birthday": "20/05/1995" }
+
+### A17-9. Ngày sinh không tồn tại 30/02 (mong đợi 400)
+PATCH {{baseUrl}}/api/users/me
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "birthday": "2021-02-30" }
+
+### A17-10. Ngày sinh ở tương lai (mong đợi 400 "Ngày sinh không được ở tương lai")
+PATCH {{baseUrl}}/api/users/me
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "birthday": "2999-01-01" }
+
+### A17-11. Địa chỉ 201 ký tự (mong đợi 400 "Địa chỉ tối đa 200 ký tự")
+PATCH {{baseUrl}}/api/users/me
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "address": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA" }
+
+### A17-12. Đồng bộ hồ sơ với số điện thoại sai (mong đợi 400)
+POST {{baseUrl}}/api/users/sync
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "fullName": "Nguyễn Văn Test", "phone": "abc" }
+
+### A17-13. Thêm người thân hợp lệ (mong đợi 201)
+# @name a17Member
+POST {{baseUrl}}/api/family-members
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "fullName": "Người thân A17", "relationship": "Con", "birthday": "2018-09-01", "phone": "" }
+
+### A17-14. Thêm người thân thiếu họ tên (mong đợi 400 "Thiếu họ tên")
+POST {{baseUrl}}/api/family-members
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "relationship": "Con" }
+
+### A17-15. Thêm người thân, mối quan hệ 51 ký tự (mong đợi 400 "Mối quan hệ tối đa 50 ký tự")
+POST {{baseUrl}}/api/family-members
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "fullName": "Người thân A17", "relationship": "BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB" }
+
+### A17-16. Thêm người thân ngày sinh tương lai (mong đợi 400)
+POST {{baseUrl}}/api/family-members
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "fullName": "Người thân A17", "birthday": "2999-01-01" }
+
+### A17-17. Sửa người thân: số điện thoại 12 số (mong đợi 400)
+PATCH {{baseUrl}}/api/family-members/{{a17Member.response.body.$.id}}
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "phone": "091234567890" }
+
+### A17-18. Sửa người thân: họ tên sai kiểu (mong đợi 400 "Họ tên phải là chuỗi")
+PATCH {{baseUrl}}/api/family-members/{{a17Member.response.body.$.id}}
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "fullName": ["Bé"] }
+
+### A17-19. Sửa người thân hợp lệ (mong đợi 200)
+PATCH {{baseUrl}}/api/family-members/{{a17Member.response.body.$.id}}
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "fullName": "Người thân A17 đã sửa", "phone": "0912345678" }
+
+### A17-20. Dọn dẹp: xóa người thân A17 (mong đợi 200)
+DELETE {{baseUrl}}/api/family-members/{{a17Member.response.body.$.id}}
+Authorization: Bearer {{token}}
+
+### ===== A01: Nhân viên xác nhận lịch hẹn (Module 2) =====
+# Trước khi chạy: node scripts/set-staff.js {{staffEmail}} (đã gán cho staff@nhakhoa.com).
+# Chạy request 1 (bệnh nhân test123) trước, rồi lần lượt A01-1 đến A01-14.
+# @a01Date phải là thứ 2 đến thứ 7 trong khoảng đã có lịch làm việc (xem scripts/seed-schedules.js).
+@a01Date = 2026-10-31
+
+### A01-1. Đăng nhập nhân viên
+# @name staffLogin
+POST https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key={{apiKey}}
+Content-Type: application/json
+
+{ "email": "{{staffEmail}}", "password": "{{staffPassword}}", "returnSecureToken": true }
+
+###
+@staffToken = {{staffLogin.response.body.$.idToken}}
+
+### A01-2. Bệnh nhân đặt lịch thứ nhất (để xác nhận rồi hoàn tất)
+# @name a01Appt
+POST {{baseUrl}}/api/appointments
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "serviceIds": ["svc_01"], "date": "{{a01Date}}", "startTime": "09:00" }
+
+### A01-3. Bệnh nhân đặt lịch thứ hai (để từ chối)
+# @name a01Appt2
+POST {{baseUrl}}/api/appointments
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "serviceIds": ["svc_01"], "date": "{{a01Date}}", "startTime": "10:00" }
+
+### A01-4. Nhân viên xem lịch chờ xác nhận trong ngày (mong đợi 200, có 2 lịch vừa đặt)
+GET {{baseUrl}}/api/appointments/staff?status=booked&date={{a01Date}}
+Authorization: Bearer {{staffToken}}
+
+### A01-5. Bệnh nhân tự xác nhận (mong đợi 403 "Chỉ nhân viên phòng khám...")
+PATCH {{baseUrl}}/api/appointments/{{a01Appt.response.body.$.id}}/status
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "status": "confirmed" }
+
+### A01-6. Bệnh nhân xem lịch chờ của phòng khám (mong đợi 403)
+GET {{baseUrl}}/api/appointments/staff
+Authorization: Bearer {{token}}
+
+### A01-7. Nhân viên xác nhận lịch thứ nhất (mong đợi 200, status confirmed)
+PATCH {{baseUrl}}/api/appointments/{{a01Appt.response.body.$.id}}/status
+Authorization: Bearer {{staffToken}}
+Content-Type: application/json
+
+{ "status": "confirmed" }
+
+### A01-8. Xác nhận lại lần nữa (mong đợi 409, không tạo thông báo trùng)
+PATCH {{baseUrl}}/api/appointments/{{a01Appt.response.body.$.id}}/status
+Authorization: Bearer {{staffToken}}
+Content-Type: application/json
+
+{ "status": "confirmed" }
+
+### A01-9. Từ chối không có lý do (mong đợi 400 "Từ chối lịch hẹn phải ghi lý do")
+PATCH {{baseUrl}}/api/appointments/{{a01Appt2.response.body.$.id}}/status
+Authorization: Bearer {{staffToken}}
+Content-Type: application/json
+
+{ "status": "rejected" }
+
+### A01-10. Từ chối có lý do (mong đợi 200, status rejected, khung 10:00 trống lại ở /api/availability)
+PATCH {{baseUrl}}/api/appointments/{{a01Appt2.response.body.$.id}}/status
+Authorization: Bearer {{staffToken}}
+Content-Type: application/json
+
+{ "status": "rejected", "reason": "Bác sĩ có lịch phẫu thuật đột xuất" }
+
+### A01-11. Chuyển sai: hoàn tất lịch đã bị từ chối (mong đợi 409)
+PATCH {{baseUrl}}/api/appointments/{{a01Appt2.response.body.$.id}}/status
+Authorization: Bearer {{staffToken}}
+Content-Type: application/json
+
+{ "status": "completed" }
+
+### A01-12. Hoàn tất lịch thứ nhất (mong đợi 200, status completed)
+PATCH {{baseUrl}}/api/appointments/{{a01Appt.response.body.$.id}}/status
+Authorization: Bearer {{staffToken}}
+Content-Type: application/json
+
+{ "status": "completed" }
+
+### A01-13. Nhân viên xem lịch đã hoàn tất trong ngày
+GET {{baseUrl}}/api/appointments/staff?status=completed&date={{a01Date}}
+Authorization: Bearer {{staffToken}}
+
+### A01-14. Bệnh nhân xem thông báo (có appointment_confirmed, appointment_rejected, appointment_completed)
+GET {{baseUrl}}/api/notifications
+Authorization: Bearer {{token}}
+
+### ===== A11, A13: Ghi chú và chống tạo trùng (Module 2) =====
+# Chạy request 1 (đăng nhập test123) trước. @a11Date là thứ 2 đến thứ 7 trong khoảng đã có lịch làm việc.
+# Mỗi lần test lại, đổi @a11Key sang chuỗi khác (8 đến 100 ký tự chữ, số, - hoặc _).
+@a11Date = 2026-11-12
+@a11Key = test-a11-0001
+
+### A11-1. Đặt lịch có ghi chú và Idempotency-Key (mong đợi 201, note đã bỏ khoảng trắng)
+# @name a11Appt
+POST {{baseUrl}}/api/appointments
+Authorization: Bearer {{token}}
+Content-Type: application/json
+Idempotency-Key: {{a11Key}}
+
+{ "serviceIds": ["svc_01"], "doctorId": "doc_01", "date": "{{a11Date}}", "startTime": "09:00", "note": "  Tôi hay ê buốt răng hàm dưới  " }
+
+### A11-2. Gửi lại y hệt cùng key (mong đợi 201, CÙNG id với A11-1, không có lịch/thông báo mới)
+POST {{baseUrl}}/api/appointments
+Authorization: Bearer {{token}}
+Content-Type: application/json
+Idempotency-Key: {{a11Key}}
+
+{ "serviceIds": ["svc_01"], "doctorId": "doc_01", "date": "{{a11Date}}", "startTime": "09:00", "note": "  Tôi hay ê buốt răng hàm dưới  " }
+
+### A11-3. Cùng key nhưng đổi giờ (mong đợi 409 "Mã yêu cầu đã dùng cho một lịch khác")
+POST {{baseUrl}}/api/appointments
+Authorization: Bearer {{token}}
+Content-Type: application/json
+Idempotency-Key: {{a11Key}}
+
+{ "serviceIds": ["svc_01"], "doctorId": "doc_01", "date": "{{a11Date}}", "startTime": "10:00", "note": "  Tôi hay ê buốt răng hàm dưới  " }
+
+### A11-4. Key không hợp lệ (mong đợi 400)
+POST {{baseUrl}}/api/appointments
+Authorization: Bearer {{token}}
+Content-Type: application/json
+Idempotency-Key: abc
+
+{ "serviceIds": ["svc_01"], "date": "{{a11Date}}", "startTime": "10:00" }
+
+### A13-1. Ghi chú quá 500 ký tự (mong đợi 400 "Ghi chú tối đa 500 ký tự")
+POST {{baseUrl}}/api/appointments
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "serviceIds": ["svc_01"], "date": "{{a11Date}}", "startTime": "10:00", "note": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" }
+
+### A13-2. Ghi chú sai kiểu (mong đợi 400 "Ghi chú phải là chuỗi")
+POST {{baseUrl}}/api/appointments
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "serviceIds": ["svc_01"], "date": "{{a11Date}}", "startTime": "10:00", "note": 123 }
+
+### A13-3. Xem lại lịch A11-1 (mong đợi note "Tôi hay ê buốt răng hàm dưới")
+GET {{baseUrl}}/api/appointments/{{a11Appt.response.body.$.id}}
+Authorization: Bearer {{token}}
+
+### A13-4. Staff xem lịch chờ trong ngày, thấy note (cần chạy A01-1 đăng nhập staff trước)
+GET {{baseUrl}}/api/appointments/staff?status=booked&date={{a11Date}}
+Authorization: Bearer {{staffToken}}
+
+### A11-5. Dọn dẹp: hủy lịch A11-1
+PATCH {{baseUrl}}/api/appointments/{{a11Appt.response.body.$.id}}/cancel
+Authorization: Bearer {{token}}

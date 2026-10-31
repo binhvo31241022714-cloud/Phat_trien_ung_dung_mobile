@@ -327,7 +327,20 @@ Rồi nhắn nhóm *"Mình push xong rồi"*.
 **❌ Không bao giờ:** `git push --force`, tạo nhánh riêng, push code đang lỗi, để Claude chạy lệnh git.
 
 ## 3.4. Test API (không cần mở app)
-Cài extension **REST Client** trong VS Code. Tạo file `backend/api-test.http` (đã bị chặn khỏi GitHub), lấy **Web API Key** ở `frontend/lib/firebase_options.dart` (đoạn `web`, dòng `apiKey`). Mẫu file và tài khoản test: hỏi Bình.
+1. Cài extension **REST Client** trong VS Code.
+2. Copy file mẫu `backend/api-test.example.http` thành **`backend/api-test.http`** (file này bị chặn khỏi GitHub, điền bí mật vào đây, không sửa file mẫu):
+   ```powershell
+   Copy-Item backend/api-test.example.http backend/api-test.http
+   ```
+3. Mở `backend/api-test.http`, thay các chữ giữ chỗ:
+
+| Chữ giữ chỗ | Lấy ở đâu |
+|---|---|
+| `DAN_WEB_API_KEY_VAO_DAY` (dòng `@apiKey`) | `frontend/lib/firebase_options.dart`, đoạn `web`, dòng `apiKey` |
+| `MAT_KHAU_TEST` (tài khoản `test123@gmail.com`) | Hỏi Bình |
+| `MAT_KHAU_STAFF` (dòng `@staffPassword`) | Hỏi Bình |
+
+4. Bật backend, bấm request **1. Đăng nhập** trước (và **A01-1** nếu test phần nhân viên), sau đó mới bấm các request khác.
 
 ---
 

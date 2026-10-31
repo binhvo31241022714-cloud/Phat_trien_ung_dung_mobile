@@ -40,3 +40,4 @@ frontend/ios/Flutter/Generated.xcconfig
 xcuserdata/ 
 *.http
 backend/serviceAccountKey.json
+!*.example.http
