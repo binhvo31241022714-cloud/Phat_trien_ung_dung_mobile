@@ -18,8 +18,11 @@ class ExamResultScreen extends StatelessWidget {
               RecordSection('Kết luận', visit.diagnosis),
               RecordSection('Ghi chú chuyên môn', visit.professionalNote),
               RecordSection('Nội dung kết quả', visit.result),
-              const Text('Thông tin minh họa · Chỉ đọc',
-                  style: TextStyle(color: Color(0xFF666666))),
+              Text(
+                  names.apiMode && !visit.isDemo
+                      ? 'Thông tin hồ sơ · Chỉ đọc'
+                      : 'Thông tin minh họa · Chỉ đọc',
+                  style: const TextStyle(color: Color(0xFF666666))),
             ])
           ]));
 }

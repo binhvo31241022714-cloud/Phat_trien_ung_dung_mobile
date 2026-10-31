@@ -23,8 +23,9 @@ class TreatmentPlanCard extends StatelessWidget {
         if (names.status != null) names.status!,
         Wrap(alignment: WrapAlignment.spaceBetween, spacing: 12, children: [
           RecordHeading(plan.title),
-          RecordBadge(
-              plan.totalVisits > 0 && plan.completedVisits >= plan.totalVisits
+          RecordBadge(names.apiMode
+              ? 'Trạng thái chưa cập nhật'
+              : plan.totalVisits > 0 && plan.completedVisits >= plan.totalVisits
                   ? 'Đã hoàn thành'
                   : 'Đang điều trị')
         ]),

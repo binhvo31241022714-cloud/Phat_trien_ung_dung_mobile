@@ -1,3 +1,5 @@
+import 'dart:async';
+import '../../core/network/api_client.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../core/utils/formatters.dart';
@@ -5,7 +7,6 @@ import '../../providers/content_provider.dart';
 import '../../providers/appointments_provider.dart';
 import '../../data/providers/patient_data_provider.dart';
 import '../../app/patient_navigation.dart';
-import '../records/appointment_api_status.dart';
 import 'me_widgets.dart';
 
 const _appointmentTypes = {
@@ -99,27 +100,56 @@ class _ApiNotificationsViewState extends State<ApiNotificationsView> {
                 onTap: content.loading('read')
                     ? null
                     : () async {
-                        await content.markRead(n.id);
-                        if (!context.mounted) return;
-                        if (content.errors['read'] != null) {
-                          meMessage(context, content.errors['read']!);
-                          return;
-                        }
-                        if (!_appointmentTypes.contains(n.type)) return;
-                        // Tải lại (cả AppointmentsProvider lẫn PatientDataProvider
-                        // mà màn Hồ sơ đọc) để thấy trạng thái mới. Chỉ mở lịch có
-                        // trong danh sách lấy từ API có phân quyền.
+                        final session = content.sessionGeneration;
+                        final data = context.read<PatientDataProvider>();
+                        final dataSession = data.sessionGeneration;
                         final appointments =
                             context.read<AppointmentsProvider>();
-                        await reloadAppointments(context);
-                        if (!context.mounted) return;
-                        final matches = appointments.appointments
-                            .where((a) => a.id == n.refId);
-                        if (matches.isEmpty) {
-                          meMessage(
-                              context, 'Lịch hẹn liên kết không còn khả dụng.');
+                        final appointmentSession =
+                            appointments.sessionGeneration;
+                        bool current() =>
+                            context.mounted &&
+                            content.isSessionCurrent(session) &&
+                            content.signedIn &&
+                            data.isSessionCurrent(dataSession) &&
+                            appointments.isSessionCurrent(appointmentSession);
+                        // Read-state is independent of opening the linked resource.
+                        unawaited(() async {
+                          await content.markRead(n.id);
+                          if (context.mounted &&
+                              current() &&
+                              content.errors['read'] != null) {
+                            meMessage(context, content.errors['read']!);
+                          }
+                        }());
+                        if (!_appointmentTypes.contains(n.type) || !current()) {
                           return;
                         }
+                        try {
+                          await appointments.refreshOne(n.refId);
+                        } on ApiException catch (error) {
+                          if (context.mounted && current()) {
+                            if (error.statusCode == 403 ||
+                                error.statusCode == 404) {
+                              data.removeApiAppointment(n.refId,
+                                  generation: dataSession);
+                            }
+                            meMessage(context, error.message);
+                          }
+                          return;
+                        } catch (_) {
+                          if (context.mounted && current()) {
+                            meMessage(context,
+                                'Không thể tải lịch hẹn. Vui lòng thử lại.');
+                          }
+                          return;
+                        }
+                        if (!context.mounted || !current()) return;
+                        final matches = appointments.appointments
+                            .where((a) => a.id == n.refId);
+                        if (matches.isEmpty) return;
+                        data.replaceAppointments(appointments.appointments,
+                            generation: dataSession);
                         final appointment = matches.first;
                         context
                             .read<PatientDataProvider>()

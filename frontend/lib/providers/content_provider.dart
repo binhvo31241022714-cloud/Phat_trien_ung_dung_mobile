@@ -38,6 +38,8 @@ class ContentProvider extends ChangeNotifier {
   List<ContentNotification> notifications = [];
   ContentHome? home;
   int unreadCount = 0;
+  int get sessionGeneration => _session;
+  bool isSessionCurrent(int generation) => _current(generation);
   bool get signedIn => _account != null;
   bool loading(String key) => _jobs.containsKey(key);
   void _notify() {

@@ -456,14 +456,18 @@ class PatientDataProvider extends SessionNotifier {
     return result;
   }
 
-  List<Visit> visitsFor(String patientId) =>
-      visits.where((v) => v.patientId == patientId).toList()
-        ..sort((a, b) => b.visitedAt.compareTo(a.visitedAt));
+  List<Visit> visitsFor(String patientId) => visits
+      .where((v) => v.patientId == patientId)
+      .toList()
+    ..sort((a, b) => (b.visitedAt?.millisecondsSinceEpoch ?? -8640000000000000)
+        .compareTo(a.visitedAt?.millisecondsSinceEpoch ?? -8640000000000000));
   List<TreatmentPlan> treatmentsFor(String patientId) =>
       treatmentPlans.where((p) => p.patientId == patientId).toList();
-  List<Followup> followupsFor(String patientId) =>
-      followups.where((f) => f.patientId == patientId).toList()
-        ..sort((a, b) => a.scheduledAt.compareTo(b.scheduledAt));
+  List<Followup> followupsFor(String patientId) => followups
+      .where((f) => f.patientId == patientId)
+      .toList()
+    ..sort((a, b) => (a.scheduledAt?.millisecondsSinceEpoch ?? 8640000000000000)
+        .compareTo(b.scheduledAt?.millisecondsSinceEpoch ?? 8640000000000000));
   bool canCancelAppointment(Appointment a, {DateTime? now}) =>
       a.isDemo &&
       a.scheduledAt.isAfter(now ?? DateTime.now()) &&

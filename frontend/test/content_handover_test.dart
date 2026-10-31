@@ -1,3 +1,5 @@
+import 'support/data_source_scope.dart';
+import 'package:frontend/core/config/app_config.dart';
 import 'dart:collection';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -65,6 +67,9 @@ Future<void> mount(WidgetTester tester, PatientDataProvider data, Widget page,
 }
 
 void main() {
+  // These scenarios assert the local demo contract (MockData IDs, local writes,
+  // demo badges). API counterparts live in api_mode_parity_test.dart.
+  setUp(() => useDataSourceForTest(DataSource.mock));
   test(
       'article optional body preserves demo summaries and meaningful missing state',
       () {

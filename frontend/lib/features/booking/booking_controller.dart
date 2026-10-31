@@ -1,3 +1,4 @@
+import '../../core/utils/clinic_time.dart';
 import 'dart:async';
 import 'dart:math';
 import '../../core/config/app_config.dart';
@@ -494,7 +495,9 @@ class BookingController extends ChangeNotifier {
       return null;
     }
 
-    return DateTime(date!.year, date!.month, date!.day, hour, minute);
+    return apiMode
+        ? clinicInstant(date!.year, date!.month, date!.day, hour, minute)
+        : DateTime(date!.year, date!.month, date!.day, hour, minute);
   }
 
   bool validSlot(String slot) =>
@@ -546,7 +549,7 @@ class BookingController extends ChangeNotifier {
   void chooseDate(DateTime value) {
     if (_disposed || locked || created != null) return;
 
-    final today = now();
+    final today = apiMode ? clinicWallTime(now()) : now();
     final selectedDay = DateTime(value.year, value.month, value.day);
     final todayOnly = DateTime(today.year, today.month, today.day);
     if (selectedDay.isBefore(todayOnly)) return;
@@ -647,8 +650,8 @@ class BookingController extends ChangeNotifier {
     }
 
     if (suggestedDate != null && suggestedDate.isAfter(now())) {
-      date =
-          DateTime(suggestedDate.year, suggestedDate.month, suggestedDate.day);
+      final suggested = apiMode ? clinicWallTime(suggestedDate) : suggestedDate;
+      date = DateTime(suggested.year, suggested.month, suggested.day);
     }
     _verifyDoctorForCurrentCombo();
     _resetAvailability();
@@ -687,8 +690,9 @@ class BookingController extends ChangeNotifier {
   Appointment? matchLastSent(Iterable<Appointment> appointments) {
     final sent = lastSent;
     if (sent == null) return null;
-    final expected = Appointment.fromJson(
-        {'date': sent.date, 'startTime': sent.startTime}).scheduledAt;
+    final expected =
+        Appointment.fromJson({'date': sent.date, 'startTime': sent.startTime})
+            .scheduledAt;
     return appointments
         .where((a) =>
             a.patientId == sent.patientId &&
@@ -778,8 +782,8 @@ class BookingController extends ChangeNotifier {
         awaitingRetry = false;
       } on ApiException catch (e) {
         // Mất kết nối: lịch có thể đã được tạo trên máy chủ, khóa lựa chọn.
-        awaitingRetry = e.kind == ApiErrorKind.connection ||
-            e.kind == ApiErrorKind.timeout;
+        awaitingRetry =
+            e.kind == ApiErrorKind.connection || e.kind == ApiErrorKind.timeout;
         rethrow;
       } catch (_) {
         awaitingRetry = false;

@@ -1,0 +1,29 @@
+{
+  "baseline": {
+    "pass": 301,
+    "fail": 41,
+    "skip": 13
+  },
+  "api": {
+    "pass": 359,
+    "fail": 0,
+    "skip": 13
+  },
+  "default": {
+    "pass": 241,
+    "fail": 0,
+    "skip": 131
+  },
+  "backend_fake": {
+    "pass": 87,
+    "fail": 0,
+    "skip": 0
+  },
+  "original_tests_preserved": 355,
+  "original_failures_now_passed_not_skipped": 41,
+  "new_api_tests": 17,
+  "original_failures_explicit_demo_scope": 32,
+  "original_failures_still_api_mode": 9,
+  "new_blocked": 0,
+  "firebase_e2e_tested": false
+}

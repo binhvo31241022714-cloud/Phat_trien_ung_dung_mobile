@@ -6,9 +6,11 @@ abstract class DemoReadOnlyRecord {
 }
 
 class Visit extends DemoReadOnlyRecord {
+  @override
+  final bool isDemo;
   final String id;
   final String patientId;
-  final DateTime visitedAt;
+  final DateTime? visitedAt;
   final String clinic;
   final String? appointmentId;
   final String? doctorId;
@@ -23,6 +25,7 @@ class Visit extends DemoReadOnlyRecord {
   final String note;
 
   const Visit({
+    this.isDemo = true,
     required this.id,
     required this.patientId,
     required this.visitedAt,
@@ -41,9 +44,10 @@ class Visit extends DemoReadOnlyRecord {
   });
 
   factory Visit.fromJson(Map<String, dynamic> json) => Visit(
+        isDemo: json['isDemo'] == true,
         id: _string(json['id']),
         patientId: _string(json['patientId']),
-        visitedAt: _date(
+        visitedAt: _dateOrNull(
             json['scheduledAt'] ?? json['visitedAt'] ?? json['createdAt']),
         clinic: _string(json['clinic']),
         appointmentId: _nullableString(json['appointmentId']),
@@ -93,7 +97,7 @@ class Prescription extends DemoReadOnlyRecord {
   final String? doctorId;
   final String visitId;
   final String patientId;
-  final DateTime issuedAt;
+  final DateTime? issuedAt;
   final List<PrescriptionItem> items;
   final String instructions;
 
@@ -114,7 +118,7 @@ class Prescription extends DemoReadOnlyRecord {
         doctorId: _nullableString(json['doctorId']),
         visitId: _string(json['visitId']),
         patientId: _string(json['patientId']),
-        issuedAt: _date(json['issuedAt']),
+        issuedAt: _dateOrNull(json['issuedAt']),
         items: _list(json['items'])
             .map((item) => PrescriptionItem.fromJson(item))
             .toList(),
@@ -135,8 +139,9 @@ class ReceiptItem {
 
 class Receipt extends DemoReadOnlyRecord {
   final String id;
-  final String appointmentId;
-  final DateTime issuedAt;
+  final String? appointmentId;
+  final String? visitId;
+  final DateTime? issuedAt;
   final int amount;
   final String paymentMethod;
   final List<ReceiptItem> items;
@@ -147,7 +152,8 @@ class Receipt extends DemoReadOnlyRecord {
 
   const Receipt({
     required this.id,
-    required this.appointmentId,
+    this.appointmentId,
+    this.visitId,
     required this.issuedAt,
     required this.amount,
     required this.paymentMethod,
@@ -158,10 +164,20 @@ class Receipt extends DemoReadOnlyRecord {
     this.patientId = '',
   });
 
+  bool belongsToVisit(Visit visit) {
+    if (patientId.isNotEmpty && patientId != visit.patientId) return false;
+    if (visitId != null) {
+      return visitId == visit.id &&
+          (appointmentId == null || appointmentId == visit.appointmentId);
+    }
+    return appointmentId != null && appointmentId == visit.appointmentId;
+  }
+
   factory Receipt.fromJson(Map<String, dynamic> json) => Receipt(
         id: _string(json['id']),
-        appointmentId: _string(json['visitId'] ?? json['appointmentId']),
-        issuedAt: _date(json['issuedAt']),
+        appointmentId: _id(json['appointmentId']),
+        visitId: _id(json['visitId']),
+        issuedAt: _dateOrNull(json['issuedAt']),
         amount: _int(json['totalAmount'] ?? json['amount']),
         paymentMethod: _string(json['paymentMethod']),
         subtotal: _intOrNull(json['subtotal']),
@@ -257,7 +273,7 @@ class Followup extends DemoReadOnlyRecord {
   final String? doctorName;
   final String patientId;
   final String doctorId;
-  final DateTime scheduledAt;
+  final DateTime? scheduledAt;
   final String note;
 
   const Followup({
@@ -276,7 +292,7 @@ class Followup extends DemoReadOnlyRecord {
         doctorName: _displayName(json['doctorName']),
         patientId: _string(json['patientId']),
         doctorId: _string(json['doctorId']),
-        scheduledAt: _date(json['scheduledAt']),
+        scheduledAt: _dateOrNull(json['scheduledAt']),
         note: _string(json['reason'] ?? json['notes'] ?? json['note']),
       );
 }
@@ -292,14 +308,53 @@ int? _intOrNull(dynamic value) => value == null ? null : _int(value);
 List<dynamic> _list(dynamic value) => value is List ? value : const [];
 List<String> _strings(dynamic value) =>
     _list(value).map(_string).where((value) => value.isNotEmpty).toList();
-DateTime _date(dynamic value) =>
-    _dateOrNull(value) ?? DateTime.fromMillisecondsSinceEpoch(0);
+String? _id(Object? value) =>
+    value is String && value.trim().isNotEmpty ? value.trim() : null;
+
 DateTime? _dateOrNull(dynamic value) {
-  if (value is Map && value['_seconds'] != null) {
-    return DateTime.fromMillisecondsSinceEpoch(_int(value['_seconds']) * 1000);
-  }
-  if (value is String) return DateTime.tryParse(value);
-  if (value is int) return DateTime.fromMillisecondsSinceEpoch(value);
+  try {
+    if (value is Map) {
+      final seconds = value['_seconds'] ?? value['seconds'];
+      final nanos = value['_nanoseconds'] ?? value['nanoseconds'] ?? 0;
+      if (seconds is! num ||
+          !seconds.isFinite ||
+          seconds != seconds.round() ||
+          nanos is! num ||
+          !nanos.isFinite ||
+          nanos < 0 ||
+          nanos >= 1000000000) {
+        return null;
+      }
+      return DateTime.fromMicrosecondsSinceEpoch(
+          (seconds * 1000000 + nanos / 1000).round(),
+          isUtc: true);
+    }
+    if (value is int) {
+      return DateTime.fromMillisecondsSinceEpoch(value, isUtc: true);
+    }
+    if (value is String) {
+      final match =
+          RegExp(r'^(\d{4})-(\d{2})-(\d{2})(?:$|T)').firstMatch(value);
+      if (match == null) return null;
+      final time = RegExp(r'T(\d{2}):(\d{2})(?::(\d{2}))?').firstMatch(value);
+      if (value.contains('T') &&
+          (time == null ||
+              int.parse(time[1]!) > 23 ||
+              int.parse(time[2]!) > 59 ||
+              int.parse(time[3] ?? '0') > 59)) {
+        return null;
+      }
+      final parsed = DateTime.tryParse(value);
+      final day = DateTime.utc(
+          int.parse(match[1]!), int.parse(match[2]!), int.parse(match[3]!));
+      if (day.year != int.parse(match[1]!) ||
+          day.month != int.parse(match[2]!) ||
+          day.day != int.parse(match[3]!)) {
+        return null;
+      }
+      return parsed;
+    }
+  } catch (_) {/* Malformed or out of range: no clinical date supplied. */}
   return null;
 }
 

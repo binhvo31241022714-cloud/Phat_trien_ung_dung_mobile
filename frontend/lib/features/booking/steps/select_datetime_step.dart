@@ -1,3 +1,4 @@
+import '../../../core/utils/clinic_time.dart';
 import 'package:flutter/material.dart';
 
 import '../../../data/models/availability_slot.dart';
@@ -20,7 +21,9 @@ class SelectDatetimeStep extends StatelessWidget {
   }
 
   Future<void> _pickDate(BuildContext context) async {
-    final now = controller.now();
+    final now = controller.apiMode
+        ? clinicWallTime(controller.now())
+        : controller.now();
     final today = DateTime(now.year, now.month, now.day);
 
     final selectedDate = controller.date;

@@ -14,7 +14,6 @@ class VisitDetailScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return RecordCatalogNames(builder: (context, names) {
       final data = context.watch<PatientDataProvider>();
-      final a = visitAppointment(data, visit);
       final activeTreatments = data.treatmentPlans
           .where((plan) =>
               plan.patientId == visit.patientId &&
@@ -48,10 +47,9 @@ class VisitDetailScreen extends StatelessWidget {
                       data,
                       activeTreatments,
                     )),
-          if (a != null)
-            for (final r in data.receipts.where((r) => r.appointmentId == a.id))
-              RecordButton('Xem phiếu thanh toán',
-                  () => RecordsRoutes.open(context, RecordsRoutes.receipt, r)),
+          for (final r in data.receipts.where((r) => r.belongsToVisit(visit)))
+            RecordButton('Xem phiếu thanh toán',
+                () => RecordsRoutes.open(context, RecordsRoutes.receipt, r)),
         ]),
         if (data.recordsAreDemoAndReadOnly)
           const Text('DỮ LIỆU DEMO · CHỈ ĐỌC',

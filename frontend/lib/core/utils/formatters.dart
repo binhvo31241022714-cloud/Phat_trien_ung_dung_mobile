@@ -11,7 +11,8 @@ String formatVnd(num amount) {
   return '${value < 0 ? '-' : ''}$grouped ₫';
 }
 
-String formatVietnameseDate(DateTime date) {
+String formatVietnameseDate(DateTime? date) {
+  if (date == null) return 'Chưa cập nhật';
   final day = date.day.toString().padLeft(2, '0');
   final month = date.month.toString().padLeft(2, '0');
   return '$day/$month/${date.year}';

@@ -118,7 +118,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                                 : (n.message.trim().isEmpty
                                     ? 'Chưa có nội dung thông báo.'
                                     : n.message))
-                            : 'Lịch $names ngày ${formatVietnameseDate(a.scheduledAt)} lúc ${formatVietnameseTime(a.scheduledAt)} · ${a.status.label}.',
+                            : 'Lịch $names ngày ${formatVietnameseDate(a.displayScheduledAt)} lúc ${formatVietnameseTime(a.displayScheduledAt)} · ${a.status.label}.',
                         style: const TextStyle(color: Color(0xFF666666))),
                     const SizedBox(height: 6),
                     Text(n.isRead ? 'Đã đọc' : 'Chưa đọc',

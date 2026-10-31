@@ -1,3 +1,5 @@
+import 'support/data_source_scope.dart';
+import 'package:frontend/core/config/app_config.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:provider/provider.dart';
@@ -12,6 +14,8 @@ import 'support/fake_profile_backend.dart';
 
 void main() {
   test('services, total and steps preserve selections', () {
+    // Local-price demo contract; API quotes are covered separately.
+    useDataSourceForTest(DataSource.mock);
     final data = PatientDataProvider();
     final controller = BookingController(data);
 

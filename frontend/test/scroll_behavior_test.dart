@@ -1,3 +1,7 @@
+import 'support/empty_content_provider.dart';
+import 'support/fake_appointments_provider.dart';
+import 'package:frontend/providers/content_provider.dart';
+import 'package:frontend/providers/appointments_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:provider/provider.dart';
@@ -61,6 +65,10 @@ void main() {
   testWidgets('real App routes and all four tabs inherit the shared behavior',
       (tester) async {
     await tester.pumpWidget(MultiProvider(providers: [
+      ChangeNotifierProvider<ContentProvider>(
+          create: (_) => emptyContentProvider()),
+      ChangeNotifierProvider<AppointmentsProvider>(
+          create: (_) => FakeAppointmentsProvider()),
       ChangeNotifierProvider(create: (_) => UserProvider()),
       ChangeNotifierProvider(create: (_) => PatientDataProvider()),
       ChangeNotifierProvider(create: (_) => FakeProfileBackend().provider()),

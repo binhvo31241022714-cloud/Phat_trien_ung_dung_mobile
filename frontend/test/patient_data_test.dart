@@ -1,3 +1,5 @@
+import 'support/data_source_scope.dart';
+import 'package:frontend/core/config/app_config.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:frontend/core/constants/app_colors.dart';
@@ -12,6 +14,9 @@ import 'package:frontend/features/shared/doctor_card.dart';
 import 'package:frontend/features/shared/service_card.dart';
 
 void main() {
+  // These scenarios assert the local demo contract (MockData IDs, local writes,
+  // demo badges). API counterparts live in api_mode_parity_test.dart.
+  setUp(() => useDataSourceForTest(DataSource.mock));
   group('Định dạng hiển thị tiếng Việt', () {
     test('định dạng tiền VND có phân cách hàng nghìn', () {
       expect(formatVnd(150000), '150.000 ₫');

@@ -1,0 +1,41 @@
+patient_data_test.dart: provider chia sẻ dữ liệu và phát thông báo khi đổi bệnh nhân
+patient_data_test.dart: provider chia sẻ bệnh nhân, thông báo và bài viết đã lưu
+booking_test.dart: services, total and steps preserve selections
+records_test.dart: filter every collection and stable appointment ordering by patient
+records_test.dart: overview filters relatives, counts and keeps account at 360.0
+widget_test.dart: MainShell không hiển thị màn hình quản lý người dùng
+final_qa_test.dart: large text and short viewport across four tabs 360.0
+records_test.dart: visit, prescription, receipt, treatment photos and back fit 360.0
+final_qa_test.dart: large text and short viewport across four tabs 390.0
+widget_test.dart: luồng đăng nhập, chuyển tab, chi tiết, Back và đăng xuất
+final_qa_test.dart: large text and short viewport across four tabs 430.0
+records_test.dart: overview filters relatives, counts and keeps account at 390.0
+final_qa_test.dart: Home article bookmark reaches Saved and removes in both places
+records_test.dart: visit, prescription, receipt, treatment photos and back fit 390.0
+records_test.dart: overview filters relatives, counts and keeps account at 430.0
+records_test.dart: visit, prescription, receipt, treatment photos and back fit 430.0
+records_test.dart: live shared appointment, confirmation, cancellation and Home update
+scroll_behavior_test.dart: real App routes and all four tabs inherit the shared behavior
+records_test.dart: followup and empty appointments open booking for correct patient without submitting
+records_test.dart: missing optional visit records hide actions; result route shows supplied read-only data
+records_test.dart: empty appointments start a draft for the selected relative
+records_test.dart: past followup passes relative only, retains stack, does not create an appointment
+records_test.dart: multiple treatment plans open the matching detail and progress
+me_test.dart: all six account destinations, settings, password and FAQ fit 360.0
+content_handover_test.dart: long article scrolls and bookmark stays unique at 360.0
+me_test.dart: profile validation, keyboard and PATCH /api/users/me at 360.0
+content_handover_test.dart: long article scrolls and bookmark stays unique at 390.0
+content_handover_test.dart: long article scrolls and bookmark stays unique at 430.0
+content_handover_test.dart: new appointment and cancellation immediately update Home
+content_handover_test.dart: missing description and invalid image asset render fallback
+content_handover_test.dart: empty article list has a real empty state
+content_handover_test.dart: missing notification text and repeated category changes preserve data
+me_test.dart: all six account destinations, settings, password and FAQ fit 390.0
+me_test.dart: profile validation, keyboard and PATCH /api/users/me at 390.0
+me_test.dart: all six account destinations, settings, password and FAQ fit 430.0
+me_test.dart: profile validation, keyboard and PATCH /api/users/me at 430.0
+me_test.dart: family list states and add/edit/delete via API
+me_test.dart: notifications filter, mark read, preserve category and open linked appointment
+me_test.dart: saved items load from /api/favorites, open details and remove
+me_test.dart: saved tabs filter, show counts and update after removal
+me_test.dart: logout cancellation, confirmed session clearing, no Back to shell and login again

@@ -480,7 +480,8 @@ class _HomeOverview extends StatelessWidget {
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           Text(
-                            _weekDayText(nextAppointment.scheduledAt.weekday),
+                            _weekDayText(
+                                nextAppointment.displayScheduledAt.weekday),
                             style: const TextStyle(
                               fontSize: 13,
                               color: AppColors.textSecondary,
@@ -488,7 +489,7 @@ class _HomeOverview extends StatelessWidget {
                           ),
                           const SizedBox(height: 6),
                           Text(
-                            nextAppointment.scheduledAt.day.toString(),
+                            nextAppointment.displayScheduledAt.day.toString(),
                             style: const TextStyle(
                               fontSize: 38,
                               fontWeight: FontWeight.w700,
@@ -496,7 +497,7 @@ class _HomeOverview extends StatelessWidget {
                             ),
                           ),
                           Text(
-                            '${_monthText(nextAppointment.scheduledAt.month)} ${nextAppointment.scheduledAt.year}',
+                            '${_monthText(nextAppointment.displayScheduledAt.month)} ${nextAppointment.displayScheduledAt.year}',
                             style: const TextStyle(
                               fontSize: 11,
                               color: AppColors.textSecondary,
@@ -634,9 +635,9 @@ class _HomeOverview extends StatelessWidget {
   }
 
   String _appointmentTime(Appointment appointment) {
-    final start = _formatTime(appointment.scheduledAt);
-    final end = appointment.endAt;
-    if (end != null && end.isAfter(appointment.scheduledAt)) {
+    final start = _formatTime(appointment.displayScheduledAt);
+    final end = appointment.displayEndAt;
+    if (end != null && end.isAfter(appointment.displayScheduledAt)) {
       return '$start - ${_formatTime(end)}';
     }
     // API Home mapping already applies only an explicitly supplied duration.
