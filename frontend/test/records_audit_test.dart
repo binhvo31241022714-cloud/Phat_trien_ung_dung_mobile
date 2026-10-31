@@ -7,6 +7,8 @@ import 'package:frontend/data/models/appointment.dart';
 import 'package:frontend/data/models/home_appointment.dart';
 import 'package:frontend/core/utils/clinic_time.dart';
 import 'package:frontend/core/utils/formatters.dart';
+import 'package:frontend/features/records/records_widgets.dart'
+    show recordDate, recordDateTime;
 
 void main() {
   test('A06: receipt keeps independent optional IDs; rejects non-string IDs',
@@ -64,15 +66,30 @@ void main() {
     }
     expect(formatVietnameseDate(null), 'Chưa cập nhật');
   });
-  test(
-      'A16: valid ISO and Firestore dates remain available including real epoch',
+  test('A16: valid dates stay; epoch 0 / before 2000 is treated as missing',
       () {
     expect(Visit.fromJson({'visitedAt': '2026-10-31'}).visitedAt?.year, 2026);
     expect(
         Receipt.fromJson({
-          'issuedAt': {'_seconds': 0}
+          'issuedAt': {'_seconds': 1792800000}
         }).issuedAt,
-        DateTime.utc(1970));
+        DateTime.fromMillisecondsSinceEpoch(1792800000000, isUtc: true));
+    for (final value in [
+      {'_seconds': 0},
+      0,
+      '1970-01-01T00:00:00Z',
+      '1999-12-31'
+    ]) {
+      expect(Receipt.fromJson({'issuedAt': value}).issuedAt, isNull);
+      expect(Visit.fromJson({'scheduledAt': value}).visitedAt, isNull);
+    }
+    // Hồ sơ hiển thị "Chưa có thời gian", không bao giờ hiện 01/01/1970.
+    expect(recordDate(null), 'Chưa có thời gian');
+    expect(recordDateTime(null), 'Chưa có thời gian');
+    // Thời điểm UTC từ API hiển thị theo giờ phòng khám (UTC+7).
+    expect(recordDateTime(DateTime.utc(2026, 11, 20, 2, 0)),
+        '20/11/2026 · 09:00');
+    expect(recordDate(DateTime.utc(2026, 11, 20, 18, 0)), '21/11/2026');
   });
   test('A15: booking selected clinic slot remains an instant in API mode', () {
     final previous = AppConfig.current;

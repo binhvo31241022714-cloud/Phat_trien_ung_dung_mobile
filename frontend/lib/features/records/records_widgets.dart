@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../../core/config/app_config.dart';
+import '../../core/utils/clinic_time.dart';
 import '../../core/utils/formatters.dart';
 import '../../data/models/appointment.dart';
 import '../../data/models/patient_records.dart';
@@ -7,6 +9,7 @@ import '../../data/providers/patient_data_provider.dart';
 
 const recordsBlue = Color(0xFF247BF3);
 const missingRecordInfo = 'Chưa có thông tin';
+const missingRecordTime = 'Chưa có thời gian';
 
 class RecordsRoutes {
   static const appointments = '/appointments';
@@ -40,6 +43,11 @@ class RecordsPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final data = context.watch<PatientDataProvider>();
+    // Màn hồ sơ ở chế độ API mặc định kéo xuống để tải lại hồ sơ.
+    final refresh = onRefresh ??
+        (useRecordsState && AppConfig.current.dataSource == DataSource.api
+            ? () => data.loadRecords()
+            : null);
     final content = useRecordsState && data.recordsLoading
         ? const Center(child: CircularProgressIndicator())
         : useRecordsState && data.recordsError != null
@@ -59,12 +67,12 @@ class RecordsPage extends StatelessWidget {
                   ],
                 ),
               )
-            : onRefresh == null
+            : refresh == null
                 ? ListView(
                     padding: const EdgeInsets.fromLTRB(16, 8, 16, 20),
                     children: children)
                 : RefreshIndicator(
-                    onRefresh: onRefresh!,
+                    onRefresh: refresh,
                     child: ListView(
                         physics: const AlwaysScrollableScrollPhysics(),
                         padding: const EdgeInsets.fromLTRB(16, 8, 16, 20),
@@ -256,10 +264,25 @@ String visitDoctor(PatientDataProvider data, Visit v) {
   return id == null ? missingRecordInfo : doctorName(data, id);
 }
 
-String recordDateTime(DateTime? date) => date == null
-    ? 'Chưa cập nhật'
-    : '${formatVietnameseDate(date)} · ${formatVietnameseTime(date)}';
+/// Ngày trong hồ sơ từ API là thời điểm UTC; hiển thị theo giờ phòng khám
+/// (UTC+7). Dữ liệu mẫu là giờ địa phương nên giữ nguyên.
+DateTime _recordWallTime(DateTime date) =>
+    date.isUtc ? clinicWallTime(date) : date;
 
-String appointmentDateText(Appointment a) => a.hasValidScheduledAt
-    ? recordDateTime(a.displayScheduledAt)
-    : 'Chưa có thông tin ngày giờ';
+/// Ngày thiếu hoặc sai (model đã trả null) hiện "Chưa có thời gian" (A16).
+String recordDate(DateTime? date) => date == null
+    ? missingRecordTime
+    : formatVietnameseDate(_recordWallTime(date));
+
+String recordDateTime(DateTime? date) {
+  if (date == null) return missingRecordTime;
+  final wall = _recordWallTime(date);
+  return '${formatVietnameseDate(wall)} · ${formatVietnameseTime(wall)}';
+}
+
+String appointmentDateText(Appointment a) {
+  if (!a.hasValidScheduledAt) return 'Chưa có thông tin ngày giờ';
+  // displayScheduledAt đã là giờ phòng khám, không đổi múi giờ lần nữa.
+  final wall = a.displayScheduledAt;
+  return '${formatVietnameseDate(wall)} · ${formatVietnameseTime(wall)}';
+}

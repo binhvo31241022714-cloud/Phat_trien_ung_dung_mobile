@@ -24,6 +24,9 @@ class Visit extends DemoReadOnlyRecord {
   final String diagnosis;
   final String note;
 
+  /// Giá trị gốc từ backend ("completed"...); null khi dữ liệu không có.
+  final String? status;
+
   const Visit({
     this.isDemo = true,
     required this.id,
@@ -41,6 +44,7 @@ class Visit extends DemoReadOnlyRecord {
     this.professionalNote,
     required this.diagnosis,
     required this.note,
+    this.status,
   });
 
   factory Visit.fromJson(Map<String, dynamic> json) => Visit(
@@ -65,6 +69,7 @@ class Visit extends DemoReadOnlyRecord {
             _nullableString(json['doctorNote'] ?? json['professionalNote']),
         diagnosis: _string(json['diagnosis']),
         note: _string(json['note'] ?? json['doctorNote']),
+        status: _nullableString(json['status']),
       );
 }
 
@@ -198,6 +203,7 @@ class TreatmentSession {
   final String notes;
   final String? appointmentId;
   final String? visitId;
+  final String? status;
   const TreatmentSession(
       {this.id = '',
       required this.title,
@@ -205,7 +211,8 @@ class TreatmentSession {
       this.scheduledAt,
       this.notes = '',
       this.appointmentId,
-      this.visitId});
+      this.visitId,
+      this.status});
 
   factory TreatmentSession.fromJson(Map<String, dynamic> json) =>
       TreatmentSession(
@@ -216,6 +223,7 @@ class TreatmentSession {
         notes: _string(json['notes']),
         appointmentId: _nullableString(json['appointmentId']),
         visitId: _nullableString(json['visitId']),
+        status: _nullableString(json['status']),
       );
 }
 
@@ -231,6 +239,7 @@ class TreatmentPlan extends DemoReadOnlyRecord {
   final List<TreatmentSession> sessions;
   final String? beforeImage;
   final String? afterImage;
+  final String? status;
   double get progress =>
       totalVisits <= 0 ? 0 : (completedVisits / totalVisits).clamp(0.0, 1.0);
 
@@ -246,6 +255,7 @@ class TreatmentPlan extends DemoReadOnlyRecord {
     this.sessions = const [],
     this.beforeImage,
     this.afterImage,
+    this.status,
   });
 
   factory TreatmentPlan.fromJson(Map<String, dynamic> json,
@@ -261,6 +271,7 @@ class TreatmentPlan extends DemoReadOnlyRecord {
       totalVisits: total == 0 ? sessions.length : total,
       doctorId: _nullableString(json['doctorId']),
       sessions: sessions,
+      status: _nullableString(json['status']),
     );
   }
 }
@@ -276,6 +287,9 @@ class Followup extends DemoReadOnlyRecord {
   final DateTime? scheduledAt;
   final String note;
 
+  /// "suggested" (mới), "scheduled" (dữ liệu cũ), "booked"...
+  final String? status;
+
   const Followup({
     required this.id,
     this.serviceId,
@@ -284,6 +298,7 @@ class Followup extends DemoReadOnlyRecord {
     required this.doctorId,
     required this.scheduledAt,
     required this.note,
+    this.status,
   });
 
   factory Followup.fromJson(Map<String, dynamic> json) => Followup(
@@ -294,6 +309,7 @@ class Followup extends DemoReadOnlyRecord {
         doctorId: _string(json['doctorId']),
         scheduledAt: _dateOrNull(json['scheduledAt']),
         note: _string(json['reason'] ?? json['notes'] ?? json['note']),
+        status: _nullableString(json['status']),
       );
 }
 
@@ -311,7 +327,14 @@ List<String> _strings(dynamic value) =>
 String? _id(Object? value) =>
     value is String && value.trim().isNotEmpty ? value.trim() : null;
 
+/// Hồ sơ nha khoa không có ngày trước năm 2000: giá trị như vậy (thường là
+/// timestamp 0 = 01/01/1970) được coi là thiếu ngày (A16).
 DateTime? _dateOrNull(dynamic value) {
+  final date = _parseDate(value);
+  return date == null || date.toUtc().year < 2000 ? null : date;
+}
+
+DateTime? _parseDate(dynamic value) {
   try {
     if (value is Map) {
       final seconds = value['_seconds'] ?? value['seconds'];

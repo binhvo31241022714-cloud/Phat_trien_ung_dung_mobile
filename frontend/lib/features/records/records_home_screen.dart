@@ -49,11 +49,15 @@ class _RecordsHomeScreenState extends State<RecordsHomeScreen> {
       final showAppointments = data.recordsShowAppointments;
       final id = data.appointmentPatientId;
       final appointmentId = data.recordsAppointmentId;
+      final visit = data.recordsVisit;
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted) return;
         final navigator = _navigator.currentState;
         navigator?.popUntil((r) => r.isFirst);
-        if (appointmentId != null) {
+        if (visit != null) {
+          navigator?.pushNamed(RecordsRoutes.visits, arguments: visit.patientId);
+          navigator?.pushNamed(RecordsRoutes.visit, arguments: visit);
+        } else if (appointmentId != null) {
           navigator?.pushNamed(RecordsRoutes.appointments, arguments: id);
           navigator?.pushNamed(RecordsRoutes.appointment,
               arguments: appointmentId);

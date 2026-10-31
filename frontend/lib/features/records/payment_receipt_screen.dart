@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../../core/utils/formatters.dart';
 import '../../data/models/patient_records.dart';
 import '../../data/providers/patient_data_provider.dart';
+import 'record_status.dart';
 import 'records_widgets.dart';
 
 class PaymentReceiptScreen extends StatelessWidget {
@@ -26,7 +27,7 @@ class PaymentReceiptScreen extends StatelessWidget {
     return RecordsPage(title: 'Phiếu thanh toán', children: [
       RecordCard(children: [
         RecordLine('Mã hóa đơn', receipt.id),
-        RecordLine('Ngày lập', formatVietnameseDate(receipt.issuedAt)),
+        RecordLine('Ngày lập', recordDate(receipt.issuedAt)),
         RecordLine(
             'Bệnh nhân', patients.isEmpty ? null : patients.first.fullName),
         const Divider(height: 28),
@@ -49,9 +50,9 @@ class PaymentReceiptScreen extends StatelessWidget {
             style: const TextStyle(
                 color: recordsBlue, fontWeight: FontWeight.w600, fontSize: 18)),
         const SizedBox(height: 12),
-        RecordLine('Hình thức', receipt.paymentMethod),
+        RecordLine('Hình thức', paymentMethodText(receipt.paymentMethod)),
         if (receipt.paymentStatus != null)
-          RecordLine('Trạng thái', receipt.paymentStatus),
+          RecordLine('Trạng thái', paymentStatusText(receipt.paymentStatus)),
         if (data.recordsAreDemoAndReadOnly)
           const Text('Phiếu minh họa · Chỉ xem thông tin đã ghi nhận',
               style: TextStyle(color: Color(0xFF666666))),

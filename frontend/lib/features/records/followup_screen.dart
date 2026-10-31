@@ -1,4 +1,5 @@
 import 'record_catalog_names.dart';
+import 'record_status.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../app/patient_navigation.dart';
@@ -21,6 +22,8 @@ class FollowupScreen extends StatelessWidget {
           const RecordEmpty('Chưa có lịch tái khám được đề xuất.'),
         for (final f in followups)
           RecordCard(children: [
+            if (followupStatusLabel(f) case final status?)
+              recordStatusBadge(status),
             RecordBadge(
                 f.scheduledAt == null
                     ? 'Chưa có ngày đề xuất'

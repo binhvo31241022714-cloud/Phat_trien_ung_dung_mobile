@@ -489,6 +489,7 @@ module.exports = {
   toVietnamMinutes,
   scheduleInterval,
   scheduleCanCover,
+  makeVietnamDateTime,
   isFutureAppointment,
   isAppointmentActive,
   getSlotBucketStarts,

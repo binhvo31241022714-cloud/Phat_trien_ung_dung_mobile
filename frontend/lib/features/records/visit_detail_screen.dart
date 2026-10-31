@@ -1,7 +1,7 @@
 import 'record_catalog_names.dart';
+import 'record_status.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../../core/utils/formatters.dart';
 import '../../core/network/api_client.dart';
 import '../../data/models/patient_records.dart';
 import '../../data/providers/patient_data_provider.dart';
@@ -14,16 +14,20 @@ class VisitDetailScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return RecordCatalogNames(builder: (context, names) {
       final data = context.watch<PatientDataProvider>();
-      final activeTreatments = data.treatmentPlans
-          .where((plan) =>
-              plan.patientId == visit.patientId &&
-              plan.completedVisits < plan.totalVisits)
-          .toList();
+      // A10: chỉ lần khám đã hoàn tất mới thêm được vào liệu trình.
+      final activeTreatments = !visitIsCompleted(visit)
+          ? const <TreatmentPlan>[]
+          : data.treatmentPlans
+              .where((plan) =>
+                  plan.patientId == visit.patientId &&
+                  plan.completedVisits < plan.totalVisits)
+              .toList();
       return RecordsPage(title: 'Chi tiết lần khám', children: [
         if (names.status != null) names.status!,
         RecordCard(children: [
           const RecordHeading('Chi tiết lần khám'),
-          RecordLine('Ngày khám', formatVietnameseDate(visit.visitedAt)),
+          recordStatusBadge(visitStatusLabel(visit)),
+          RecordLine('Ngày khám', recordDateTime(visit.visitedAt)),
           RecordLine('Dịch vụ', names.visitServices(visit)),
           RecordLine('Bác sĩ', names.visitDoctor(visit)),
           const Divider(height: 28),

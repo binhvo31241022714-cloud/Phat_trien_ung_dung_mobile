@@ -77,8 +77,8 @@ beforeEach(() => {
   store = {
     'treatments/t1': { patientId:'A', name:'plan', photos:[{ imageUrl:'embedded' }] },
     'treatments/t2': { patientId:'A', name:'other' },
-    'visits/v1': { patientId:'A', appointmentId:'a1' },
-    'visits/v2': { patientId:'A', appointmentId:'a2' },
+    'visits/v1': { patientId:'A', appointmentId:'a1', status:'completed' },
+    'visits/v2': { patientId:'A', appointmentId:'a2', status:'completed' },
     'treatment_sessions/s1': { treatmentId:'t1', patientId:'A', sessionNumber:1, status:'pending', note:'preserve' },
     'treatment_sessions/s2': { treatmentId:'t1', patientId:'A', sessionNumber:2, status:'pending' },
     'treatment_sessions/s3': { treatmentId:'t2', patientId:'A', sessionNumber:1, status:'pending' },
@@ -102,8 +102,18 @@ test('success preserves session fields, JSON contract and unrelated documents', 
   assert.equal(r.status,200); assert.equal(r.body.id,'s1'); assert.equal(r.body.visitId,'v1');
   assert.equal(r.body.appointmentId,'a1'); assert.equal(r.body.status,'completed');
   assert.equal(r.body.note,'preserve'); assert.ok(!Number.isNaN(Date.parse(r.body.completedAt)));
+  // Liệu trình 2 buổi, xong 1 buổi: tự chuyển in_progress, các trường khác giữ nguyên.
+  assert.equal(store['treatments/t1'].status,'in_progress');
+  assert.ok(store['treatments/t1'].updatedAt);
   delete before['treatment_sessions/s1']; const after = clone(store); delete after['treatment_sessions/s1'];
+  const { status, updatedAt, ...t1 } = after['treatments/t1']; after['treatments/t1'] = t1;
   assert.deepEqual(after,before);
+});
+for (const status of [undefined,'pending','in_progress']) test(`A10: visit status ${status} cannot be linked`, async () => {
+  if (status === undefined) delete store['visits/v1'].status; else store['visits/v1'].status = status;
+  const old = clone(store); const r = await request();
+  assert.equal(r.status,400); assert.equal(r.body.message,'Chỉ thêm được lần khám đã hoàn tất');
+  assert.deepEqual(store,old);
 });
 for (const token of [null,'invalid']) test(`auth rejects ${token}`, async () => {
   assert.equal((await request({token})).status,401); assert.equal(attempts,0);

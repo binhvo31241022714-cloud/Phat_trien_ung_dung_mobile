@@ -17,6 +17,9 @@ const _appointmentTypes = {
   'appointment_completed',
 };
 
+/// Thông báo kết quả khám: refId là visitId.
+const _visitResultType = 'visit_result';
+
 class ApiNotificationsView extends StatefulWidget {
   const ApiNotificationsView({super.key});
   @override
@@ -40,11 +43,14 @@ class _ApiNotificationsViewState extends State<ApiNotificationsView> {
         .where((n) =>
             filter == null ||
             (filter == 'appointment'
-                ? n.type.startsWith('appointment_') || n.type == 'follow_up'
+                ? n.type.startsWith('appointment_') ||
+                    n.type == 'follow_up' ||
+                    n.type == _visitResultType
                 : filter == 'offer'
                     ? n.type == 'offer'
                     : !n.type.startsWith('appointment_') &&
                         n.type != 'follow_up' &&
+                        n.type != _visitResultType &&
                         n.type != 'offer'))
         .toList();
     return MePage(title: 'Thông báo', children: [
@@ -122,6 +128,29 @@ class _ApiNotificationsViewState extends State<ApiNotificationsView> {
                             meMessage(context, content.errors['read']!);
                           }
                         }());
+                        if (n.type == _visitResultType && current()) {
+                          try {
+                            final opened = await data.focusVisit(n.refId);
+                            if (!opened || !context.mounted || !current()) {
+                              return;
+                            }
+                          } on ApiException catch (error) {
+                            if (context.mounted && current()) {
+                              meMessage(context, error.message);
+                            }
+                            return;
+                          } catch (_) {
+                            if (context.mounted && current()) {
+                              meMessage(context,
+                                  'Không thể tải kết quả khám. Vui lòng thử lại.');
+                            }
+                            return;
+                          }
+                          Navigator.of(context)
+                              .popUntil((route) => route.isFirst);
+                          PatientNavigation.selectTab(context, 2);
+                          return;
+                        }
                         if (!_appointmentTypes.contains(n.type) || !current()) {
                           return;
                         }

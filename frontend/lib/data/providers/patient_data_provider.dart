@@ -50,6 +50,7 @@ class PatientDataProvider extends SessionNotifier {
     _appointmentPatientId = null;
     _bookingPatientRequest = null;
     recordsAppointmentId = null;
+    recordsVisit = null;
     recordsShowAppointments = false;
     recordsFocusVersion = 0;
     notificationsOpenVersion = 0;
@@ -119,6 +120,9 @@ class PatientDataProvider extends SessionNotifier {
   int recordsFocusVersion = 0;
   bool recordsShowAppointments = false;
   String? recordsAppointmentId;
+
+  /// Lần khám cần mở trong tab Hồ sơ (bấm thông báo visit_result).
+  Visit? recordsVisit;
   void focusAppointmentsFor(String patientId,
       {bool showAppointments = false, String? appointmentId}) {
     if (!patients.any((p) => p.id == patientId)) return;
@@ -126,8 +130,33 @@ class PatientDataProvider extends SessionNotifier {
     recordsFocusVersion++;
     recordsShowAppointments = showAppointments;
     recordsAppointmentId = appointmentId;
+    recordsVisit = null;
     notifyListeners();
     unawaited(loadRecords(patientId: patientId));
+  }
+
+  /// Đọc lần khám từ GET /api/visits/:id, chọn đúng bệnh nhân và tải lại hồ sơ
+  /// của người đó (để màn chi tiết có đơn thuốc, hóa đơn mới nhất), rồi yêu
+  /// cầu tab Hồ sơ mở lần khám. Trả về false nếu phiên đã đổi giữa chừng.
+  /// Lỗi API (403, 404, mất mạng) được ném ra cho nơi gọi báo người dùng.
+  Future<bool> focusVisit(String visitId) async {
+    final generation = sessionGeneration;
+    final detail = Visit.fromJson(await _recordsService.visit(visitId));
+    if (!isSessionCurrent(generation)) return false;
+    if (!_patients.any((p) => p.id == detail.patientId)) {
+      throw const ApiException('Hồ sơ này không còn trong danh sách người thân.');
+    }
+    _selectedPatientId = detail.patientId;
+    _appointmentPatientId = detail.patientId;
+    await loadRecords(patientId: detail.patientId);
+    if (!isSessionCurrent(generation)) return false;
+    recordsVisit =
+        _apiVisits.where((v) => v.id == detail.id).firstOrNull ?? detail;
+    recordsAppointmentId = null;
+    recordsShowAppointments = false;
+    recordsFocusVersion++;
+    notifyListeners();
+    return true;
   }
 
   String get selectedPatientId => _selectedPatientId;
@@ -175,6 +204,7 @@ class PatientDataProvider extends SessionNotifier {
       recordsFocusVersion++;
       recordsShowAppointments = false;
       recordsAppointmentId = null;
+      recordsVisit = null;
     }
     if (missing(_bookingPatientRequest)) {
       _bookingPatientRequest = profile.id;
@@ -374,6 +404,7 @@ class PatientDataProvider extends SessionNotifier {
       recordsFocusVersion++;
       recordsShowAppointments = false;
       recordsAppointmentId = null;
+      recordsVisit = null;
     }
     if (_bookingPatientRequest == id) {
       _bookingPatientRequest = primaryPatient.id;

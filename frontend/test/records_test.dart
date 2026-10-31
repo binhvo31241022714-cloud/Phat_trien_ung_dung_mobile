@@ -173,7 +173,7 @@ void main() {
           findsNothing);
       await back(tester);
       await open(tester, 'Lịch sử khám');
-      expect(find.text('Chưa có lịch sử khám.'), findsOneWidget);
+      expect(find.text('Chưa có hồ sơ khám.'), findsOneWidget);
       await back(tester);
       await open(tester, 'Liệu trình điều trị');
       expect(find.text('Chưa có liệu trình điều trị.'), findsOneWidget);

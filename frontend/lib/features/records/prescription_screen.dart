@@ -1,7 +1,6 @@
 import 'record_catalog_names.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../../core/utils/formatters.dart';
 import '../../data/models/patient_records.dart';
 import '../../data/providers/patient_data_provider.dart';
 import 'records_widgets.dart';
@@ -17,7 +16,7 @@ class PrescriptionScreen extends StatelessWidget {
         if (names.status != null) names.status!,
         RecordCard(children: [
           RecordLine(
-              'Ngày kê đơn', formatVietnameseDate(prescription.issuedAt)),
+              'Ngày kê đơn', recordDate(prescription.issuedAt)),
           RecordLine('Bác sĩ kê đơn', names.prescriptionDoctor(prescription)),
           if (prescription.items.isEmpty)
             const RecordEmpty('Không có thuốc được ghi nhận trong đơn này.'),

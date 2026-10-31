@@ -26,6 +26,7 @@ app.use('/api/patients', require('./routes/patients'));
 app.use('/api/visits', require('./routes/visits'));
 app.use('/api/invoices', require('./routes/invoices'));
 app.use('/api/treatments', require('./routes/treatments'));
+app.use('/api/follow-ups', require('./routes/followUps'));
 
 // Module 4 - Nội dung và thông báo (Nhi)
 app.use('/api/articles', require('./routes/articles'));

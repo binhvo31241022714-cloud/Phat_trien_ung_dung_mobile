@@ -1,4 +1,5 @@
 import 'record_catalog_names.dart';
+import 'record_status.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../data/models/patient_records.dart';
@@ -23,11 +24,7 @@ class TreatmentPlanCard extends StatelessWidget {
         if (names.status != null) names.status!,
         Wrap(alignment: WrapAlignment.spaceBetween, spacing: 12, children: [
           RecordHeading(plan.title),
-          RecordBadge(names.apiMode
-              ? 'Trạng thái chưa cập nhật'
-              : plan.totalVisits > 0 && plan.completedVisits >= plan.totalVisits
-                  ? 'Đã hoàn thành'
-                  : 'Đang điều trị')
+          recordStatusBadge(treatmentStatusLabel(plan))
         ]),
         Text(
             '${!names.apiMode && plan.doctorId == null ? missingRecordInfo : names.doctor(plan.doctorId, name: plan.doctorName)} · ${plan.completedVisits}/${plan.totalVisits} buổi'),
@@ -83,15 +80,13 @@ class _TreatmentSessionCard extends StatelessWidget {
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
-                  '${session.title} · ${session.completed ? "Hoàn thành" : "Chưa hoàn thành"}',
+                  '${session.title} · ${sessionStatusLabel(session).label}',
                   style: const TextStyle(fontWeight: FontWeight.w600),
                 ),
               ),
             ]),
-            if (session.scheduledAt != null) ...[
-              const SizedBox(height: 4),
-              Text(recordDateTime(session.scheduledAt!)),
-            ],
+            const SizedBox(height: 4),
+            Text(recordDateTime(session.scheduledAt)),
             if (session.notes.isNotEmpty) ...[
               const SizedBox(height: 4),
               Text(session.notes),

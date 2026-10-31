@@ -478,7 +478,7 @@ Content-Type: application/json
 
 { "status": "completed" }
 
-### A01-12. Hoàn tất lịch thứ nhất (mong đợi 200, status completed)
+### A01-12. Hoàn tất lịch thứ nhất (mong đợi 200, status completed, tự tạo visit và hóa đơn trống kết quả)
 PATCH {{baseUrl}}/api/appointments/{{a01Appt.response.body.$.id}}/status
 Authorization: Bearer {{staffToken}}
 Content-Type: application/json
@@ -489,7 +489,7 @@ Content-Type: application/json
 GET {{baseUrl}}/api/appointments/staff?status=completed&date={{a01Date}}
 Authorization: Bearer {{staffToken}}
 
-### A01-14. Bệnh nhân xem thông báo (có appointment_confirmed, appointment_rejected, appointment_completed)
+### A01-14. Bệnh nhân xem thông báo (có appointment_confirmed, appointment_rejected, visit_result)
 GET {{baseUrl}}/api/notifications
 Authorization: Bearer {{token}}
 
@@ -562,7 +562,158 @@ Authorization: Bearer {{token}}
 # MODULE 3 - Ngân
 ######################################################################
 
-# Ngân dán request của module vào đây, không ghi mật khẩu
+### ===== Giai đoạn 1: Hồ sơ khám thật (A09, A06, A10, A16, A21) =====
+# Bấm 2 request ở mục ĐĂNG NHẬP trước. Chạy lần lượt M3-1 đến M3-18.
+# Mọi id (lịch, lần khám, hóa đơn, liệu trình, buổi) lấy tự động từ response, không cần copy.
+# @m3Date phải là thứ 2 đến thứ 7 trong khoảng đã có lịch làm việc (xem scripts/seed-schedules.js).
+# Mỗi lần chạy lại thì đổi @m3Time (hoặc @m3Date) để không trùng khung giờ cũ.
+@m3Date = 2026-11-13
+@m3Time = 14:00
+# Mã tài khoản test123, lấy từ response đăng nhập (dùng cho các API của staff).
+@m3AccountId = {{login.response.body.$.localId}}
+
+### M3-1. Bệnh nhân đặt lịch (mong đợi 201, status booked)
+# @name m3Appt
+POST {{baseUrl}}/api/appointments
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "serviceIds": ["svc_01"], "date": "{{m3Date}}", "startTime": "{{m3Time}}", "note": "Đau răng hàm dưới bên trái" }
+
+### M3-2. Staff xác nhận lịch (mong đợi 200, status confirmed)
+# @name m3Confirm
+PATCH {{baseUrl}}/api/appointments/{{m3Appt.response.body.$.id}}/status
+Authorization: Bearer {{staffToken}}
+Content-Type: application/json
+
+{ "status": "confirmed" }
+
+### M3-3. Staff hoàn tất kèm kết quả khám và đơn thuốc (mong đợi 200)
+# Response có visitId = "visit_<id lịch>", visit.invoiceId, visit.prescriptionId.
+# Không gửi invoice nên hóa đơn tự lập từ dịch vụ, giá, voucher của lịch (chưa thanh toán).
+# Muốn ghi đã thu tiền: thêm "invoice": { "paid": true, "paymentMethod": "cash" }.
+# @name m3Done
+PATCH {{baseUrl}}/api/appointments/{{m3Appt.response.body.$.id}}/status
+Authorization: Bearer {{staffToken}}
+Content-Type: application/json
+
+{
+  "status": "completed",
+  "visit": {
+    "diagnosis": "Sâu răng số 36, viêm tủy có hồi phục",
+    "result": "Đã trám răng 36 bằng composite",
+    "notes": "Tránh nhai đồ cứng bên trái trong 24 giờ"
+  },
+  "prescriptions": [
+    { "medicineName": "Paracetamol 500mg", "dosage": "1 viên/lần", "frequency": "Khi đau, cách nhau ít nhất 6 giờ", "durationDays": 3, "instructions": "Uống sau ăn" },
+    { "medicineName": "Nước súc miệng Chlorhexidine 0,12%", "dosage": "15 ml/lần", "frequency": "2 lần/ngày", "durationDays": 7 }
+  ]
+}
+
+### M3-4. Hoàn tất lại lần nữa (mong đợi 409, không tạo hồ sơ trùng)
+PATCH {{baseUrl}}/api/appointments/{{m3Appt.response.body.$.id}}/status
+Authorization: Bearer {{staffToken}}
+Content-Type: application/json
+
+{ "status": "completed", "visit": { "diagnosis": "Gửi lại" } }
+
+### M3-5. Bệnh nhân xem lần khám (mong đợi 200, status completed, appointmentId là id lịch M3-1)
+GET {{baseUrl}}/api/visits/{{m3Done.response.body.$.visitId}}
+Authorization: Bearer {{token}}
+
+### M3-6. Bệnh nhân xem đơn thuốc của lần khám (mong đợi 1 đơn, 2 thuốc)
+GET {{baseUrl}}/api/visits/{{m3Done.response.body.$.visitId}}/prescriptions
+Authorization: Bearer {{token}}
+
+### M3-7. Bệnh nhân xem hóa đơn (mong đợi visitId và appointmentId tách riêng, paymentStatus unpaid)
+GET {{baseUrl}}/api/invoices/{{m3Done.response.body.$.visit.invoiceId}}
+Authorization: Bearer {{token}}
+
+### M3-8. Lịch sử khám của bệnh nhân (có lần khám vừa tạo)
+GET {{baseUrl}}/api/patients/{{m3AccountId}}/visits
+Authorization: Bearer {{token}}
+
+### M3-9. Thông báo của bệnh nhân (có "visit_result", refId là visitId)
+GET {{baseUrl}}/api/notifications
+Authorization: Bearer {{token}}
+
+### M3-10. Staff tạo liệu trình 2 buổi (mong đợi 201, liệu trình và các buổi đều "planned")
+# @name m3Treatment
+POST {{baseUrl}}/api/treatments
+Authorization: Bearer {{staffToken}}
+Content-Type: application/json
+
+{
+  "accountId": "{{m3AccountId}}",
+  "patientId": "{{m3AccountId}}",
+  "doctorId": "{{m3Done.response.body.$.doctorId}}",
+  "name": "Điều trị tủy răng 36",
+  "diagnosis": "Viêm tủy có hồi phục răng 36",
+  "sessions": [
+    { "scheduledAt": "{{m3Date}}T14:00:00+07:00", "notes": "Trám và theo dõi" },
+    { "scheduledAt": "2026-11-27T14:00:00+07:00", "notes": "Kiểm tra lại tủy" }
+  ]
+}
+
+### M3-11. Staff đánh dấu buổi 1 đã làm bằng lần khám M3-3 (mong đợi 200, treatmentStatus in_progress)
+PATCH {{baseUrl}}/api/treatments/{{m3Treatment.response.body.$.id}}/sessions/{{m3Treatment.response.body.$.sessions[0].id}}
+Authorization: Bearer {{staffToken}}
+Content-Type: application/json
+
+{ "status": "completed", "visitId": "{{m3Done.response.body.$.visitId}}", "notes": "Đã trám, bệnh nhân hết đau" }
+
+### M3-12. Gắn cùng lần khám vào buổi 2 (mong đợi 409 "Lần khám đã được gắn vào một buổi điều trị khác")
+PATCH {{baseUrl}}/api/treatments/{{m3Treatment.response.body.$.id}}/sessions/{{m3Treatment.response.body.$.sessions[1].id}}
+Authorization: Bearer {{staffToken}}
+Content-Type: application/json
+
+{ "status": "completed", "visitId": "{{m3Done.response.body.$.visitId}}" }
+
+### M3-13. Bệnh nhân xem các buổi của liệu trình (buổi 1 completed, buổi 2 planned)
+GET {{baseUrl}}/api/treatments/{{m3Treatment.response.body.$.id}}/sessions
+Authorization: Bearer {{token}}
+
+### M3-14. Bệnh nhân xem liệu trình (status in_progress)
+GET {{baseUrl}}/api/treatments/{{m3Treatment.response.body.$.id}}
+Authorization: Bearer {{token}}
+
+### M3-15. Staff đề xuất tái khám (mong đợi 201, status "suggested", có thông báo "follow_up")
+# @name m3FollowUp
+POST {{baseUrl}}/api/follow-ups
+Authorization: Bearer {{staffToken}}
+Content-Type: application/json
+
+{
+  "accountId": "{{m3AccountId}}",
+  "patientId": "{{m3AccountId}}",
+  "doctorId": "{{m3Done.response.body.$.doctorId}}",
+  "scheduledAt": "2026-11-27",
+  "reason": "Kiểm tra lại răng 36 sau trám",
+  "visitId": "{{m3Done.response.body.$.visitId}}",
+  "treatmentId": "{{m3Treatment.response.body.$.id}}",
+  "serviceId": "svc_01"
+}
+
+### M3-16. Bệnh nhân xem đề xuất tái khám (có đề xuất vừa tạo)
+GET {{baseUrl}}/api/patients/{{m3AccountId}}/follow-ups
+Authorization: Bearer {{token}}
+
+### M3-17. Bệnh nhân tự tạo liệu trình (mong đợi 403 "Chỉ nhân viên phòng khám...")
+POST {{baseUrl}}/api/treatments
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "accountId": "{{m3AccountId}}", "name": "Tự tạo", "sessions": [{}] }
+
+### M3-18. Staff gửi đơn thuốc thiếu tên thuốc (mong đợi 400, lịch không bị đổi)
+PATCH {{baseUrl}}/api/appointments/{{m3Appt.response.body.$.id}}/status
+Authorization: Bearer {{staffToken}}
+Content-Type: application/json
+
+{ "status": "completed", "prescriptions": [{ "dosage": "1 viên" }] }
+
+# Lưu ý: chưa có API xóa hồ sơ khám. Dữ liệu tạo ở đây nằm lại trong tài khoản test123
+# để demo; muốn dọn thì nhờ Bình chạy script dọn dữ liệu test.
 
 ######################################################################
 # MODULE 4 - Nhi

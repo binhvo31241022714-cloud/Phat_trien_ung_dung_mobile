@@ -138,9 +138,26 @@ Module 2 (đặt lịch), Module 3 (hồ sơ nha khoa), Module 4 (nội dung và
 | GET | `/api/patients/:id/treatments` | Có | Danh sách liệu trình |
 | GET | `/api/treatments/:id` | Có | Chi tiết và tiến độ liệu trình |
 | GET | `/api/treatments/:id/sessions` | Có | Các buổi điều trị |
-| POST | `/api/treatments/:id/sessions/link-visit` | Có | Gắn một lần khám đã hoàn thành vào buổi do người dùng chọn. Body: `{ visitId, sessionId }` |
+| POST | `/api/treatments/:id/sessions/link-visit` | Có | Gắn một lần khám đã hoàn thành vào buổi do người dùng chọn. Body: `{ visitId, sessionId }`. Visit phải có `status: "completed"` (A10) |
+| POST | `/api/treatments` | Staff | Tạo liệu trình kèm các buổi dự kiến. Body `{ accountId, patientId?, doctorId?, name, diagnosis?, startAt?, endAt?, sessions: [{ scheduledAt?, notes? }] }`. Liệu trình và buổi đều `planned` |
+| PATCH | `/api/treatments/:id/sessions/:sessionId` | Staff | Đánh dấu buổi đã làm. Body `{ status: "completed", visitId, notes? }`; visit phải hoàn tất, cùng bệnh nhân, chưa gắn buổi khác. Liệu trình tự chuyển `in_progress`, xong hết buổi thì `completed` |
 | GET | `/api/treatments/:id/photos` | Có | Ảnh trước và sau; trả mảng rỗng nếu chưa có ảnh |
 | GET | `/api/patients/:id/follow-ups` | Có | Lịch tái khám |
+| POST | `/api/follow-ups` | Staff | Đề xuất tái khám. Body `{ accountId, patientId?, scheduledAt, reason, notes?, doctorId?, visitId?, treatmentId?, serviceId? }`. Lưu `status: "suggested"`, tạo thông báo `follow_up` |
+
+### Hồ sơ khám tạo khi staff hoàn tất lịch
+
+`PATCH /api/appointments/:id/status` với `status: "completed"` có thể gửi thêm
+`visit { diagnosis, result, notes }`, `prescriptions [{ medicineName, dosage, frequency, durationDays, instructions }]`,
+`invoice { items?: [{ name, quantity, unitPrice }], discount?, paymentMethod?, paid? }`.
+Trong cùng transaction backend tạo `visits/visit_{id lịch}` (`status: "completed"`, `scheduledAt` là ngày giờ lịch,
+`doctorNote` lấy từ `notes`), `prescriptions/rx_{id lịch}` (chỉ khi có thuốc, thuốc nằm trong `items[]`),
+`invoices/inv_{id lịch}` (có cả `visitId` và `appointmentId`) và 1 thông báo `visit_result` có `refId` là visitId.
+Không gửi `invoice` thì hóa đơn tự lập từ combo, dịch vụ, voucher của lịch, mặc định `unpaid`.
+`paymentMethod` là `cash`, `bank_transfer`, `card` hoặc `e_wallet`. Gọi hoàn tất lại trả `409`, không tạo trùng.
+
+Các API staff kiểm tra `patientId` là chính chủ `accountId` hoặc người thân còn hoạt động của tài khoản đó.
+Đề xuất tái khám cũ có `status: "scheduled"` được app hiểu là "Đã đề xuất".
 
 `patientId` không được lấy từ body/query của client. Với API danh sách, `:id` chỉ được phép là
 `req.user.uid` hoặc id document trong `users/{req.user.uid}/family_members`. Với API theo
@@ -159,7 +176,7 @@ nhận `403`.
 | GET | `/api/appointments/:id` | Có | Chi tiết lịch; chỉ chủ tài khoản được xem |
 | PATCH | `/api/appointments/:id/cancel` | Có | Hủy lịch tương lai và giải phóng các slot đã giữ |
 | GET | `/api/appointments/staff?status=booked&date=YYYY-MM-DD` | Staff | Nhân viên xem lịch theo trạng thái (mặc định `booked`), lọc ngày tùy chọn |
-| PATCH | `/api/appointments/:id/status` | Staff | Nhân viên đổi trạng thái. Body `{ status: "confirmed" \| "rejected" \| "completed", reason? }`, `reason` bắt buộc khi `rejected` (tối đa 500 ký tự) |
+| PATCH | `/api/appointments/:id/status` | Staff | Nhân viên đổi trạng thái. Body `{ status: "confirmed" \| "rejected" \| "completed", reason? }`, `reason` bắt buộc khi `rejected` (tối đa 500 ký tự). Khi `completed` có thể kèm kết quả khám, đơn thuốc, hóa đơn (xem Module 3) |
 
 ### Trạng thái lịch hẹn
 
@@ -183,7 +200,7 @@ confirmed → completed | cancelled
 - Bệnh nhân chỉ hủy qua `PATCH /:id/cancel`. Nhân viên dùng `PATCH /:id/status`.
 - Khi đổi trạng thái lưu `status`, `statusUpdatedAt` (Timestamp), `statusUpdatedBy` (uid nhân viên), `statusReason` (nếu có).
 - `rejected` giải phóng slot và trả 1 lượt voucher giống luồng hủy (hàm dùng chung `readRelease`/`writeRelease` trong `routes/appointments.js`).
-- Mỗi lần đổi trạng thái tạo đúng 1 thông báo gửi `accountId`, id cố định `${appointmentId}_${status}`, `type` là `appointment_confirmed`, `appointment_rejected` hoặc `appointment_completed`, `refId` là id lịch.
+- Mỗi lần đổi trạng thái tạo đúng 1 thông báo gửi `accountId`, id cố định `${appointmentId}_${status}`, `type` là `appointment_confirmed` hoặc `appointment_rejected` (`refId` là id lịch); hoàn tất tạo `visit_result` (`refId` là visitId).
 
 ### Ghi chú lịch hẹn (`note`)
 

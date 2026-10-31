@@ -99,7 +99,8 @@ test('A01: xác nhận rồi hoàn tất, mỗi bước đúng 1 thông báo cho
   const done = await call('/a1/status', { body: { status: 'completed' } });
   assert.equal(done.status, 200);
   assert.deepEqual(notifications().map(([p, n]) => [p, n.type, n.userId, n.refId, n.isRead]), [
-    ['notifications/a1_completed', 'appointment_completed', 'P', 'a1', false],
+    // Hoàn tất tạo 1 thông báo kết quả khám, refId là visitId.
+    ['notifications/a1_completed', 'visit_result', 'P', 'visit_a1', false],
     ['notifications/a1_confirmed', 'appointment_confirmed', 'P', 'a1', false],
   ]);
   // Xác nhận không giải phóng slot, không đổi voucher.

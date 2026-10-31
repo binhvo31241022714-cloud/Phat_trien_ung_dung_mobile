@@ -21,6 +21,7 @@ const {
   isAppointmentActive,
   shuffle,
 } = require('../utils/booking');
+const { parseCompletionBody, readCompletion, writeCompletion } = require('../utils/clinical');
 
 function overlaps(startA, endA, startB, endB) {
   return startA < endB && startB < endA;
@@ -81,10 +82,11 @@ const STATUS_NOTIFICATIONS = {
     title: 'Lịch hẹn bị từ chối',
     body: (a, reason) => `Lịch hẹn ngày ${a.date} lúc ${a.startTime} đã bị từ chối. Lý do: ${reason}`,
   },
+  // Hoàn tất chỉ tạo 1 thông báo kết quả khám, refId là visitId.
   completed: {
-    type: 'appointment_completed',
-    title: 'Lịch hẹn đã hoàn tất',
-    body: (a) => `Lịch hẹn ngày ${a.date} lúc ${a.startTime} đã hoàn tất. Cảm ơn bạn đã đến khám.`,
+    type: 'visit_result',
+    title: 'Đã có kết quả khám',
+    body: (a) => `Kết quả lần khám ngày ${a.date} lúc ${a.startTime} đã sẵn sàng. Bấm để xem chi tiết.`,
   },
 };
 
@@ -453,6 +455,10 @@ router.get('/staff', auth, requireStaff, asyncHandler(async (req, res) => {
 
 // PATCH /api/appointments/:id/status - nhân viên xác nhận, từ chối, hoàn tất lịch
 // Body: { status: "confirmed" | "rejected" | "completed", reason? (bắt buộc khi rejected) }
+// Khi completed có thể kèm: visit { diagnosis, result, notes },
+// prescriptions [{ medicineName, dosage, frequency, durationDays, instructions }],
+// invoice { items?: [{ name, quantity, unitPrice }], discount?, paymentMethod?, paid? }.
+// Cùng transaction tạo visit_{id}, rx_{id} (nếu có thuốc), inv_{id} và thông báo visit_result.
 router.patch('/:id/status', auth, requireStaff, asyncHandler(async (req, res) => {
   const body = req.body || {};
   const status = typeof body.status === 'string' ? body.status.trim().toLowerCase() : '';
@@ -470,6 +476,11 @@ router.patch('/:id/status', auth, requireStaff, asyncHandler(async (req, res) =>
   if (reason.length > 500) {
     return res.status(400).json({ message: 'Lý do tối đa 500 ký tự' });
   }
+  const hasClinical = ['visit', 'prescriptions', 'invoice'].some((key) => body[key] !== undefined);
+  if (hasClinical && status !== 'completed') {
+    return res.status(400).json({ message: 'visit, prescriptions, invoice chỉ dùng khi hoàn tất lịch' });
+  }
+  const clinical = status === 'completed' ? parseCompletionBody(body) : null;
 
   const appointmentRef = db.collection('appointments').doc(req.params.id);
   // Id cố định: mỗi lịch chỉ có 1 thông báo cho mỗi trạng thái.
@@ -488,23 +499,38 @@ router.patch('/:id/status', auth, requireStaff, asyncHandler(async (req, res) =>
       throw new ApiError(409, 'Lịch hẹn đã được cập nhật trạng thái này trước đó');
     }
     const release = status === 'rejected' ? await readRelease(transaction, appointment) : null;
+    const completion = clinical
+      ? await readCompletion(transaction, appointmentSnap.id, appointment, clinical)
+      : null;
 
     const now = new Date();
     const update = { status, statusUpdatedAt: now, statusUpdatedBy: req.user.uid };
     if (reason) update.statusReason = reason;
+    if (completion) update.visitId = completion.ids.visitId;
     transaction.update(appointmentRef, update);
     if (release) writeRelease(transaction, appointmentSnap.id, release);
+    const visit = completion
+      ? writeCompletion(transaction, {
+        appointmentId: appointmentSnap.id,
+        appointment,
+        input: clinical,
+        read: completion,
+        staffUid: req.user.uid,
+        now,
+      })
+      : null;
     transaction.set(notificationRef, {
       userId: appointment.accountId,
       title: notice.title,
       body: notice.body(appointment, reason),
       type: notice.type,
-      refId: appointmentSnap.id,
+      refId: visit ? visit.id : appointmentSnap.id,
+      ...(visit ? { appointmentId: appointmentSnap.id, patientId: appointment.patientId } : {}),
       isRead: false,
       createdAt: now,
     });
 
-    return { id: appointmentSnap.id, ...appointment, ...update };
+    return { id: appointmentSnap.id, ...appointment, ...update, ...(visit ? { visit } : {}) };
   });
 
   res.json(result);

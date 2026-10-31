@@ -66,7 +66,8 @@ void main() {
       (t) async {
     final data = ClinicalFixture();
     await mount(t, data, VisitDetailScreen(visit: data.visit));
-    expect(find.textContaining('Chưa cập nhật'), findsWidgets);
+    // A16: ngày thiếu hiện "Chưa có thời gian", không bao giờ là 01/01/1970.
+    expect(find.textContaining('Chưa có thời gian'), findsWidgets);
     expect(find.textContaining('1970'), findsNothing);
     await t.ensureVisible(find.text('Xem phiếu thanh toán'));
     await t.tap(find.text('Xem phiếu thanh toán'));
