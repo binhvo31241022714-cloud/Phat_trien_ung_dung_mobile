@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:typed_data';
 
 import 'package:http/http.dart' as http;
 
@@ -75,7 +76,13 @@ class ApiClient {
   Future<dynamic> delete(String path) =>
       _send(() async => _client.delete(_uri(path), headers: await _headers()));
 
-  Future<dynamic> _send(Future<http.Response> Function() request) async {
+  /// Tải dữ liệu nhị phân (ảnh) kèm token. Lỗi vẫn ném [ApiException] như JSON.
+  Future<Uint8List> getBytes(String path) async => await _send(
+      () async => _client.get(_uri(path), headers: await _headers()),
+      raw: true) as Uint8List;
+
+  Future<dynamic> _send(Future<http.Response> Function() request,
+      {bool raw = false}) async {
     final http.Response response;
     try {
       response = await request().timeout(timeout);
@@ -87,6 +94,7 @@ class ApiClient {
           kind: ApiErrorKind.connection);
     }
     final status = response.statusCode;
+    if (raw && status >= 200 && status < 300) return response.bodyBytes;
     dynamic decoded;
     var malformed = false;
     try {

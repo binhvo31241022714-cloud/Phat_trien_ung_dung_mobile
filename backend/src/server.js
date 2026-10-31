@@ -3,7 +3,8 @@ const cors = require('cors');
 
 const app = express();
 app.use(cors());
-app.use(express.json());
+// Route ảnh nhận body tới 1 MB, các route khác giữ 100 KB (xem utils/media.js)
+app.use(require('./utils/media').jsonBody);
 
 app.get('/', (req, res) => res.send('API nha khoa đang chạy'));
 
@@ -27,6 +28,7 @@ app.use('/api/visits', require('./routes/visits'));
 app.use('/api/invoices', require('./routes/invoices'));
 app.use('/api/treatments', require('./routes/treatments'));
 app.use('/api/follow-ups', require('./routes/followUps'));
+app.use('/api/media', require('./routes/media'));
 
 // Module 4 - Nội dung và thông báo (Nhi)
 app.use('/api/articles', require('./routes/articles'));
@@ -38,6 +40,13 @@ app.use((req, res) => res.status(404).json({ message: 'API không tồn tại' }
 
 // Bắt lỗi chung, tránh server bị sập
 app.use((err, req, res, next) => {
+  // Lỗi đọc body JSON: quá giới hạn hoặc sai cú pháp
+  if (err.type === 'entity.too.large') {
+    return res.status(413).json({ message: 'Dữ liệu gửi lên quá lớn (ảnh tối đa 700 KB)' });
+  }
+  if (err.type === 'entity.parse.failed') {
+    return res.status(400).json({ message: 'Body JSON không hợp lệ' });
+  }
   console.error(err);
   res.status(500).json({ message: 'Lỗi server' });
 });

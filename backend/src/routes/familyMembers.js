@@ -4,6 +4,8 @@ const auth = require('../middleware/auth');
 const { readHealth, withHealthDefaults, DEFAULTS } = require('../utils/health');
 const { isAppointmentActive, isFutureAppointment } = require('../utils/booking');
 const { readProfile } = require('../utils/profile');
+const { asyncHandler } = require('../utils/records');
+const { decodeImage, replaceAvatar } = require('../utils/media');
 
 // Người thân lưu bên trong hồ sơ của từng user, nên người khác không xem được
 const col = (uid) => db.collection('users').doc(uid).collection('family_members');
@@ -96,5 +98,18 @@ router.delete('/:id', auth, async (req, res) => {
   }
   res.json({ message: 'Đã xóa' });
 });
+
+// PUT /api/family-members/:id/avatar - ảnh đại diện người thân (còn hoạt động)
+router.put('/:id/avatar', auth, asyncHandler(async (req, res) => {
+  const image = decodeImage(req.body);
+  res.json(await replaceAvatar(col(req.user.uid).doc(req.params.id),
+    { uid: req.user.uid, patientId: req.params.id, image, isAllowed: (snap) => !isArchived(snap) }));
+}));
+
+// DELETE /api/family-members/:id/avatar - gỡ ảnh đại diện người thân
+router.delete('/:id/avatar', auth, asyncHandler(async (req, res) => {
+  res.json(await replaceAvatar(col(req.user.uid).doc(req.params.id),
+    { uid: req.user.uid, patientId: req.params.id, image: null, isAllowed: (snap) => !isArchived(snap) }));
+}));
 
 module.exports = router;

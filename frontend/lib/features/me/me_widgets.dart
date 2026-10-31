@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+import '../../core/media/photo_picker.dart';
 import '../../core/utils/formatters.dart';
+import '../shared/media_image.dart';
+import '../shared/photo_source_sheet.dart';
 import '../../core/widgets/app_card.dart';
 
 const meBlue = Color(0xFF247BF3);
@@ -80,13 +83,53 @@ class MeMenuTile extends StatelessWidget {
 }
 
 class MeAvatar extends StatelessWidget {
-  const MeAvatar({this.radius = 38, super.key});
+  const MeAvatar({this.radius = 38, this.mediaId, super.key});
   final double radius;
+
+  /// Ảnh đại diện trên backend; null thì hiện biểu tượng mặc định.
+  final String? mediaId;
   @override
-  Widget build(BuildContext context) => CircleAvatar(
-      radius: radius,
-      backgroundColor: const Color(0xFFDFE8F6),
-      child: Icon(Icons.person_outline, color: meBlue, size: radius));
+  Widget build(BuildContext context) {
+    final fallback = Icon(Icons.person_outline, color: meBlue, size: radius);
+    return CircleAvatar(
+        radius: radius,
+        backgroundColor: const Color(0xFFDFE8F6),
+        child: mediaId == null
+            ? fallback
+            : ClipOval(
+                child: SizedBox.square(
+                    dimension: radius * 2,
+                    child: MediaImage(mediaId!,
+                        key: ValueKey('avatar-$mediaId'),
+                        error: Center(child: fallback)))));
+  }
+}
+
+/// Nút "Thay ảnh": chọn Chụp ảnh / Thư viện / Gỡ ảnh rồi lưu qua [save]
+/// ([save] nhận null khi gỡ, trả thông báo lỗi hoặc null khi thành công).
+Future<void> changeAvatar(BuildContext context,
+    {required bool hasAvatar,
+    required Future<String?> Function(PickedImage? image) save}) async {
+  final PhotoChoice? choice;
+  try {
+    choice = await choosePhoto(context,
+        allowRemove: hasAvatar, title: 'Ảnh đại diện');
+  } on PhotoPickException catch (e) {
+    if (context.mounted) meMessage(context, e.message);
+    return;
+  }
+  if (choice == null || !context.mounted) return;
+  final image = choice is PhotoPicked ? choice.image : null;
+  meMessage(context, image == null ? 'Đang gỡ ảnh…' : 'Đang tải ảnh lên…');
+  final error = await save(image);
+  if (!context.mounted) return;
+  meMessage(
+      context,
+      error != null
+          ? 'Chưa cập nhật được ảnh: $error'
+          : image == null
+              ? 'Đã gỡ ảnh đại diện.'
+              : 'Đã cập nhật ảnh đại diện.');
 }
 
 void meMessage(BuildContext context, String message) {

@@ -138,7 +138,9 @@ class _AccountOverview extends StatelessWidget {
     final user = context.watch<UserProvider>().account;
     final profile = context.watch<ProfileProvider>();
     return MePage(title: 'Tôi', children: [
-      const Center(child: MeAvatar(radius: 42)),
+      Center(
+          child: MeAvatar(
+              radius: 42, mediaId: profile.profile?.avatarMediaId)),
       const SizedBox(height: 12),
       Text(profile.displayName(user.email),
           textAlign: TextAlign.center,

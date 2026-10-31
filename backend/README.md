@@ -69,6 +69,11 @@ Khi test bằng `api-test.http`: tạo `backend/.env` theo `backend/.env.example
 | POST   | /api/family-members       | Có  | Thêm người thân. Bắt buộc `fullName`; nhận thêm giới tính và thông tin sức khỏe |
 | PATCH  | /api/family-members/:id   | Có  | Sửa người thân (gồm cả giới tính và thông tin sức khỏe) |
 | DELETE | /api/family-members/:id   | Có  | Xóa mềm người thân (xem "Xóa người thân" bên dưới) |
+| PUT    | /api/users/me/avatar      | Có  | Đặt ảnh đại diện. Body `{ image: base64, mimeType? }` (xem "Ảnh" bên dưới) |
+| DELETE | /api/users/me/avatar      | Có  | Gỡ ảnh đại diện |
+| PUT    | /api/family-members/:id/avatar | Có | Ảnh đại diện người thân còn hoạt động |
+| DELETE | /api/family-members/:id/avatar | Có | Gỡ ảnh đại diện người thân |
+| GET    | /api/media/:id            | Có  | Trả ảnh nhị phân. Chỉ chủ tài khoản (`ownerAccountId`) hoặc staff, người khác 403 |
 | GET    | /api/services             | Không | Danh sách dịch vụ |
 | GET    | /api/services/:id         | Không | Chi tiết dịch vụ |
 | GET    | /api/combos               | Không | Danh sách combo |
@@ -78,6 +83,14 @@ Khi test bằng `api-test.http`: tạo `backend/.env` theo `backend/.env.example
 | GET    | /api/favorites            | Có  | Danh sách nội dung đã lưu |
 | POST   | /api/favorites            | Có  | Lưu nội dung. Body: `{ type, itemId }` |
 | DELETE | /api/favorites/:id        | Có  | Bỏ lưu một mục |
+
+### Ảnh (không dùng Firebase Storage)
+
+Ảnh lưu trong Firestore dạng base64 ở `media/{id}`: `{ ownerAccountId, patientId, kind ("avatar" | "treatment_photo"), mimeType, data, size, createdAt, createdBy }`.
+- Chỉ nhận JPEG hoặc PNG, kiểm tra theo byte đầu của file (không tin `mimeType` gửi lên); `image` có thể là base64 thuần hoặc `data:image/...;base64,...`.
+- Tối đa 700 KB sau giải mã (base64 khoảng 933 KB, vừa giới hạn 1 MiB của một document). Quá thì `413`, sai định dạng thì `400`.
+- Chỉ các route ảnh nhận body tới 1 MB (`utils/media.js` > `jsonBody`); route khác giữ 100 KB.
+- Hồ sơ lưu `avatarMediaId`; thay ảnh thì ảnh cũ bị xóa trong cùng transaction. Staff chỉ xem, không đổi ảnh đại diện.
 
 ### Dữ liệu `users/{uid}` và `users/{uid}/family_members/{id}`
 
@@ -141,7 +154,9 @@ Module 2 (đặt lịch), Module 3 (hồ sơ nha khoa), Module 4 (nội dung và
 | POST | `/api/treatments/:id/sessions/link-visit` | Có | Gắn một lần khám đã hoàn thành vào buổi do người dùng chọn. Body: `{ visitId, sessionId }`. Visit phải có `status: "completed"` (A10) |
 | POST | `/api/treatments` | Staff | Tạo liệu trình kèm các buổi dự kiến. Body `{ accountId, patientId?, doctorId?, name, diagnosis?, startAt?, endAt?, sessions: [{ scheduledAt?, notes? }] }`. Liệu trình và buổi đều `planned` |
 | PATCH | `/api/treatments/:id/sessions/:sessionId` | Staff | Đánh dấu buổi đã làm. Body `{ status: "completed", visitId, notes? }`; visit phải hoàn tất, cùng bệnh nhân, chưa gắn buổi khác. Liệu trình tự chuyển `in_progress`, xong hết buổi thì `completed` |
-| GET | `/api/treatments/:id/photos` | Có | Ảnh trước và sau; trả mảng rỗng nếu chưa có ảnh |
+| GET | `/api/treatments/:id/photos` | Có hoặc Staff | Ảnh cũ (`photos`, `treatment_photos`, mảng `photos` của treatment) và ảnh mới; ảnh mới có `imageUrl` = `/api/media/:mediaId`, mọi ảnh có `canDelete` |
+| POST | `/api/treatments/:id/photos` | Có hoặc Staff | Tải ảnh. Body `{ phase: "before" \| "after", sessionId?, image, mimeType?, note? }`. Chủ tài khoản (bản thân hoặc người thân còn hoạt động) hoặc staff; tối đa 30 ảnh mỗi liệu trình (409) |
+| DELETE | `/api/treatments/:id/photos/:photoId` | Có hoặc Staff | Xóa ảnh và media; chỉ người tải lên hoặc staff. Ảnh cũ không có `mediaId` trả 409 |
 | GET | `/api/patients/:id/follow-ups` | Có | Lịch tái khám |
 | POST | `/api/follow-ups` | Staff | Đề xuất tái khám. Body `{ accountId, patientId?, scheduledAt, reason, notes?, doctorId?, visitId?, treatmentId?, serviceId? }`. Lưu `status: "suggested"`, tạo thông báo `follow_up` |
 

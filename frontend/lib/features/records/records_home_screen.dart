@@ -6,6 +6,7 @@ import '../../data/models/appointment.dart';
 import '../../data/models/patient_records.dart';
 import '../../data/providers/patient_data_provider.dart';
 import 'records_widgets.dart';
+import '../shared/person_avatar.dart';
 import 'appointment_api_status.dart';
 import 'appointments_screen.dart';
 import 'appointment_detail_screen.dart';
@@ -151,10 +152,12 @@ class _RecordsOverview extends StatelessWidget {
     return RecordsPage(title: 'Hồ sơ nha khoa', children: [
       RecordCard(children: [
         Row(children: [
-          const CircleAvatar(
+          PersonAvatar(
+              key: ValueKey('records-patient-avatar-${p.id}'),
+              mediaId: p.avatarMediaId,
               radius: 28,
-              backgroundColor: Color(0xFFDFE8F6),
-              child: Icon(Icons.monitor_heart_outlined, color: recordsBlue)),
+              icon: Icons.monitor_heart_outlined,
+              iconColor: recordsBlue),
           const SizedBox(width: 12),
           Expanded(
               child: Column(
@@ -192,9 +195,9 @@ class _RecordsOverview extends StatelessWidget {
               for (final patient in data.patients)
                 DropdownMenuItem(
                     value: patient.id,
-                    child: Text(
+                    child: PatientOptionLabel(
                         '${patient.fullName} (${patient.isPrimary ? "Bản thân" : patient.relationship})',
-                        overflow: TextOverflow.ellipsis))
+                        avatarMediaId: patient.avatarMediaId))
             ],
             onChanged: (id) {
               if (id != null) {

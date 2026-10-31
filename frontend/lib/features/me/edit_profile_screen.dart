@@ -99,12 +99,24 @@ class _ProfileFormState extends State<_ProfileForm> {
                 child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Center(child: MeAvatar()),
+                      Center(
+                          child: MeAvatar(
+                              mediaId: context
+                                  .watch<ProfileProvider>()
+                                  .profile
+                                  ?.avatarMediaId)),
                       Center(
                           child: TextButton(
-                              onPressed: () => meMessage(context,
-                                  'Thay ảnh chỉ là chức năng demo; chưa hỗ trợ chọn hoặc tải ảnh lên.'),
-                              child: const Text('Thay ảnh (demo)'))),
+                              key: const ValueKey('change-avatar'),
+                              onPressed: () {
+                                final provider =
+                                    context.read<ProfileProvider>();
+                                changeAvatar(context,
+                                    hasAvatar:
+                                        provider.profile?.avatarMediaId != null,
+                                    save: provider.changeMyAvatar);
+                              },
+                              child: const Text('Thay ảnh'))),
                       const SizedBox(height: 8),
                       AppTextField(
                           label: 'Họ và tên',

@@ -402,6 +402,69 @@ Content-Type: application/json
 DELETE {{baseUrl}}/api/family-members/{{a17Member.response.body.$.id}}
 Authorization: Bearer {{token}}
 
+### ===== Giai đoạn 2: Ảnh đại diện (Module 1) =====
+# Bấm 2 request ở mục ĐĂNG NHẬP trước. Ảnh mẫu là PNG 1x1 dạng base64 (dán thẳng trong body).
+# Ảnh thật: JPEG hoặc PNG, tối đa 700 KB sau giải mã; app tự nén về 1024px, chất lượng 70.
+@pngSample = iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==
+
+### AV-1. Đặt ảnh đại diện cho bản thân (mong đợi 200, có avatarMediaId)
+# @name avatarMe
+PUT {{baseUrl}}/api/users/me/avatar
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "image": "{{pngSample}}", "mimeType": "image/png" }
+
+### AV-2. Xem ảnh (mong đợi 200, Content-Type image/png, REST Client hiện ảnh)
+GET {{baseUrl}}/api/media/{{avatarMe.response.body.$.avatarMediaId}}
+Authorization: Bearer {{token}}
+
+### AV-3. Hồ sơ có avatarMediaId
+GET {{baseUrl}}/api/users/me
+Authorization: Bearer {{token}}
+
+### AV-4. Staff xem được ảnh đại diện (mong đợi 200)
+GET {{baseUrl}}/api/media/{{avatarMe.response.body.$.avatarMediaId}}
+Authorization: Bearer {{staffToken}}
+
+### AV-5. Ảnh GIF (mong đợi 400 "Chỉ nhận ảnh JPEG hoặc PNG")
+PUT {{baseUrl}}/api/users/me/avatar
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "image": "R0lGODlhAQABAAAAACw=" }
+
+### AV-6. Khai báo JPEG nhưng nội dung là PNG (mong đợi 400 "Định dạng ảnh không khớp...")
+PUT {{baseUrl}}/api/users/me/avatar
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "image": "{{pngSample}}", "mimeType": "image/jpeg" }
+
+### AV-7. Danh sách người thân (lấy id người thân đầu tiên cho AV-8, AV-9; cần có ít nhất 1 người thân)
+# @name avatarFamily
+GET {{baseUrl}}/api/family-members
+Authorization: Bearer {{token}}
+
+### AV-8. Đặt ảnh đại diện cho người thân đầu tiên (mong đợi 200)
+PUT {{baseUrl}}/api/family-members/{{avatarFamily.response.body.$[0].id}}/avatar
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "image": "{{pngSample}}" }
+
+### AV-9. Gỡ ảnh người thân (mong đợi 200, avatarMediaId null, ảnh cũ bị xóa)
+DELETE {{baseUrl}}/api/family-members/{{avatarFamily.response.body.$[0].id}}/avatar
+Authorization: Bearer {{token}}
+
+### AV-10. Gỡ ảnh đại diện bản thân (mong đợi 200, avatarMediaId null)
+DELETE {{baseUrl}}/api/users/me/avatar
+Authorization: Bearer {{token}}
+
+### AV-11. Xem lại ảnh đã gỡ (mong đợi 404 "Không tìm thấy ảnh")
+GET {{baseUrl}}/api/media/{{avatarMe.response.body.$.avatarMediaId}}
+Authorization: Bearer {{token}}
+
 ######################################################################
 # MODULE 2 - Phương
 ######################################################################
@@ -711,6 +774,53 @@ Authorization: Bearer {{staffToken}}
 Content-Type: application/json
 
 { "status": "completed", "prescriptions": [{ "dosage": "1 viên" }] }
+
+### ===== Giai đoạn 2: Ảnh trước, sau điều trị (Module 3) =====
+# Chạy sau M3-10 (cần liệu trình m3Treatment). Ảnh mẫu @pngSample khai báo ở mục MODULE 1.
+# Mỗi liệu trình tối đa 30 ảnh.
+
+### PH-1. Bệnh nhân tải ảnh "trước" (mong đợi 201, canDelete true)
+# @name m3Photo
+POST {{baseUrl}}/api/treatments/{{m3Treatment.response.body.$.id}}/photos
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "phase": "before", "image": "{{pngSample}}", "note": "Trước khi điều trị" }
+
+### PH-2. Staff tải ảnh "sau" gắn buổi 1 (mong đợi 201, createdByRole staff)
+# @name m3StaffPhoto
+POST {{baseUrl}}/api/treatments/{{m3Treatment.response.body.$.id}}/photos
+Authorization: Bearer {{staffToken}}
+Content-Type: application/json
+
+{ "phase": "after", "sessionId": "{{m3Treatment.response.body.$.sessions[0].id}}", "image": "{{pngSample}}", "note": "Sau buổi 1" }
+
+### PH-3. Bệnh nhân xem ảnh liệu trình (ảnh PH-1 canDelete true, ảnh staff canDelete false)
+GET {{baseUrl}}/api/treatments/{{m3Treatment.response.body.$.id}}/photos
+Authorization: Bearer {{token}}
+
+### PH-4. Bệnh nhân xem ảnh staff tải lên (mong đợi 200, hiện ảnh)
+GET {{baseUrl}}/api/media/{{m3StaffPhoto.response.body.$.mediaId}}
+Authorization: Bearer {{token}}
+
+### PH-5. Bệnh nhân xóa ảnh của staff (mong đợi 403)
+DELETE {{baseUrl}}/api/treatments/{{m3Treatment.response.body.$.id}}/photos/{{m3StaffPhoto.response.body.$.id}}
+Authorization: Bearer {{token}}
+
+### PH-6. phase sai (mong đợi 400)
+POST {{baseUrl}}/api/treatments/{{m3Treatment.response.body.$.id}}/photos
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "phase": "middle", "image": "{{pngSample}}" }
+
+### PH-7. Bệnh nhân xóa ảnh của mình (mong đợi 200, xóa cả media)
+DELETE {{baseUrl}}/api/treatments/{{m3Treatment.response.body.$.id}}/photos/{{m3Photo.response.body.$.id}}
+Authorization: Bearer {{token}}
+
+### PH-8. Staff xóa ảnh staff đã tải (mong đợi 200)
+DELETE {{baseUrl}}/api/treatments/{{m3Treatment.response.body.$.id}}/photos/{{m3StaffPhoto.response.body.$.id}}
+Authorization: Bearer {{staffToken}}
 
 # Lưu ý: chưa có API xóa hồ sơ khám. Dữ liệu tạo ở đây nằm lại trong tài khoản test123
 # để demo; muốn dọn thì nhờ Bình chạy script dọn dữ liệu test.

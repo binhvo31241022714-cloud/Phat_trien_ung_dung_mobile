@@ -11,6 +11,7 @@ const {
   assertActivePatient,
   treatmentStatusFor,
 } = require('../utils/clinical');
+const { decodeImage, mediaDocument, mediaUrl } = require('../utils/media');
 const {
   db,
   getRecordOrThrow,
@@ -277,9 +278,29 @@ router.post('/:id/sessions/link-visit', auth, asyncHandler(async (req, res) => {
   res.json(result);
 }));
 
+const MAX_PHOTOS_PER_TREATMENT = 30;
+const PHOTO_PHASES = ['before', 'after'];
+const isStaff = (req) => req.user.role === 'staff';
+
+// Ảnh có trong media mới xóa được; người tải lên hoặc staff mới được xóa.
+function photoView(doc, req) {
+  const data = doc.data();
+  const view = { id: doc.id, ...data };
+  if (data.mediaId) {
+    view.imageUrl = mediaUrl(data.mediaId);
+    view.type = data.phase;
+    view.canDelete = data.createdBy === req.user.uid || isStaff(req);
+  } else {
+    view.canDelete = false;
+  }
+  return view;
+}
+
+// GET /api/treatments/:id/photos - ảnh cũ (photos, treatment_photos, mảng trong
+// treatment) và ảnh mới tải lên (treatment_photos có mediaId). Bệnh nhân hoặc staff.
 router.get('/:id/photos', auth, asyncHandler(async (req, res) => {
   const treatment = await getRecordOrThrow('treatments', req.params.id);
-  await assertRecordAccess(req.user.uid, treatment);
+  if (!isStaff(req)) await assertRecordAccess(req.user.uid, treatment);
 
   const [photosSnapshot, treatmentPhotosSnapshot] = await Promise.all([
     db.collection('photos').where('treatmentId', '==', req.params.id).get(),
@@ -290,15 +311,108 @@ router.get('/:id/photos', auth, asyncHandler(async (req, res) => {
     ...treatmentPhotosSnapshot.docs,
   ]
     .filter((doc) => doc.data().patientId === treatment.data.patientId)
-    .map((doc) => ({ id: doc.id, ...doc.data() }));
+    .map((doc) => photoView(doc, req));
 
   const embeddedPhotos = Array.isArray(treatment.data.photos)
     ? treatment.data.photos
     : [];
   res.json([
     ...storedPhotos,
-    ...embeddedPhotos.map((photo, index) => ({ id: `${req.params.id}_photo_${index + 1}`, ...photo })),
+    ...embeddedPhotos.map((photo, index) => ({
+      id: `${req.params.id}_photo_${index + 1}`, ...photo, canDelete: false,
+    })),
   ]);
+}));
+
+// POST /api/treatments/:id/photos - body { phase: "before" | "after", sessionId?, image, mimeType?, note? }
+// Chủ tài khoản (bản thân hoặc người thân còn hoạt động) hoặc staff. Tối đa 30 ảnh mỗi liệu trình.
+router.post('/:id/photos', auth, asyncHandler(async (req, res) => {
+  const body = req.body || {};
+  if (!PHOTO_PHASES.includes(body.phase)) throw fail(400, 'phase phải là "before" hoặc "after"');
+  const sessionId = optionalId(body.sessionId, 'sessionId');
+  const note = optionalText(body.note, 'Ghi chú', 500);
+  const image = decodeImage(body);
+
+  const photoRef = db.collection('treatment_photos').doc();
+  const mediaRef = db.collection('media').doc();
+  const result = await db.runTransaction(async (transaction) => {
+    const treatmentSnap = await transaction.get(db.collection('treatments').doc(req.params.id));
+    if (!treatmentSnap.exists) throw fail(404, 'Không tìm thấy liệu trình');
+    const treatment = treatmentSnap.data();
+    const patientId = treatment.patientId;
+    let ownerAccountId;
+    if (isStaff(req)) {
+      ownerAccountId = treatment.accountId ||
+        ((await transaction.get(db.collection('users').doc(patientId))).exists ? patientId : null);
+      if (!ownerAccountId) throw fail(400, 'Liệu trình chưa gắn tài khoản bệnh nhân (thiếu accountId)');
+    } else {
+      const uid = req.user.uid;
+      if (treatment.accountId && treatment.accountId !== uid) {
+        throw fail(403, 'Bạn không có quyền với liệu trình này');
+      }
+      if (patientId !== uid) {
+        const member = await transaction.get(db.collection('users').doc(uid)
+          .collection('family_members').doc(patientId));
+        if (!member.exists) throw fail(403, 'Bạn không có quyền với liệu trình này');
+        if (member.data().isArchived === true) {
+          throw fail(403, 'Người thân đã bị xóa: chỉ xem được ảnh cũ, không tải ảnh mới');
+        }
+      }
+      ownerAccountId = uid;
+    }
+    if (sessionId) {
+      const session = await transaction.get(db.collection('treatment_sessions').doc(sessionId));
+      if (!session.exists || session.data().treatmentId !== treatmentSnap.id) {
+        throw fail(400, 'Buổi điều trị không thuộc liệu trình này');
+      }
+    }
+    const existing = await transaction.get(db.collection('treatment_photos')
+      .where('treatmentId', '==', treatmentSnap.id));
+    if (existing.docs.length >= MAX_PHOTOS_PER_TREATMENT) {
+      throw fail(409, `Liệu trình đã đủ ${MAX_PHOTOS_PER_TREATMENT} ảnh, hãy xóa bớt ảnh cũ`);
+    }
+
+    const now = new Date();
+    transaction.set(mediaRef, mediaDocument({
+      image, ownerAccountId, patientId, kind: 'treatment_photo', createdBy: req.user.uid, now,
+    }));
+    const photo = {
+      treatmentId: treatmentSnap.id,
+      patientId,
+      accountId: ownerAccountId,
+      phase: body.phase,
+      sessionId,
+      note,
+      mediaId: mediaRef.id,
+      mimeType: image.mimeType,
+      size: image.buffer.length,
+      createdBy: req.user.uid,
+      createdByRole: isStaff(req) ? 'staff' : 'patient',
+      createdAt: now,
+    };
+    transaction.set(photoRef, photo);
+    return photo;
+  });
+  res.status(201).json({
+    id: photoRef.id, ...result, imageUrl: mediaUrl(mediaRef.id), type: result.phase, canDelete: true,
+  });
+}));
+
+// DELETE /api/treatments/:id/photos/:photoId - người tải lên hoặc staff. Xóa cả media.
+router.delete('/:id/photos/:photoId', auth, asyncHandler(async (req, res) => {
+  await db.runTransaction(async (transaction) => {
+    const photoRef = db.collection('treatment_photos').doc(req.params.photoId);
+    const snap = await transaction.get(photoRef);
+    if (!snap.exists || snap.data().treatmentId !== req.params.id) throw fail(404, 'Không tìm thấy ảnh');
+    const photo = snap.data();
+    if (!photo.mediaId) throw fail(409, 'Ảnh cũ của phòng khám, không xóa được trong ứng dụng');
+    if (photo.createdBy !== req.user.uid && !isStaff(req)) {
+      throw fail(403, 'Chỉ người tải ảnh lên hoặc nhân viên phòng khám được xóa ảnh này');
+    }
+    transaction.delete(db.collection('media').doc(photo.mediaId));
+    transaction.delete(photoRef);
+  });
+  res.json({ message: 'Đã xóa ảnh', id: req.params.photoId });
 }));
 
 module.exports = router;

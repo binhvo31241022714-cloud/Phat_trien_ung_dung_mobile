@@ -19,6 +19,7 @@ import 'steps/select_datetime_step.dart';
 import 'steps/confirm_booking_step.dart';
 import 'widgets/booking_stepper.dart';
 import 'widgets/booking_price_summary.dart';
+import '../shared/person_avatar.dart';
 
 class BookingScreen extends StatefulWidget {
   final String? initialDoctorId;
@@ -378,9 +379,9 @@ class _BookingScreenState extends State<BookingScreen> {
         patientItems.add(
           DropdownMenuItem<String>(
             value: account.id,
-            child: Text(
+            child: PatientOptionLabel(
               '$displayName (Bản thân)',
-              overflow: TextOverflow.ellipsis,
+              avatarMediaId: account.avatarMediaId,
             ),
           ),
         );
@@ -401,9 +402,9 @@ class _BookingScreenState extends State<BookingScreen> {
         patientItems.add(
           DropdownMenuItem<String>(
             value: memberId,
-            child: Text(
+            child: PatientOptionLabel(
               '${member.fullName} ($relationship)',
-              overflow: TextOverflow.ellipsis,
+              avatarMediaId: member.avatarMediaId,
             ),
           ),
         );

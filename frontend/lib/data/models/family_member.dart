@@ -11,6 +11,9 @@ class FamilyMember {
   final String gender;
   final HealthInfo health;
 
+  /// Ảnh đại diện (media/{id}); null khi chưa có ảnh. Không gửi trong toJson.
+  final String? avatarMediaId;
+
   const FamilyMember({
     required this.id,
     this.fullName = '',
@@ -19,7 +22,19 @@ class FamilyMember {
     this.phone = '',
     this.gender = '',
     this.health = const HealthInfo(),
+    this.avatarMediaId,
   });
+
+  FamilyMember withAvatar(String? mediaId) => FamilyMember(
+        id: id,
+        fullName: fullName,
+        relationship: relationship,
+        birthday: birthday,
+        phone: phone,
+        gender: gender,
+        health: health,
+        avatarMediaId: mediaId,
+      );
 
   factory FamilyMember.fromJson(Map<String, dynamic> json) => FamilyMember(
         id: readString(json['id']),
@@ -29,6 +44,10 @@ class FamilyMember {
         phone: readString(json['phone']),
         gender: readGender(json['gender']),
         health: HealthInfo.fromJson(json),
+        avatarMediaId: json['avatarMediaId'] is String &&
+                (json['avatarMediaId'] as String).trim().isNotEmpty
+            ? (json['avatarMediaId'] as String).trim()
+            : null,
       );
 
   /// Body gửi cho POST và PATCH.

@@ -103,7 +103,8 @@ class _MainShellState extends State<MainShell> {
         records.applyAccountProfile(
             name: profile.fullName,
             phone: profile.phone,
-            dateOfBirth: profile.birthday);
+            dateOfBirth: profile.birthday,
+            avatarMediaId: profile.avatarMediaId);
       });
     }
   }

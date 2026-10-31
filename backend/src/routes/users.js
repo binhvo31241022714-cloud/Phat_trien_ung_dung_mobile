@@ -3,6 +3,8 @@ const { db } = require('../config/firebase');
 const auth = require('../middleware/auth');
 const { readHealth, withHealthDefaults } = require('../utils/health');
 const { readProfile } = require('../utils/profile');
+const { asyncHandler } = require('../utils/records');
+const { decodeImage, replaceAvatar } = require('../utils/media');
 
 // POST /api/users/sync
 router.post('/sync', auth, async (req, res) => {
@@ -48,5 +50,20 @@ router.patch('/me', auth, async (req, res) => {
   await db.collection('users').doc(req.user.uid).set(updates, { merge: true });
   res.json({ message: 'Cập nhật thành công', ...updates });
 });
+
+// PUT /api/users/me/avatar - body { image: base64 JPEG/PNG <= 700 KB, mimeType? }
+router.put('/me/avatar', auth, asyncHandler(async (req, res) => {
+  const image = decodeImage(req.body);
+  const uid = req.user.uid;
+  res.json(await replaceAvatar(db.collection('users').doc(uid),
+    { uid, patientId: uid, image, isAllowed: () => true }));
+}));
+
+// DELETE /api/users/me/avatar - gỡ ảnh đại diện
+router.delete('/me/avatar', auth, asyncHandler(async (req, res) => {
+  const uid = req.user.uid;
+  res.json(await replaceAvatar(db.collection('users').doc(uid),
+    { uid, patientId: uid, image: null, isAllowed: () => true }));
+}));
 
 module.exports = router;

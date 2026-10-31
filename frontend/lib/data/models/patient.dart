@@ -7,6 +7,9 @@ class Patient {
   final bool isPrimary;
   final String? avatarAsset;
 
+  /// Ảnh đại diện trên backend (media/{id}), ưu tiên hơn [avatarAsset].
+  final String? avatarMediaId;
+
   const Patient({
     required this.id,
     required this.fullName,
@@ -15,5 +18,6 @@ class Patient {
     required this.relationship,
     this.isPrimary = false,
     this.avatarAsset,
+    this.avatarMediaId,
   });
 }

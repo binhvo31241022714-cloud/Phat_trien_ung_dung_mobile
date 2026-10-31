@@ -4,6 +4,9 @@ import '../data/api_client.dart';
 import '../data/models/family_member.dart';
 import '../data/models/health_info.dart';
 import '../data/models/user_profile.dart';
+import '../core/media/media_cache.dart';
+import '../core/media/photo_picker.dart';
+import '../data/services/media_service.dart';
 import '../data/services/profile_service.dart';
 
 /// Hồ sơ tài khoản và người thân lấy từ backend.
@@ -12,9 +15,11 @@ import '../data/services/profile_service.dart';
 /// liệu mock cho tới khi các module đó nối API.
 class ProfileProvider extends SessionNotifier {
   final ProfileService _service;
+  final MediaService _media;
 
-  ProfileProvider({ProfileService? service})
-      : _service = service ?? ProfileService();
+  ProfileProvider({ProfileService? service, MediaService? media})
+      : _service = service ?? ProfileService(),
+        _media = media ?? MediaService.shared;
 
   // Tăng mỗi lần đăng xuất, để kết quả API của phiên cũ trả về muộn bị bỏ qua.
 
@@ -110,10 +115,54 @@ class ProfileProvider extends SessionNotifier {
       gender: newGender,
       address: current.address,
       health: newHealth,
+      avatarMediaId: current.avatarMediaId,
     );
     notifyListeners();
     return null;
   }
+
+  /// Thay ảnh đại diện của bản thân; [image] null là gỡ ảnh. Trả lỗi hoặc null.
+  Future<String?> changeMyAvatar(PickedImage? image) async {
+    final current = _profile;
+    if (isDisposed || current == null) return 'Chưa tải được hồ sơ.';
+    final session = sessionGeneration;
+    try {
+      final id = await _media.setMyAvatar(image);
+      if (!isSessionCurrent(session)) return 'Phiên đăng nhập đã thay đổi.';
+      MediaCache.evict(current.avatarMediaId);
+      _profile = (_profile ?? current).withAvatar(id);
+      notifyListeners();
+      return null;
+    } catch (e) {
+      return isSessionCurrent(session)
+          ? (e is ApiException ? e.message : 'Không thể cập nhật ảnh đại diện.')
+          : 'Phiên đăng nhập đã thay đổi.';
+    }
+  }
+
+  /// Thay ảnh đại diện người thân; [image] null là gỡ ảnh. Trả lỗi hoặc null.
+  Future<String?> changeFamilyAvatar(String memberId, PickedImage? image) async {
+    if (isDisposed) return 'Phiên đăng nhập đã kết thúc.';
+    final session = sessionGeneration;
+    try {
+      final id = await _media.setFamilyAvatar(memberId, image);
+      if (!isSessionCurrent(session)) return 'Phiên đăng nhập đã thay đổi.';
+      MediaCache.evict(familyAvatar(memberId));
+      _family = List.unmodifiable([
+        for (final member in _family)
+          member.id == memberId ? member.withAvatar(id) : member,
+      ]);
+      notifyListeners();
+      return null;
+    } catch (e) {
+      return isSessionCurrent(session)
+          ? (e is ApiException ? e.message : 'Không thể cập nhật ảnh đại diện.')
+          : 'Phiên đăng nhập đã thay đổi.';
+    }
+  }
+
+  String? familyAvatar(String memberId) =>
+      _family.where((m) => m.id == memberId).firstOrNull?.avatarMediaId;
 
   Future<void> loadFamily() async {
     if (isDisposed) return;
@@ -163,6 +212,7 @@ class ProfileProvider extends SessionNotifier {
   /// Gọi khi đăng xuất để người dùng sau không thấy dữ liệu người trước.
   void clear() {
     invalidateSession();
+    MediaCache.clear();
     _profile = null;
     _profileLoading = false;
     _profileError = null;

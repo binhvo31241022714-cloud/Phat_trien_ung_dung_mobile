@@ -23,12 +23,15 @@ class PrivacyScreen extends StatelessWidget {
           SizedBox(height: 10),
           Text(
               'Thông tin sức khỏe chỉ dùng để bác sĩ chuẩn bị điều trị an toàn, chỉ chủ tài khoản xem được.'),
+          SizedBox(height: 10),
+          Text(
+              'Ảnh đại diện và ảnh trước, sau điều trị được lưu trên máy chủ, chỉ chủ tài khoản và nhân viên phòng khám xem được.'),
           SizedBox(height: 16),
           Text('Đang được hoàn thiện',
               style: TextStyle(fontWeight: FontWeight.w600)),
           SizedBox(height: 10),
           Text(
-              'Lịch hẹn, hồ sơ nha khoa, thông báo và bài viết hiện là dữ liệu minh họa, chưa phải dữ liệu thật của bạn. Ứng dụng chưa hỗ trợ tải ảnh lên và thanh toán trực tuyến.'),
+              'Lịch hẹn, hồ sơ nha khoa, thông báo và bài viết hiện là dữ liệu minh họa, chưa phải dữ liệu thật của bạn. Ứng dụng chưa hỗ trợ thanh toán trực tuyến.'),
           SizedBox(height: 16),
           Text(
               'Vui lòng chưa nhập thông tin bệnh án thật cho tới khi các phần trên hoàn thiện.'),

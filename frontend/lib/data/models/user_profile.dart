@@ -14,6 +14,9 @@ class UserProfile {
   final String address;
   final HealthInfo health;
 
+  /// Ảnh đại diện (media/{id}); null khi chưa có ảnh.
+  final String? avatarMediaId;
+
   const UserProfile({
     required this.id,
     this.email = '',
@@ -23,7 +26,20 @@ class UserProfile {
     this.gender = '',
     this.address = '',
     this.health = const HealthInfo(),
+    this.avatarMediaId,
   });
+
+  UserProfile withAvatar(String? mediaId) => UserProfile(
+        id: id,
+        email: email,
+        fullName: fullName,
+        phone: phone,
+        birthday: birthday,
+        gender: gender,
+        address: address,
+        health: health,
+        avatarMediaId: mediaId,
+      );
 
   /// Chịu được trường thiếu hoặc null: chuỗi thiếu thành '', ngày sai thành null.
   factory UserProfile.fromJson(Map<String, dynamic> json) => UserProfile(
@@ -35,5 +51,9 @@ class UserProfile {
         gender: readGender(json['gender']),
         address: readString(json['address']),
         health: HealthInfo.fromJson(json),
+        avatarMediaId: _optionalId(json['avatarMediaId']),
       );
 }
+
+String? _optionalId(Object? value) =>
+    value is String && value.trim().isNotEmpty ? value.trim() : null;

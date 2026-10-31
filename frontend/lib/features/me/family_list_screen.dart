@@ -37,6 +37,7 @@ class _FamilyListScreenState extends State<FamilyListScreen> {
           name: profile.displayName(email),
           subtitle: 'Bản thân · ${_date(birthday)}',
           healthWarning: profile.profile?.health.hasWarning ?? false,
+          avatarMediaId: profile.profile?.avatarMediaId,
           onEdit: () => MeRoutes.open(context, MeRoutes.profile)),
       if (profile.familyLoading && !profile.familyLoaded)
         const Padding(padding: EdgeInsets.all(24), child: LoadingView())
@@ -55,6 +56,7 @@ class _FamilyListScreenState extends State<FamilyListScreen> {
               subtitle:
                   '${p.relationship.isEmpty ? 'Người thân' : p.relationship} · ${_date(p.birthday)}',
               healthWarning: p.health.hasWarning,
+              avatarMediaId: p.avatarMediaId,
               onEdit: () =>
                   MeRoutes.open(context, MeRoutes.familyForm, arguments: p),
               onDelete: () async {
@@ -98,12 +100,13 @@ class _FamilyListScreenState extends State<FamilyListScreen> {
           {required String name,
           required String subtitle,
           bool healthWarning = false,
+          String? avatarMediaId,
           required VoidCallback onEdit,
           VoidCallback? onDelete}) =>
       MeCard(
           child: Column(children: [
         Row(children: [
-          const MeAvatar(radius: 22),
+          MeAvatar(radius: 22, mediaId: avatarMediaId),
           const SizedBox(width: 12),
           Expanded(
               child: Column(

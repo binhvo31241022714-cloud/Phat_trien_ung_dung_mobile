@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../core/constants/app_colors.dart';
 import '../../data/models/patient.dart';
+import 'media_image.dart';
 
 class PatientAvatar extends StatelessWidget {
   final Patient patient;
@@ -24,11 +25,21 @@ class PatientAvatar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final image = patient.avatarAsset;
+    final mediaId = patient.avatarMediaId;
     return CircleAvatar(
       radius: radius,
       backgroundColor: AppColors.accent,
       foregroundColor: AppColors.primaryDark,
-      child: image == null
+      child: mediaId != null
+          ? ClipOval(
+              child: SizedBox.square(
+                dimension: radius * 2,
+                child: MediaImage(mediaId,
+                    key: ValueKey('patient-avatar-$mediaId'),
+                    error: Center(child: Text(_initials))),
+              ),
+            )
+          : image == null
           ? Text(_initials)
           : ClipOval(
               child: SizedBox.square(

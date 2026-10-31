@@ -177,6 +177,7 @@ class PatientDataProvider extends SessionNotifier {
         dateOfBirth: profile.birthday ?? DateTime(1970),
         relationship: 'Tôi',
         isPrimary: true,
+        avatarMediaId: profile.avatarMediaId,
       ),
       for (final member in family)
         Patient(
@@ -185,6 +186,7 @@ class PatientDataProvider extends SessionNotifier {
           phone: member.phone,
           dateOfBirth: member.birthday ?? DateTime(1970),
           relationship: member.relationship,
+          avatarMediaId: member.avatarMediaId,
         ),
     ];
     if (patients.isEmpty) return;
@@ -338,12 +340,19 @@ class PatientDataProvider extends SessionNotifier {
 
   /// Đổi tên, SĐT, ngày sinh của "Bản thân" theo hồ sơ thật từ API.
   /// Giữ nguyên id để lịch hẹn, hồ sơ khám mock vẫn trỏ đúng.
+  /// Cập nhật "Bản thân" theo hồ sơ tài khoản, gồm cả ảnh đại diện.
   void applyAccountProfile(
-      {required String name, required String phone, DateTime? dateOfBirth}) {
+      {required String name,
+      required String phone,
+      DateTime? dateOfBirth,
+      String? avatarMediaId}) {
     final p = primaryPatient;
     final newName = name.trim().isEmpty ? p.fullName : name.trim();
     final newDob = dateOfBirth ?? p.dateOfBirth;
-    if (newName == p.fullName && phone == p.phone && newDob == p.dateOfBirth) {
+    if (newName == p.fullName &&
+        phone == p.phone &&
+        newDob == p.dateOfBirth &&
+        avatarMediaId == p.avatarMediaId) {
       return;
     }
     updatePatient(Patient(
@@ -353,7 +362,8 @@ class PatientDataProvider extends SessionNotifier {
         dateOfBirth: newDob,
         relationship: p.relationship,
         isPrimary: true,
-        avatarAsset: p.avatarAsset));
+        avatarAsset: p.avatarAsset,
+        avatarMediaId: avatarMediaId));
   }
 
   int _familySequence = 0;

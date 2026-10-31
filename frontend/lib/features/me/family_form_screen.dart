@@ -89,6 +89,25 @@ class _FamilyFormScreenState extends State<FamilyFormScreen> {
                 child: Form(
                     key: _form,
                     child: Column(children: [
+                      // Ảnh đại diện chỉ đổi được với người thân đã lưu.
+                      if (widget.member case final member?) ...[
+                        MeAvatar(
+                            mediaId: context
+                                .watch<ProfileProvider>()
+                                .familyAvatar(member.id)),
+                        TextButton(
+                            key: const ValueKey('change-family-avatar'),
+                            onPressed: () {
+                              final provider = context.read<ProfileProvider>();
+                              changeAvatar(context,
+                                  hasAvatar:
+                                      provider.familyAvatar(member.id) != null,
+                                  save: (image) => provider.changeFamilyAvatar(
+                                      member.id, image));
+                            },
+                            child: const Text('Thay ảnh')),
+                        const SizedBox(height: 8),
+                      ],
                       AppTextField(
                           label: 'Họ và tên',
                           controller: _name,
