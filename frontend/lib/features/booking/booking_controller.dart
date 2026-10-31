@@ -123,6 +123,13 @@ class BookingController extends ChangeNotifier {
   /// Lựa chọn của lần gửi gần nhất (để "Chọn lại" tìm lịch có thể đã tạo).
   ({String patientId, String date, String startTime})? lastSent;
 
+  /// Đề xuất tái khám đang đặt lịch (A08) và người khám của đề xuất đó.
+  /// Đổi sang người khám khác thì không còn là lịch tái khám.
+  String? followUpId;
+  String? followUpPatientId;
+  String? get activeFollowUpId =>
+      followUpId != null && followUpPatientId == patientId ? followUpId : null;
+
   /// Danh sách chỉ chứa slot hợp lệ, không chứa null.
   List<AvailabilitySlot> availabilitySlots = <AvailabilitySlot>[];
   bool availabilityLoading = false;
@@ -158,6 +165,8 @@ class BookingController extends ChangeNotifier {
     _requestKey = null;
     _requestFingerprint = null;
     lastSent = null;
+    followUpId = null;
+    followUpPatientId = null;
     step = 0;
     notifyListeners();
   }
@@ -688,10 +697,13 @@ class BookingController extends ChangeNotifier {
     bool? restrictToServiceIds,
     String? comboId,
     String? patientId,
+    String? followUpId,
   }) {
     if (_disposed || locked || created != null) return;
 
     if (replaceSelection) {
+      this.followUpId = null;
+      followUpPatientId = null;
       this.serviceIds.clear();
       this.comboId = null;
       _preferredDoctorId = null;
@@ -702,6 +714,10 @@ class BookingController extends ChangeNotifier {
     }
     if (patientId != null && patientId.isNotEmpty) {
       this.patientId = patientId;
+    }
+    if (followUpId != null && followUpId.isNotEmpty) {
+      this.followUpId = followUpId;
+      followUpPatientId = this.patientId;
     }
     if (comboId != null && comboId.isNotEmpty) {
       this.comboId = comboId;
@@ -829,6 +845,7 @@ class BookingController extends ChangeNotifier {
         comboId ?? '',
         appliedVoucher ?? '',
         note.trim(),
+        activeFollowUpId ?? '',
       ].join('|');
       // Cùng lựa chọn (bấm lại, gửi lại sau lỗi mạng) thì dùng lại key cũ.
       if (_requestKey == null || fingerprint != _requestFingerprint) {
@@ -848,6 +865,7 @@ class BookingController extends ChangeNotifier {
           voucherCode: appliedVoucher,
           note: note,
           requestKey: _requestKey,
+          followUpId: activeFollowUpId,
         );
         awaitingRetry = false;
       } on ApiException catch (e) {
@@ -874,6 +892,10 @@ class BookingController extends ChangeNotifier {
           generation: appointmentGeneration);
       if (AppConfig.current.dataSource == DataSource.api) {
         data.upsertApiAppointment(appointment, generation: patientGeneration);
+        // Đề xuất tái khám vừa chuyển "Đã đặt lịch": tải lại hồ sơ người khám.
+        if (appointment.followUpId != null) {
+          unawaited(data.loadRecords(patientId: appointment.patientId));
+        }
       } else {
         // Preserve demo validation and behavior independently of API IDs.
         data.addAppointment(appointment, generation: patientGeneration);

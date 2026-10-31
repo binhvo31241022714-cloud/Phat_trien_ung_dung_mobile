@@ -47,6 +47,9 @@ class Appointment {
   final AppointmentStatus status;
   final String note;
 
+  /// Đề xuất tái khám đã dẫn tới lịch này (A08), null nếu đặt thường.
+  final String? followUpId;
+
   /// true: dữ liệu mẫu; false: lịch đọc hoặc tạo từ API thật.
   final bool isDemo;
 
@@ -67,6 +70,7 @@ class Appointment {
     this.endAt,
     required this.status,
     this.note = '',
+    this.followUpId,
     this.isDemo = true,
   }) : serviceIds = List.unmodifiable(serviceIds);
 
@@ -187,6 +191,10 @@ class Appointment {
       endAt: parsedEnd,
       status: status,
       note: json['note']?.toString() ?? '',
+      followUpId: json['followUpId'] is String &&
+              (json['followUpId'] as String).isNotEmpty
+          ? json['followUpId'] as String
+          : null,
       isDemo: false,
     );
   }

@@ -24,14 +24,21 @@ router.post('/sync', auth, async (req, res) => {
     });
   }
   const data = (await ref.get()).data();
-  res.json({ id: uid, ...withHealthDefaults(data) });
+  res.json({ id: uid, ...withNotificationDefault(withHealthDefaults(data)) });
+});
+
+// Công tắc "Nhận thông báo": tắt thì không tạo thông báo nhắc lịch, nhắc tái khám.
+// Dữ liệu cũ chưa có trường này được coi là đang bật.
+const withNotificationDefault = (data) => ({
+  ...data,
+  notificationsEnabled: data.notificationsEnabled !== false,
 });
 
 // GET /api/users/me
 router.get('/me', auth, async (req, res) => {
   const doc = await db.collection('users').doc(req.user.uid).get();
   if (!doc.exists) return res.status(404).json({ message: 'Chưa có hồ sơ' });
-  res.json({ id: doc.id, ...withHealthDefaults(doc.data()) });
+  res.json({ id: doc.id, ...withNotificationDefault(withHealthDefaults(doc.data())) });
 });
 
 // PATCH /api/users/me
@@ -46,6 +53,12 @@ router.patch('/me', auth, async (req, res) => {
   if (profileError) return res.status(400).json({ message: profileError });
 
   const updates = { ...health, ...profile };
+  if (req.body?.notificationsEnabled !== undefined) {
+    if (typeof req.body.notificationsEnabled !== 'boolean') {
+      return res.status(400).json({ message: 'notificationsEnabled phải là true hoặc false' });
+    }
+    updates.notificationsEnabled = req.body.notificationsEnabled;
+  }
 
   await db.collection('users').doc(req.user.uid).set(updates, { merge: true });
   res.json({ message: 'Cập nhật thành công', ...updates });

@@ -290,6 +290,9 @@ class Followup extends DemoReadOnlyRecord {
   /// "suggested" (mới), "scheduled" (dữ liệu cũ), "booked"...
   final String? status;
 
+  /// Lịch hẹn đã đặt từ đề xuất này (A08), có khi status là "booked".
+  final String? appointmentId;
+
   const Followup({
     required this.id,
     this.serviceId,
@@ -299,7 +302,14 @@ class Followup extends DemoReadOnlyRecord {
     required this.scheduledAt,
     required this.note,
     this.status,
+    this.appointmentId,
   });
+
+  /// Còn đặt lịch được: chưa có trạng thái (dữ liệu mẫu), "suggested" hoặc "scheduled" cũ.
+  bool get isOpen {
+    final value = status?.trim().toLowerCase();
+    return value == null || value.isEmpty || value == 'suggested' || value == 'scheduled';
+  }
 
   factory Followup.fromJson(Map<String, dynamic> json) => Followup(
         id: _string(json['id']),
@@ -310,6 +320,7 @@ class Followup extends DemoReadOnlyRecord {
         scheduledAt: _dateOrNull(json['scheduledAt']),
         note: _string(json['reason'] ?? json['notes'] ?? json['note']),
         status: _nullableString(json['status']),
+        appointmentId: _nullableString(json['appointmentId']),
       );
 }
 

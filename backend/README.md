@@ -64,7 +64,7 @@ Khi test bằng `api-test.http`: tạo `backend/.env` theo `backend/.env.example
 |--------|---------------------------|-----------|-------|
 | POST   | /api/users/sync           | Có  | Tạo hồ sơ nếu chưa có. Body: `{ fullName, phone }` |
 | GET    | /api/users/me             | Có  | Xem hồ sơ của mình |
-| PATCH  | /api/users/me             | Có  | Sửa `fullName`, `phone`, `birthday`, `address`, giới tính và thông tin sức khỏe (xem bên dưới) |
+| PATCH  | /api/users/me             | Có  | Sửa `fullName`, `phone`, `birthday`, `address`, giới tính, thông tin sức khỏe (xem bên dưới) và `notificationsEnabled` (true/false: tắt thì không nhận nhắc lịch, nhắc tái khám; `GET /me` mặc định true) |
 | GET    | /api/family-members       | Có  | Danh sách người thân (ẩn người đã xóa) |
 | POST   | /api/family-members       | Có  | Thêm người thân. Bắt buộc `fullName`; nhận thêm giới tính và thông tin sức khỏe |
 | PATCH  | /api/family-members/:id   | Có  | Sửa người thân (gồm cả giới tính và thông tin sức khỏe) |
@@ -158,6 +158,7 @@ Module 2 (đặt lịch), Module 3 (hồ sơ nha khoa), Module 4 (nội dung và
 | POST | `/api/treatments/:id/photos` | Có hoặc Staff | Tải ảnh. Body `{ phase: "before" \| "after", sessionId?, image, mimeType?, note? }`. Chủ tài khoản (bản thân hoặc người thân còn hoạt động) hoặc staff; tối đa 30 ảnh mỗi liệu trình (409) |
 | DELETE | `/api/treatments/:id/photos/:photoId` | Có hoặc Staff | Xóa ảnh và media; chỉ người tải lên hoặc staff. Ảnh cũ không có `mediaId` trả 409 |
 | GET | `/api/patients/:id/follow-ups` | Có | Lịch tái khám |
+| GET | `/api/follow-ups/:id` | Có hoặc Staff | Chi tiết đề xuất tái khám (app dùng khi bấm thông báo `follow_up`) |
 | POST | `/api/follow-ups` | Staff | Đề xuất tái khám. Body `{ accountId, patientId?, scheduledAt, reason, notes?, doctorId?, visitId?, treatmentId?, serviceId? }`. Lưu `status: "suggested"`, tạo thông báo `follow_up` |
 
 ### Hồ sơ khám tạo khi staff hoàn tất lịch
@@ -186,11 +187,11 @@ nhận `403`.
 | POST | `/api/bookings/quote` | Không | Báo giá dịch vụ/combo, trả `subtotal`, `discount`, `totalPrice`, `durationMinutes`; có thể gửi `voucherCode` |
 | GET | `/api/availability?date=YYYY-MM-DD&durationMinutes=30` | Không | Giờ trống theo ngày; có thể truyền `doctorId`, `comboId`, `serviceIds` (các mã phân tách bằng dấu phẩy) |
 | POST | `/api/vouchers/validate` | Không | Body gồm `code` và `serviceIds` và/hoặc `comboId`; giá được tính lại trên backend |
-| POST | `/api/appointments` | Có | Tạo lịch cho bản thân hoặc người thân; `doctorId` có thể bỏ trống để chọn ngẫu nhiên; body có `patientId?`, `serviceIds?`, `comboId?`, `date`, `startTime`, `voucherCode?`, `note?`; header tùy chọn `Idempotency-Key` |
+| POST | `/api/appointments` | Có | Tạo lịch cho bản thân hoặc người thân; `doctorId` có thể bỏ trống để chọn ngẫu nhiên; body có `patientId?`, `serviceIds?`, `comboId?`, `date`, `startTime`, `voucherCode?`, `note?`, `followUpId?`; header tùy chọn `Idempotency-Key` |
 | GET | `/api/appointments` | Có | Lịch của tài khoản đang đăng nhập, bao gồm lịch đặt cho người thân |
 | GET | `/api/appointments/:id` | Có | Chi tiết lịch; chỉ chủ tài khoản được xem |
 | PATCH | `/api/appointments/:id/cancel` | Có | Hủy lịch tương lai và giải phóng các slot đã giữ |
-| GET | `/api/appointments/staff?status=booked&date=YYYY-MM-DD` | Staff | Nhân viên xem lịch theo trạng thái (mặc định `booked`), lọc ngày tùy chọn |
+| GET | `/api/appointments/staff?status=booked&date=YYYY-MM-DD&sort=newest` | Staff | Nhân viên xem lịch theo trạng thái (mặc định `booked`), lọc ngày tùy chọn, mỗi lịch có `patientName`. `sort=newest`: mới đặt/mới đổi trạng thái lên trước (mặc định xếp theo ngày giờ khám) |
 | PATCH | `/api/appointments/:id/status` | Staff | Nhân viên đổi trạng thái. Body `{ status: "confirmed" \| "rejected" \| "completed", reason? }`, `reason` bắt buộc khi `rejected` (tối đa 500 ký tự). Khi `completed` có thể kèm kết quả khám, đơn thuốc, hóa đơn (xem Module 3) |
 
 ### Trạng thái lịch hẹn
@@ -216,6 +217,20 @@ confirmed → completed | cancelled
 - Khi đổi trạng thái lưu `status`, `statusUpdatedAt` (Timestamp), `statusUpdatedBy` (uid nhân viên), `statusReason` (nếu có).
 - `rejected` giải phóng slot và trả 1 lượt voucher giống luồng hủy (hàm dùng chung `readRelease`/`writeRelease` trong `routes/appointments.js`).
 - Mỗi lần đổi trạng thái tạo đúng 1 thông báo gửi `accountId`, id cố định `${appointmentId}_${status}`, `type` là `appointment_confirmed` hoặc `appointment_rejected` (`refId` là id lịch); hoàn tất tạo `visit_result` (`refId` là visitId).
+
+### Đặt lịch từ đề xuất tái khám (`followUpId`, A08)
+
+- Follow-up phải có thật, đúng `patientId`, cùng tài khoản (nếu có `accountId`) và còn `suggested` hoặc `scheduled` (dữ liệu cũ); có `serviceId` thì lịch phải gồm dịch vụ đó.
+- Cùng transaction giữ chỗ: lịch lưu `followUpId`, follow-up chuyển `booked` kèm `appointmentId`. Đặt lần nữa trả 409.
+- Lịch bị hủy hoặc từ chối: follow-up về `suggested`; lịch hoàn tất: follow-up `completed`.
+- `followUpId` nằm trong dấu vân tay Idempotency-Key.
+
+### Nhắc lịch tự động (`src/jobs/reminders.js`, A03)
+
+- Server chạy job khi khởi động và mỗi 10 phút (test không nạp `server.js` nên không chạy). Staff chạy ngay bằng `POST /api/notifications/run-reminders`.
+- `appointment_reminder`: lịch `confirmed` bắt đầu trong 24 giờ tới; id `remind_{idLịch}_{ngày}_{giờ}` (đổi giờ thì có nhắc mới).
+- `follow_up_reminder`: đề xuất `suggested`/`scheduled` có `scheduledAt` trong 3 ngày tới; id `furemind_{id}_{ngày}`.
+- Mỗi nhắc tạo trong transaction đọc lại trạng thái, giờ, `notificationsEnabled` của tài khoản; đã có thì bỏ qua. Hủy hoặc từ chối lịch xóa nhắc đã gửi. `GET /api/notifications` không tạo thông báo.
 
 ### Ghi chú lịch hẹn (`note`)
 

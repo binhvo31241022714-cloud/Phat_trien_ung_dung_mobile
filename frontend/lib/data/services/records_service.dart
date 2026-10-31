@@ -47,4 +47,6 @@ class RecordsService {
       _list('/api/treatments/$treatmentId/photos');
   Future<List<dynamic>> followups(String patientId) =>
       _list('/api/patients/$patientId/follow-ups');
+  Future<Map<String, dynamic>> followup(String id) =>
+      _map('/api/follow-ups/$id');
 }

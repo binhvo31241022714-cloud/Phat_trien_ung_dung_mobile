@@ -23,7 +23,7 @@ class MainShell extends StatefulWidget {
   State<MainShell> createState() => _MainShellState();
 }
 
-class _MainShellState extends State<MainShell> {
+class _MainShellState extends State<MainShell> with WidgetsBindingObserver {
   int _selectedIndex = 0;
   UserProfile? _appliedProfile;
   List<FamilyMember>? _appliedFamily;
@@ -31,6 +31,7 @@ class _MainShellState extends State<MainShell> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     // Vào trang chính thì tải hồ sơ và danh mục từ API.
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
@@ -43,6 +44,23 @@ class _MainShellState extends State<MainShell> {
       // Dịch vụ, combo, bác sĩ và mục yêu thích.
       context.read<CatalogProvider>().ensureLoaded();
     });
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  /// Quay lại app (có thể đã có nhắc lịch mới): cập nhật số chưa đọc trên chuông.
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state != AppLifecycleState.resumed ||
+        AppConfig.current.dataSource != DataSource.api) {
+      return;
+    }
+    final content = context.read<ContentProvider>();
+    if (content.signedIn) content.loadUnread();
   }
 
   Future<void> _loadAccount() async {

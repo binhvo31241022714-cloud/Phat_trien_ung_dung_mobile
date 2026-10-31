@@ -187,6 +187,7 @@ class AppointmentsProvider extends SessionNotifier {
       endAt: a.endAt,
       status: AppointmentStatus.cancelled,
       note: a.note,
+      followUpId: a.followUpId,
       isDemo: false);
 
   /// Thêm lịch vừa tạo thành công vào đầu danh sách lịch hẹn.

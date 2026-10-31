@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:frontend/data/providers/patient_data_provider.dart';
 import 'package:frontend/features/me/me_widgets.dart';
+import 'package:frontend/features/me/settings_screen.dart'
+    show notificationsSettingDescription;
 
 import 'me_test.dart' show demoUsers, openMe, pumpMe;
 import 'support/fake_profile_backend.dart';
@@ -92,6 +94,19 @@ void main() {
         await validate(DateTime.now().add(const Duration(days: 1))), 'future');
   });
 
+  testWidgets('API: notification switch is saved on the server (A18)',
+      (tester) async {
+    final backend = FakeProfileBackend();
+    final profile = backend.provider();
+    await pumpMe(tester, demoUsers(), PatientDataProvider(), profile: profile);
+    await openMe(tester, 'Cài đặt');
+    expect(find.text(notificationsSettingDescription), findsOneWidget);
+    await openMe(tester, 'Nhận thông báo');
+    expect(backend.me['notificationsEnabled'], isFalse);
+    expect(profile.profile?.notificationsEnabled, isFalse);
+    expect(tester.takeException(), isNull);
+  }, skip: AppConfig.current.dataSource != DataSource.api);
+
   testWidgets('notification switch says it is a local option only (A18)',
       (tester) async {
     final users = demoUsers();
@@ -117,5 +132,5 @@ void main() {
     expect(find.textContaining('tắt nhận thông báo trong phiên demo'),
         findsNothing);
     expect(tester.takeException(), isNull);
-  });
+  }, skip: AppConfig.current.dataSource != DataSource.mock);
 }

@@ -1,6 +1,8 @@
 const router = require('express').Router();
 const { db } = require('../config/firebase');
 const auth = require('../middleware/auth');
+const requireStaff = require('../middleware/requireStaff');
+const { runReminders } = require('../jobs/reminders');
 
 router.use(auth);
 const owned = uid => db.collection('notifications').where('userId', '==', uid);
@@ -37,6 +39,16 @@ router.patch('/read-all', async (req, res) => {
     await batch.commit();
   }
   res.json({ updatedCount: unread.length });
+});
+
+// POST /api/notifications/run-reminders - staff chạy nhắc lịch ngay (demo).
+// Bình thường server tự chạy mỗi 10 phút (src/jobs/reminders.js).
+router.post('/run-reminders', requireStaff, async (req, res, next) => {
+  try {
+    res.json(await runReminders());
+  } catch (error) {
+    next(error);
+  }
 });
 
 router.patch('/:id/read', async (req, res) => {

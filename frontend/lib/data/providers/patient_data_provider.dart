@@ -51,6 +51,7 @@ class PatientDataProvider extends SessionNotifier {
     _bookingPatientRequest = null;
     recordsAppointmentId = null;
     recordsVisit = null;
+    recordsFollowupsPatientId = null;
     recordsShowAppointments = false;
     recordsFocusVersion = 0;
     notificationsOpenVersion = 0;
@@ -123,6 +124,9 @@ class PatientDataProvider extends SessionNotifier {
 
   /// Lần khám cần mở trong tab Hồ sơ (bấm thông báo visit_result).
   Visit? recordsVisit;
+
+  /// Mở màn Lịch tái khám của người này (bấm thông báo follow_up...).
+  String? recordsFollowupsPatientId;
   void focusAppointmentsFor(String patientId,
       {bool showAppointments = false, String? appointmentId}) {
     if (!patients.any((p) => p.id == patientId)) return;
@@ -131,8 +135,32 @@ class PatientDataProvider extends SessionNotifier {
     recordsShowAppointments = showAppointments;
     recordsAppointmentId = appointmentId;
     recordsVisit = null;
+    recordsFollowupsPatientId = null;
     notifyListeners();
     unawaited(loadRecords(patientId: patientId));
+  }
+
+  /// Đọc đề xuất tái khám từ GET /api/follow-ups/:id (mở được cả khi máy chưa
+  /// có dữ liệu), chọn đúng người khám, tải lại hồ sơ rồi yêu cầu tab Hồ sơ mở
+  /// màn Lịch tái khám. Trả false nếu phiên đổi giữa chừng; lỗi API ném ra.
+  Future<bool> focusFollowUp(String followUpId) async {
+    final generation = sessionGeneration;
+    final detail = Followup.fromJson(await _recordsService.followup(followUpId));
+    if (!isSessionCurrent(generation)) return false;
+    if (!_patients.any((p) => p.id == detail.patientId)) {
+      throw const ApiException('Hồ sơ này không còn trong danh sách người thân.');
+    }
+    _selectedPatientId = detail.patientId;
+    _appointmentPatientId = detail.patientId;
+    await loadRecords(patientId: detail.patientId);
+    if (!isSessionCurrent(generation)) return false;
+    recordsFollowupsPatientId = detail.patientId;
+    recordsVisit = null;
+    recordsAppointmentId = null;
+    recordsShowAppointments = false;
+    recordsFocusVersion++;
+    notifyListeners();
+    return true;
   }
 
   /// Đọc lần khám từ GET /api/visits/:id, chọn đúng bệnh nhân và tải lại hồ sơ
@@ -152,6 +180,7 @@ class PatientDataProvider extends SessionNotifier {
     if (!isSessionCurrent(generation)) return false;
     recordsVisit =
         _apiVisits.where((v) => v.id == detail.id).firstOrNull ?? detail;
+    recordsFollowupsPatientId = null;
     recordsAppointmentId = null;
     recordsShowAppointments = false;
     recordsFocusVersion++;
@@ -207,6 +236,7 @@ class PatientDataProvider extends SessionNotifier {
       recordsShowAppointments = false;
       recordsAppointmentId = null;
       recordsVisit = null;
+      recordsFollowupsPatientId = null;
     }
     if (missing(_bookingPatientRequest)) {
       _bookingPatientRequest = profile.id;
@@ -415,6 +445,7 @@ class PatientDataProvider extends SessionNotifier {
       recordsShowAppointments = false;
       recordsAppointmentId = null;
       recordsVisit = null;
+      recordsFollowupsPatientId = null;
     }
     if (_bookingPatientRequest == id) {
       _bookingPatientRequest = primaryPatient.id;

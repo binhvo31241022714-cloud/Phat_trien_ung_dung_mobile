@@ -140,6 +140,7 @@ class _BookingScreenState extends State<BookingScreen> {
         restrictToServiceIds: pending.restrictToServiceIds,
         comboId: pending.comboId,
         patientId: pending.patientId,
+        followUpId: pending.followUpId,
       );
     }
 

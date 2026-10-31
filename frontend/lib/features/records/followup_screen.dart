@@ -35,10 +35,17 @@ class FollowupScreen extends StatelessWidget {
             Text(recordDateTime(f.scheduledAt)),
             const SizedBox(height: 8),
             Text(names.doctor(f.doctorId, name: f.doctorName)),
-            _bookingAction(context, names, data, f, generation),
-            if (!(f.scheduledAt?.isAfter(DateTime.now()) ?? false))
-              const Text('Vui lòng chọn ngày khám mới trong bước đặt lịch.',
-                  style: TextStyle(color: Color(0xFF666666))),
+            if (f.isOpen) ...[
+              _bookingAction(context, names, data, f, generation),
+              if (!(f.scheduledAt?.isAfter(DateTime.now()) ?? false))
+                const Text('Vui lòng chọn ngày khám mới trong bước đặt lịch.',
+                    style: TextStyle(color: Color(0xFF666666))),
+            ] else if (f.appointmentId != null)
+              // A08: đã đặt lịch từ đề xuất này, mở chi tiết lịch.
+              RecordButton(
+                  'Xem lịch đã đặt',
+                  () => RecordsRoutes.open(
+                      context, RecordsRoutes.appointment, f.appointmentId!)),
           ]),
       ]);
     });
@@ -102,6 +109,7 @@ class FollowupScreen extends StatelessWidget {
                 ? f.scheduledAt
                 : null,
         patientId: patientId,
+        followUpId: names.apiMode ? f.id : null,
       );
       PatientNavigation.selectTab(context, 1);
     });

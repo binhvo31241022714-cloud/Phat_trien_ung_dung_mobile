@@ -18,10 +18,12 @@ class PhotoRemoved extends PhotoChoice {
 
 enum _Action { camera, gallery, file, remove }
 
-/// Bảng chọn "Chụp ảnh / Chọn từ thư viện / Gỡ ảnh", rồi mở camera hoặc
-/// thư viện qua [PhotoPicker.instance]. Lỗi chọn ảnh ném [PhotoPickException].
+/// Bảng chọn "Chụp ảnh / Chọn từ thư viện / Chọn tệp ảnh / Gỡ ảnh", rồi mở
+/// nguồn ảnh qua [PhotoPicker.instance]. Chọn xong hiện "Đang xử lý ảnh…"
+/// trước bước nén. Lỗi chọn ảnh ném [PhotoPickException].
 Future<PhotoChoice?> choosePhoto(BuildContext context,
     {bool allowRemove = false, String title = 'Ảnh'}) async {
+  final messenger = ScaffoldMessenger.maybeOf(context);
   final action = await showModalBottomSheet<_Action>(
     context: context,
     showDragHandle: true,
@@ -66,11 +68,23 @@ Future<PhotoChoice?> choosePhoto(BuildContext context,
     case _Action.remove:
       return const PhotoRemoved();
     case _Action.camera || _Action.gallery || _Action.file:
-      final image = await PhotoPicker.instance.pick(switch (action) {
-        _Action.camera => PhotoSource.camera,
-        _Action.gallery => PhotoSource.gallery,
-        _ => PhotoSource.file,
-      });
-      return image == null ? null : PhotoPicked(image);
+      try {
+        final image = await PhotoPicker.instance.pick(
+            switch (action) {
+              _Action.camera => PhotoSource.camera,
+              _Action.gallery => PhotoSource.gallery,
+              _ => PhotoSource.file,
+            },
+            onSelected: () => messenger
+              ?..removeCurrentSnackBar()
+              ..showSnackBar(const SnackBar(
+                  key: ValueKey('photo-processing'),
+                  duration: Duration(seconds: 30),
+                  content: Text('Đang xử lý ảnh…'))));
+        return image == null ? null : PhotoPicked(image);
+      } finally {
+        // Nơi gọi hiện tiếp "Đang tải ảnh lên…" hoặc lời báo lỗi.
+        messenger?.hideCurrentSnackBar();
+      }
   }
 }

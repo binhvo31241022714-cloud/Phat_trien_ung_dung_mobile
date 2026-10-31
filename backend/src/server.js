@@ -52,4 +52,8 @@ app.use((err, req, res, next) => {
 });
 
 const PORT = 3000;
-app.listen(PORT, () => console.log(`Server chạy tại http://localhost:${PORT}`));
+app.listen(PORT, () => {
+  console.log(`Server chạy tại http://localhost:${PORT}`);
+  // Nhắc lịch hẹn, tái khám: chạy ngay rồi mỗi 10 phút (test không nạp file này).
+  require('./jobs/reminders').startReminderJob();
+});

@@ -303,7 +303,8 @@ void main() {
     'appointment_confirmed',
     'appointment_rejected',
     'appointment_cancelled',
-    'appointment_completed'
+    'appointment_completed',
+    'appointment_reminder'
   ]) {
     testWidgets('A19: $type opens uncached detail despite mark-read failure',
         (t) async {

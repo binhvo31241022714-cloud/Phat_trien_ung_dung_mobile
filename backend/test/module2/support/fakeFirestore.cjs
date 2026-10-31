@@ -23,6 +23,13 @@ function createFakeDb() {
       id: path.split('/').at(-1),
       collection: (name) => collection(`${path}/${name}`),
       get: async () => snap(path),
+      // Ghi trực tiếp ngoài transaction (ví dụ PATCH /api/users/me dùng merge).
+      set: async (data, options = {}) => {
+        state.store[path] = options.merge
+          ? { ...(state.store[path] || {}), ...clone(data) }
+          : clone(data);
+        bump(path);
+      },
     };
   }
   function snap(path) {

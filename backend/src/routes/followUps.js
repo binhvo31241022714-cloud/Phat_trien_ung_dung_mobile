@@ -1,7 +1,7 @@
 const router = require('express').Router();
 const auth = require('../middleware/auth');
 const requireStaff = require('../middleware/requireStaff');
-const { db, asyncHandler } = require('../utils/records');
+const { db, asyncHandler, getRecordOrThrow, assertRecordAccess, document } = require('../utils/records');
 const {
   optionalText,
   requiredText,
@@ -93,6 +93,14 @@ router.post('/', auth, requireStaff, asyncHandler(async (req, res) => {
     return { id: followUpRef.id, ...followUp };
   });
   res.status(201).json(result);
+}));
+
+// GET /api/follow-ups/:id - chi tiết đề xuất tái khám (chủ tài khoản hoặc staff).
+// App dùng khi bấm thông báo follow_up mà chưa có dữ liệu trong máy.
+router.get('/:id', auth, asyncHandler(async (req, res) => {
+  const followUp = await getRecordOrThrow('follow_ups', req.params.id);
+  if (req.user.role !== 'staff') await assertRecordAccess(req.user.uid, followUp);
+  res.json(document(followUp));
 }));
 
 module.exports = router;

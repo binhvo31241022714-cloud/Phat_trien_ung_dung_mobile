@@ -17,6 +17,9 @@ class BookingRequest {
   final String? comboId;
   final String? patientId;
 
+  /// Đặt lịch từ đề xuất tái khám (A08): gửi kèm lịch để backend liên kết.
+  final String? followUpId;
+
   const BookingRequest({
     this.replaceSelection = false,
     this.suggestedDate,
@@ -25,6 +28,7 @@ class BookingRequest {
     this.restrictToServiceIds = false,
     this.comboId,
     this.patientId,
+    this.followUpId,
   });
 }
 

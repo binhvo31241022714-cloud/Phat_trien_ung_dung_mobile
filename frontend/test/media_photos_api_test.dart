@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:typed_data';
 
@@ -42,9 +43,19 @@ class FakePicker implements PhotoPicker {
   PickedImage? result;
   Object? error;
   final sources = <PhotoSource>[];
+
+  /// Đặt [gate] để giữ lại ở bước "nén" (sau khi chọn xong).
+  Completer<void>? gate;
+  bool onSelectedCalled = false;
   @override
-  Future<PickedImage?> pick(PhotoSource source) async {
+  Future<PickedImage?> pick(PhotoSource source,
+      {void Function()? onSelected}) async {
     sources.add(source);
+    if (result != null || error != null) {
+      onSelectedCalled = onSelected != null;
+      onSelected?.call();
+    }
+    if (gate != null) await gate!.future;
     if (error != null) throw error!;
     return result;
   }
@@ -317,9 +328,17 @@ void main() {
     await t.tap(find.byKey(const ValueKey('change-avatar')));
     await t.pumpAndSettle();
     expect(find.text('Chọn tệp ảnh'), findsOneWidget);
+    picker.gate = Completer<void>();
     await t.tap(find.text('Chọn tệp ảnh'));
+    await t.pump();
+    await t.pump(const Duration(milliseconds: 500));
+    // Chọn xong, đang nén: đã hiện "Đang xử lý ảnh…", chưa gửi lên.
+    expect(find.text('Đang xử lý ảnh…'), findsOneWidget);
+    expect(server.calls('PUT', '/api/users/me/avatar'), isEmpty);
+    picker.gate!.complete();
     await t.pumpAndSettle();
     expect(picker.sources, [PhotoSource.file]);
+    expect(picker.onSelectedCalled, isTrue);
     expect(server.calls('PUT', '/api/users/me/avatar'), hasLength(1));
     expect(profile.profile?.avatarMediaId, 'm1');
   });

@@ -84,6 +84,19 @@ class ConfirmBookingStep extends StatelessWidget {
                   '"Chọn lại" để kiểm tra rồi sửa lựa chọn.',
                 ),
               ),
+            if (c.activeFollowUpId != null)
+              Container(
+                key: const ValueKey('booking-followup-banner'),
+                width: double.infinity,
+                margin: const EdgeInsets.only(bottom: 12),
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFEAF2FF),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Text(
+                    'Lịch tái khám theo đề xuất của bác sĩ. Sau khi đặt, đề xuất sẽ chuyển sang "Đã đặt lịch".'),
+              ),
             // Người khám
             Row(
               children: [

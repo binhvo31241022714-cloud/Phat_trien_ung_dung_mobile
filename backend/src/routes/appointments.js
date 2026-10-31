@@ -19,9 +19,18 @@ const {
   scheduleCanCover,
   isFutureAppointment,
   isAppointmentActive,
+  parseFirestoreDate,
   shuffle,
 } = require('../utils/booking');
 const { parseCompletionBody, readCompletion, writeCompletion } = require('../utils/clinical');
+const {
+  isOpenFollowUp,
+  readFollowUpId,
+  readLinkedFollowUp,
+  reopenFollowUp,
+  completeFollowUp,
+} = require('../utils/followUps');
+const { appointmentReminderId } = require('../jobs/reminders');
 
 function overlaps(startA, endA, startB, endB) {
   return startA < endB && startB < endA;
@@ -121,7 +130,8 @@ async function replayRequest(requestSnap, fingerprint, readAppointment) {
 
 // POST /api/appointments
 // Header tùy chọn: Idempotency-Key (gửi lại cùng key không tạo lịch trùng)
-// Body: { patientId, doctorId?, serviceIds?, comboId?, date, startTime, voucherCode?, note? }
+// Body: { patientId, doctorId?, serviceIds?, comboId?, date, startTime, voucherCode?, note?, followUpId? }
+// followUpId: đặt từ đề xuất tái khám (A08); follow-up chuyển sang "booked" cùng transaction.
 router.post('/', auth, asyncHandler(async (req, res) => {
   const uid = req.user.uid;
   const body = req.body || {};
@@ -166,6 +176,7 @@ router.post('/', auth, asyncHandler(async (req, res) => {
   const requestedDoctorId = typeof body.doctorId === 'string' && body.doctorId.trim()
     ? body.doctorId.trim()
     : null;
+  const followUpId = readFollowUpId(body.followUpId);
 
   let requestRef = null;
   let fingerprint = null;
@@ -182,6 +193,7 @@ router.post('/', auth, asyncHandler(async (req, res) => {
       comboId: body.comboId || null,
       voucherCode: String(body.voucherCode || body.code || '').trim().toUpperCase() || null,
       note,
+      followUpId,
     });
     // Gửi lại: trả ngay lịch đã tạo. Phải kiểm tra trước khi xét khung giờ,
     // vì slot đang bị chính lịch đó giữ.
@@ -327,6 +339,29 @@ router.post('/', auth, asyncHandler(async (req, res) => {
           throw new ApiError(409, 'Khung giờ vừa được giữ bởi một lịch hẹn khác');
         }
 
+        // A08: đề xuất tái khám phải đúng bệnh nhân, đúng tài khoản, còn mở.
+        let followUpRef = null;
+        if (followUpId) {
+          followUpRef = db.collection('follow_ups').doc(followUpId);
+          const followUpSnap = await transaction.get(followUpRef);
+          if (!followUpSnap.exists) throw new ApiError(404, 'Không tìm thấy đề xuất tái khám');
+          const followUp = followUpSnap.data();
+          if (followUp.accountId && followUp.accountId !== uid) {
+            throw new ApiError(403, 'Đề xuất tái khám không thuộc tài khoản này');
+          }
+          if (followUp.patientId !== patientId) {
+            throw new ApiError(400, 'Đề xuất tái khám không thuộc người khám đã chọn');
+          }
+          if (!isOpenFollowUp(followUp.status)) {
+            throw fatalConflict(String(followUp.status).toLowerCase() === 'booked'
+              ? 'Đề xuất tái khám này đã được đặt lịch'
+              : 'Đề xuất tái khám này không còn hiệu lực');
+          }
+          if (followUp.serviceId && !quote.serviceIds.includes(followUp.serviceId)) {
+            throw new ApiError(400, 'Lịch tái khám phải gồm dịch vụ bác sĩ đã đề xuất');
+          }
+        }
+
         const startTimeSaved = toTimeString(startMinute);
         const endTimeSaved = toTimeString(actualEndMinute);
         const doctorName = doctorSnap.data().name || '';
@@ -345,6 +380,7 @@ router.post('/', auth, asyncHandler(async (req, res) => {
           discount: quote.discount,
           voucherCode: quote.voucherCode,
           note,
+          followUpId,
           status: 'booked',
           slotKeys: lockRefs.map(({ ref }) => ref.id),
           createdAt: new Date(),
@@ -358,6 +394,11 @@ router.post('/', auth, asyncHandler(async (req, res) => {
           });
         }
         transaction.set(appointmentRef, appointmentData);
+        if (followUpRef) {
+          transaction.update(followUpRef, {
+            status: 'booked', appointmentId: appointmentRef.id, bookedAt: new Date(), updatedAt: new Date(),
+          });
+        }
         if (requestRef) {
           transaction.set(requestRef, {
             accountId: uid,
@@ -429,7 +470,8 @@ router.get('/', auth, asyncHandler(async (req, res) => {
   res.json(appointments);
 }));
 
-// GET /api/appointments/staff?status=booked&date=YYYY-MM-DD - nhân viên xem lịch theo trạng thái
+// GET /api/appointments/staff?status=booked&date=YYYY-MM-DD&sort=schedule|newest
+// Nhân viên xem lịch theo trạng thái, kèm patientName. sort=newest: mới đổi trạng thái lên trước.
 // Đặt trên /:id để "staff" không bị hiểu là id lịch hẹn.
 router.get('/staff', auth, requireStaff, asyncHandler(async (req, res) => {
   const status = String(req.query.status || 'booked').trim().toLowerCase();
@@ -441,15 +483,35 @@ router.get('/staff', auth, requireStaff, asyncHandler(async (req, res) => {
     return res.status(400).json({ message: 'date phải theo định dạng YYYY-MM-DD' });
   }
 
+  const sort = String(req.query.sort || 'schedule').trim().toLowerCase();
+  if (!['schedule', 'newest'].includes(sort)) {
+    return res.status(400).json({ message: 'sort phải là "schedule" hoặc "newest"' });
+  }
+
   let query = db.collection('appointments').where('status', '==', status);
   if (date) query = query.where('date', '==', date);
   const snapshot = await query.get();
   const appointments = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
-  appointments.sort((a, b) => {
-    const left = `${a.date || ''}T${a.startTime || ''}`;
-    const right = `${b.date || ''}T${b.startTime || ''}`;
-    return left.localeCompare(right);
-  });
+  const changedAt = (a) => (parseFirestoreDate(a.statusUpdatedAt) || parseFirestoreDate(a.createdAt))?.getTime() || 0;
+  appointments.sort(sort === 'newest'
+    // Mới đổi trạng thái (hoặc mới đặt) lên trước: dùng cho demo xác nhận lịch vừa đặt.
+    ? (a, b) => changedAt(b) - changedAt(a) || a.id.localeCompare(b.id)
+    : (a, b) => `${a.date || ''}T${a.startTime || ''}`.localeCompare(`${b.date || ''}T${b.startTime || ''}`));
+
+  // Tên người khám để nhân viên biết lịch của ai (đọc hồ sơ, dùng lại kết quả đã đọc).
+  const names = new Map();
+  for (const a of appointments) {
+    if (!a.accountId || !a.patientId) continue;
+    const key = `${a.accountId}/${a.patientId}`;
+    if (!names.has(key)) {
+      const ref = a.patientId === a.accountId
+        ? db.collection('users').doc(a.accountId)
+        : db.collection('users').doc(a.accountId).collection('family_members').doc(a.patientId);
+      const snap = await ref.get();
+      names.set(key, snap.exists ? snap.data().fullName || snap.data().email || '' : '');
+    }
+    a.patientName = names.get(key);
+  }
   res.json(appointments);
 }));
 
@@ -502,13 +564,23 @@ router.patch('/:id/status', auth, requireStaff, asyncHandler(async (req, res) =>
     const completion = clinical
       ? await readCompletion(transaction, appointmentSnap.id, appointment, clinical)
       : null;
+    const followUpRef = status === 'confirmed'
+      ? null
+      : await readLinkedFollowUp(transaction, appointmentSnap.id, appointment);
 
     const now = new Date();
     const update = { status, statusUpdatedAt: now, statusUpdatedBy: req.user.uid };
     if (reason) update.statusReason = reason;
     if (completion) update.visitId = completion.ids.visitId;
     transaction.update(appointmentRef, update);
-    if (release) writeRelease(transaction, appointmentSnap.id, release);
+    if (release) {
+      writeRelease(transaction, appointmentSnap.id, release);
+      reopenFollowUp(transaction, followUpRef, now);
+      // Nhắc lịch đã gửi trước đó không còn đúng nữa.
+      transaction.delete(db.collection('notifications').doc(
+        appointmentReminderId(appointmentSnap.id, appointment.date, appointment.startTime)));
+    }
+    if (status === 'completed') completeFollowUp(transaction, followUpRef, now);
     const visit = completion
       ? writeCompletion(transaction, {
         appointmentId: appointmentSnap.id,
@@ -565,10 +637,14 @@ router.patch('/:id/cancel', auth, asyncHandler(async (req, res) => {
       throw new ApiError(400, 'Chỉ có thể hủy lịch hẹn chưa diễn ra');
     }
     const release = await readRelease(transaction, appointment);
+    const followUpRef = await readLinkedFollowUp(transaction, appointmentSnap.id, appointment);
 
     const now = new Date();
     transaction.update(appointmentRef, { status: 'cancelled', cancelledAt: now });
     writeRelease(transaction, appointmentSnap.id, release);
+    reopenFollowUp(transaction, followUpRef, now);
+    transaction.delete(db.collection('notifications').doc(
+      appointmentReminderId(appointmentSnap.id, appointment.date, appointment.startTime)));
     transaction.set(notificationRef, {
       userId: uid,
       title: 'Đã hủy lịch hẹn',

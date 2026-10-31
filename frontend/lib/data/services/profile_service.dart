@@ -35,6 +35,9 @@ class ProfileService {
         if (health != null) ...health.forGender(gender ?? '').toJson(),
       });
 
+  Future<void> updateNotifications(bool enabled) =>
+      _api.patch(_me, {'notificationsEnabled': enabled});
+
   Future<List<FamilyMember>> getFamily() async {
     final data = await _api.get(_family);
     if (data is! List) throw _invalid;

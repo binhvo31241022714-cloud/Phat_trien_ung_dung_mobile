@@ -107,6 +107,7 @@ class BookingService {
     String? voucherCode,
     String note = '',
     String? requestKey,
+    String? followUpId,
   }) async {
     final body = <String, dynamic>{
       'patientId': patientId,
@@ -118,6 +119,7 @@ class BookingService {
       if (voucherCode != null && voucherCode.trim().isNotEmpty)
         'voucherCode': voucherCode.trim(),
       'note': note.trim(),
+      if (followUpId != null && followUpId.isNotEmpty) 'followUpId': followUpId,
     };
 
     final result = _readMap(

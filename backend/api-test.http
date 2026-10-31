@@ -32,6 +32,115 @@ Content-Type: application/json
 @staffToken = {{staffLogin.response.body.$.idToken}}
 
 ######################################################################
+# DEMO THUYẾT TRÌNH (chỉ cần đăng nhập staff ở trên)
+######################################################################
+# Dùng cho lịch bệnh nhân vừa đặt trên app bằng BẤT KỲ tài khoản nào (không cần test123).
+# Mọi id, accountId, patientId lấy tự động từ response: bấm lần lượt D1 đến D8, không copy gì.
+# Mỗi lần bấm D1/D3, kiểm tra "patientName" ở phần tử đầu ($[0]) đúng người đang demo.
+
+### D1. Staff xem lịch chờ xác nhận, mới đặt nhất lên đầu
+# @name demoBooked
+GET {{baseUrl}}/api/appointments/staff?status=booked&sort=newest
+Authorization: Bearer {{staffToken}}
+
+### D2. Xác nhận lịch đầu tiên của D1 (app bệnh nhân: lịch chuyển "Đã xác nhận", có thông báo)
+PATCH {{baseUrl}}/api/appointments/{{demoBooked.response.body.$[0].id}}/status
+Authorization: Bearer {{staffToken}}
+Content-Type: application/json
+
+{ "status": "confirmed" }
+
+### D3. Staff xem lịch đã xác nhận, mới xác nhận nhất lên đầu (chính là lịch ở D2)
+# @name demoConfirmed
+GET {{baseUrl}}/api/appointments/staff?status=confirmed&sort=newest
+Authorization: Bearer {{staffToken}}
+
+### D4. Hoàn tất lịch đó kèm kết quả khám và 2 thuốc (app: thông báo "Đã có kết quả khám")
+# Sửa chẩn đoán, thuốc trước khi bấm
+# @name demoDone
+PATCH {{baseUrl}}/api/appointments/{{demoConfirmed.response.body.$[0].id}}/status
+Authorization: Bearer {{staffToken}}
+Content-Type: application/json
+
+{
+  "status": "completed",
+  "visit": {
+    "diagnosis": "Viêm nướu nhẹ, có cao răng mặt trong răng cửa dưới",
+    "result": "Đã lấy cao răng và đánh bóng toàn hàm",
+    "notes": "Chải răng 2 lần/ngày, dùng chỉ nha khoa, tái khám sau 2 tuần"
+  },
+  "prescriptions": [
+    { "medicineName": "Nước súc miệng Chlorhexidine 0,12%", "dosage": "15 ml/lần", "frequency": "2 lần/ngày sau chải răng", "durationDays": 7, "instructions": "Súc 30 giây rồi nhổ, không nuốt" },
+    { "medicineName": "Paracetamol 500mg", "dosage": "1 viên/lần", "frequency": "Khi đau, cách nhau ít nhất 6 giờ", "durationDays": 3, "instructions": "Uống sau ăn" }
+  ]
+}
+
+### D5. Tạo liệu trình 3 buổi cho đúng bệnh nhân của lịch đó
+# @name demoTreatment
+POST {{baseUrl}}/api/treatments
+Authorization: Bearer {{staffToken}}
+Content-Type: application/json
+
+{
+  "accountId": "{{demoConfirmed.response.body.$[0].accountId}}",
+  "patientId": "{{demoConfirmed.response.body.$[0].patientId}}",
+  "doctorId": "{{demoConfirmed.response.body.$[0].doctorId}}",
+  "name": "Điều trị viêm nướu",
+  "diagnosis": "Viêm nướu nhẹ",
+  "sessions": [
+    { "scheduledAt": "{{$datetime "YYYY-MM-DD"}}T09:00:00+07:00", "notes": "Lấy cao răng, hướng dẫn vệ sinh" },
+    { "scheduledAt": "{{$datetime "YYYY-MM-DD" 7 d}}T09:00:00+07:00", "notes": "Kiểm tra nướu" },
+    { "scheduledAt": "{{$datetime "YYYY-MM-DD" 14 d}}T09:00:00+07:00", "notes": "Đánh giá kết quả" }
+  ]
+}
+
+### D5b. Đánh dấu buổi 1 hoàn tất bằng lần khám ở D4 (liệu trình chuyển "Đang điều trị")
+PATCH {{baseUrl}}/api/treatments/{{demoTreatment.response.body.$.id}}/sessions/{{demoTreatment.response.body.$.sessions[0].id}}
+Authorization: Bearer {{staffToken}}
+Content-Type: application/json
+
+{ "status": "completed", "visitId": "{{demoDone.response.body.$.visitId}}", "notes": "Đã lấy cao răng" }
+
+### D6. Đề xuất tái khám 2 tuần sau (app: thông báo "Bác sĩ đề xuất tái khám", có nút đặt lịch)
+# @name demoFollowUp
+POST {{baseUrl}}/api/follow-ups
+Authorization: Bearer {{staffToken}}
+Content-Type: application/json
+
+{
+  "accountId": "{{demoConfirmed.response.body.$[0].accountId}}",
+  "patientId": "{{demoConfirmed.response.body.$[0].patientId}}",
+  "doctorId": "{{demoConfirmed.response.body.$[0].doctorId}}",
+  "scheduledAt": "{{$datetime "YYYY-MM-DD" 14 d}}",
+  "reason": "Kiểm tra nướu sau điều trị",
+  "visitId": "{{demoDone.response.body.$.visitId}}",
+  "treatmentId": "{{demoTreatment.response.body.$.id}}",
+  "serviceId": "{{demoConfirmed.response.body.$[0].serviceIds[0]}}"
+}
+
+### D6b. (Tùy chọn, để demo nhắc tái khám) Đề xuất tái khám 2 ngày sau: D7 sẽ tạo "Nhắc lịch tái khám"
+POST {{baseUrl}}/api/follow-ups
+Authorization: Bearer {{staffToken}}
+Content-Type: application/json
+
+{
+  "accountId": "{{demoConfirmed.response.body.$[0].accountId}}",
+  "patientId": "{{demoConfirmed.response.body.$[0].patientId}}",
+  "scheduledAt": "{{$datetime "YYYY-MM-DD" 2 d}}",
+  "reason": "Kiểm tra lại sau 2 ngày"
+}
+
+### D7. Chạy nhắc lịch ngay (server cũng tự chạy mỗi 10 phút)
+# Nhắc lịch hẹn: lịch "Đã xác nhận" bắt đầu trong 24 giờ tới (lịch đã hoàn tất ở D4 thì không nhắc).
+# Nhắc tái khám: đề xuất còn mở có ngày trong 3 ngày tới (D6b). Tài khoản tắt "Nhận thông báo" thì không có.
+POST {{baseUrl}}/api/notifications/run-reminders
+Authorization: Bearer {{staffToken}}
+
+### D8. (Tùy chọn) Bệnh nhân đặt lịch tái khám từ đề xuất trên app, staff xem lịch mới có followUpId
+GET {{baseUrl}}/api/appointments/staff?status=booked&sort=newest
+Authorization: Bearer {{staffToken}}
+
+######################################################################
 # MODULE 1 - Bình
 ######################################################################
 
@@ -619,6 +728,51 @@ Authorization: Bearer {{staffToken}}
 
 ### A11-5. Dọn dẹp: hủy lịch A11-1
 PATCH {{baseUrl}}/api/appointments/{{a11Appt.response.body.$.id}}/cancel
+Authorization: Bearer {{token}}
+
+### ===== Giai đoạn 3: công tắc thông báo, đặt lịch từ đề xuất tái khám (A08) =====
+# Chạy sau M3-15 (cần m3FollowUp còn "suggested"). Đổi @a08Time nếu trùng giờ.
+@a08Time = 15:00
+
+### G3-1. Tắt "Nhận thông báo" cho test123 (mong đợi 200; job nhắc bỏ qua tài khoản này)
+PATCH {{baseUrl}}/api/users/me
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "notificationsEnabled": false }
+
+### G3-2. Bật lại (mong đợi 200, GET /api/users/me có notificationsEnabled true)
+PATCH {{baseUrl}}/api/users/me
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "notificationsEnabled": true }
+
+### G3-3. Bệnh nhân xem đề xuất tái khám theo id (mong đợi 200)
+GET {{baseUrl}}/api/follow-ups/{{m3FollowUp.response.body.$.id}}
+Authorization: Bearer {{token}}
+
+### G3-4. Đặt lịch từ đề xuất (mong đợi 201, có followUpId; đề xuất chuyển "booked")
+# @name a08Appt
+POST {{baseUrl}}/api/appointments
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "serviceIds": ["svc_01"], "date": "{{m3Date}}", "startTime": "{{a08Time}}", "followUpId": "{{m3FollowUp.response.body.$.id}}" }
+
+### G3-5. Đặt lần nữa cùng đề xuất (mong đợi 409 "Đề xuất tái khám này đã được đặt lịch")
+POST {{baseUrl}}/api/appointments
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "serviceIds": ["svc_01"], "date": "{{m3Date}}", "startTime": "{{a08Time}}", "followUpId": "{{m3FollowUp.response.body.$.id}}" }
+
+### G3-6. Hủy lịch G3-4 (mong đợi 200; đề xuất về "suggested", xem lại bằng G3-3)
+PATCH {{baseUrl}}/api/appointments/{{a08Appt.response.body.$.id}}/cancel
+Authorization: Bearer {{token}}
+
+### G3-7. Bệnh nhân gọi chạy nhắc lịch (mong đợi 403)
+POST {{baseUrl}}/api/notifications/run-reminders
 Authorization: Bearer {{token}}
 
 ######################################################################

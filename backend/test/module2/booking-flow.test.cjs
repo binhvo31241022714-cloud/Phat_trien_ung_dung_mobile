@@ -64,7 +64,7 @@ test('tạo lịch thành công: lưu đủ trường, giữ slot 15 phút, tạ
     { ...saved, createdAt: undefined, slotKeys: undefined },
     { accountId: 'A', patientId: 'A', doctorId: 'doc_01', doctorName: 'BS A', serviceIds: ['svc_01'],
       comboId: null, date: DAY, startTime: '09:00', endTime: '09:30', durationMinutes: 30,
-      totalPrice: 100000, discount: 0, voucherCode: null, note: 'n', status: 'booked',
+      totalPrice: 100000, discount: 0, voucherCode: null, note: 'n', followUpId: null, status: 'booked',
       createdAt: undefined, slotKeys: undefined },
   );
   assert.ok(saved.createdAt instanceof Date);

@@ -116,9 +116,38 @@ class ProfileProvider extends SessionNotifier {
       address: current.address,
       health: newHealth,
       avatarMediaId: current.avatarMediaId,
+      notificationsEnabled: current.notificationsEnabled,
     );
     notifyListeners();
     return null;
+  }
+
+  bool _savingNotifications = false;
+  bool get savingNotifications => _savingNotifications;
+
+  /// Bật/tắt nhận thông báo nhắc lịch trên máy chủ. Đổi ngay trên giao diện,
+  /// lỗi thì trả lại như cũ. Trả thông báo lỗi hoặc null.
+  Future<String?> setNotificationsEnabled(bool enabled) async {
+    final current = _profile;
+    if (isDisposed || current == null) return 'Chưa tải được hồ sơ.';
+    if (_savingNotifications) return null;
+    final session = sessionGeneration;
+    _savingNotifications = true;
+    _profile = current.withNotifications(enabled);
+    notifyListeners();
+    try {
+      await _service.updateNotifications(enabled);
+      return null;
+    } catch (e) {
+      if (!isSessionCurrent(session)) return 'Phiên đăng nhập đã thay đổi.';
+      _profile = (_profile ?? current).withNotifications(!enabled);
+      return e is ApiException ? e.message : 'Không lưu được cài đặt thông báo.';
+    } finally {
+      if (isSessionCurrent(session)) {
+        _savingNotifications = false;
+        notifyListeners();
+      }
+    }
   }
 
   /// Thay ảnh đại diện của bản thân; [image] null là gỡ ảnh. Trả lỗi hoặc null.
@@ -213,6 +242,7 @@ class ProfileProvider extends SessionNotifier {
   void clear() {
     invalidateSession();
     MediaCache.clear();
+    _savingNotifications = false;
     _profile = null;
     _profileLoading = false;
     _profileError = null;

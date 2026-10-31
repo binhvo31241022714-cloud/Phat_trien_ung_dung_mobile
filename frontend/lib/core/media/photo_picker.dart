@@ -63,7 +63,8 @@ abstract class PhotoPicker {
   static PhotoPicker instance = ImagePickerPhotoPicker();
 
   /// Trả null khi người dùng hủy. Ném [PhotoPickException] khi ảnh không hợp lệ.
-  Future<PickedImage?> pick(PhotoSource source);
+  /// [onSelected] được gọi ngay khi người dùng chọn xong, trước bước nén.
+  Future<PickedImage?> pick(PhotoSource source, {void Function()? onSelected});
 }
 
 /// Camera, thư viện: image_picker nén ngay lúc chọn (1024px, chất lượng 70).
@@ -72,8 +73,9 @@ class ImagePickerPhotoPicker implements PhotoPicker {
   final _picker = ImagePicker();
 
   @override
-  Future<PickedImage?> pick(PhotoSource source) async {
-    if (source == PhotoSource.file) return _pickFile();
+  Future<PickedImage?> pick(PhotoSource source,
+      {void Function()? onSelected}) async {
+    if (source == PhotoSource.file) return _pickFile(onSelected);
     final XFile? file;
     try {
       file = await _picker.pickImage(
@@ -90,10 +92,11 @@ class ImagePickerPhotoPicker implements PhotoPicker {
           : 'Không mở được thư viện ảnh.');
     }
     if (file == null) return null;
+    onSelected?.call();
     return preparePickedBytes(await file.readAsBytes());
   }
 
-  Future<PickedImage?> _pickFile() async {
+  Future<PickedImage?> _pickFile(void Function()? onSelected) async {
     final PlatformFile? file;
     try {
       file = await FilePicker.pickFile(
@@ -105,6 +108,7 @@ class ImagePickerPhotoPicker implements PhotoPicker {
       throw const PhotoPickException('Không mở được trình chọn tệp.');
     }
     if (file == null) return null;
+    onSelected?.call();
     final Uint8List bytes;
     try {
       bytes = await file.readAsBytes();
