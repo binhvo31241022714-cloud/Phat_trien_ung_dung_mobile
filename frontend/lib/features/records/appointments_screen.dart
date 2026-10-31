@@ -18,6 +18,12 @@ class AppointmentsScreen extends StatefulWidget {
 }
 
 class _AppointmentsScreenState extends State<AppointmentsScreen> {
+  static const _tabs = [
+    AppointmentStatus.pending,
+    AppointmentStatus.confirmed,
+    AppointmentStatus.cancelled,
+  ];
+  int _tab = 0;
   bool get isApi => AppConfig.current.dataSource == DataSource.api;
   @override
   void initState() {
@@ -77,7 +83,7 @@ class _AppointmentsScreenState extends State<AppointmentsScreen> {
           height: 16,
           child: CircularProgressIndicator(strokeWidth: 2)),
       SizedBox(width: 8),
-      Text('Đang tải danh mục…')
+      Expanded(child: Text('Đang tải danh mục…'))
     ]);
   }
 
@@ -97,26 +103,64 @@ class _AppointmentsScreenState extends State<AppointmentsScreen> {
     }
     final patient = patients.first;
     final appointments = data.appointmentsFor(widget.patientId);
+    final visible = appointments.where((a) =>
+        a.status == _tabs[_tab] ||
+        _tabs[_tab] == AppointmentStatus.cancelled &&
+            a.status == AppointmentStatus.rejected);
+    final history = appointments.where((a) =>
+        !_tabs.contains(a.status) && a.status != AppointmentStatus.rejected);
     return RecordsPage(
         title: 'Lịch hẹn',
         useRecordsState: false,
         onRefresh: isApi ? () => reloadAppointments(context) : null,
         children: [
-      if (isApi) const AppointmentApiStatus(),
-      if (catalog != null &&
-          (catalog.loading || !catalog.loaded || catalog.error != null))
-        _catalogStatus(catalog),
-      RecordHeading('Lịch hẹn của ${patient.fullName}'),
-      if (appointments.isEmpty &&
-          source?.loading != true &&
-          source?.error == null)
-        RecordEmpty('Chưa có lịch hẹn.',
-            action: RecordButton('Đặt lịch khám', () {
-              data.requestBookingFor(widget.patientId);
-              PatientNavigation.selectTab(context, 1);
-            })),
-      for (final a in appointments)
-        RecordCard(
+          if (isApi) const AppointmentApiStatus(),
+          if (catalog != null &&
+              (catalog.loading || !catalog.loaded || catalog.error != null))
+            _catalogStatus(catalog),
+          RecordHeading('Lịch hẹn của ${patient.fullName}'),
+          DefaultTabController(
+            length: _tabs.length,
+            initialIndex: _tab,
+            child: TabBar(
+              isScrollable: true,
+              tabAlignment: TabAlignment.start,
+              onTap: (index) => setState(() => _tab = index),
+              tabs: [for (final status in _tabs) Tab(text: status.label)],
+            ),
+          ),
+          const SizedBox(height: 16),
+          if (_tabs[_tab] == AppointmentStatus.cancelled)
+            const Padding(
+              padding: EdgeInsets.only(bottom: 12),
+              child: Text('Bao gồm lịch đã hủy và lịch bị từ chối.'),
+            ),
+          if (visible.isEmpty &&
+              source?.loading != true &&
+              source?.error == null)
+            RecordEmpty(
+                appointments.isEmpty
+                    ? 'Chưa có lịch hẹn.'
+                    : 'Chưa có lịch hẹn trong mục ${_tabs[_tab].label.toLowerCase()}.',
+                action: RecordButton('Đặt lịch khám', () {
+                  data.requestBookingFor(widget.patientId);
+                  PatientNavigation.selectTab(context, 1);
+                })),
+          for (final a in visible) _appointmentCard(context, a, data, catalog),
+          if (history.isNotEmpty) ...[
+            const Divider(height: 32),
+            const RecordHeading('Lịch sử và trạng thái khác'),
+            for (final a in history)
+              _appointmentCard(context, a, data, catalog),
+          ],
+        ]);
+  }
+
+  Widget _appointmentCard(BuildContext context, Appointment a,
+          PatientDataProvider data, CatalogProvider? catalog) =>
+      KeyedSubtree(
+        key: ValueKey('appointment-card-${a.id}'),
+        child: RecordCard(
             onTap: () =>
                 RecordsRoutes.open(context, RecordsRoutes.appointment, a.id),
             children: [
@@ -138,6 +182,5 @@ class _AppointmentsScreenState extends State<AppointmentsScreen> {
                             fontSize: 18,
                             fontWeight: FontWeight.w600))),
             ]),
-    ]);
-  }
+      );
 }

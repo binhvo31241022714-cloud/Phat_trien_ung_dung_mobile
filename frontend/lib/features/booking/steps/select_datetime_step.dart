@@ -217,29 +217,9 @@ class SelectDatetimeStep extends StatelessWidget {
                 controller.chooseAvailabilitySlot(slot);
               }
             },
-      label: SizedBox(
-        width: 135,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              '${slot.startTime} – ${slot.endTime}',
-              textAlign: TextAlign.center,
-              style: const TextStyle(fontWeight: FontWeight.w600),
-            ),
-            if (slot.doctorName.isNotEmpty) ...[
-              const SizedBox(height: 4),
-              Text(
-                slot.doctorName,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-                textAlign: TextAlign.center,
-                style: const TextStyle(fontSize: 12),
-              ),
-            ],
-          ],
-        ),
-      ),
+      key: ValueKey('slot-${slot.date}-${slot.doctorId}-${slot.startTime}'),
+      label: Text(slot.startTime,
+          style: const TextStyle(fontWeight: FontWeight.w600)),
     );
   }
 }

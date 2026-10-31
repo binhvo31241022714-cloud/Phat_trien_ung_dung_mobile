@@ -6,6 +6,23 @@ App Flutter (frontend/)  ──HTTP + token──▶  Backend Node.js (backend/)
 
 Hướng dẫn chi tiết cách viết API: [`backend/README.md`](backend/README.md)
 
+## Bản sửa ngày 31/10/2026 — tích hợp đặt lịch và UI Home
+
+- **Đặt lịch/voucher:** bỏ qua response quote/voucher cũ khi đổi lựa chọn; chỉ cho xác nhận sau khi giá được backend xác minh. Đổi dịch vụ/combo sẽ bỏ voucher đã áp và kiểm tra lại bác sĩ phù hợp; ghi chú UI giới hạn 500 ký tự.
+- **Phiên đăng nhập:** xóa draft riêng tư khi đổi tài khoản; response quote/voucher/slot của phiên cũ không được khôi phục dữ liệu.
+- **Lịch hẹn:** ba tab Chờ xác nhận, Đã xác nhận, Đã hủy. Lịch `rejected` nằm trong tab Đã hủy nhưng giữ nhãn Bị từ chối; `completed` và trạng thái lạ vẫn truy cập được trong mục lịch sử riêng. Chi tiết hỗ trợ kéo để tải lại và refresh khi app trở lại foreground.
+- **Chọn giờ:** mỗi ô chỉ hiển thị giờ bắt đầu; giữ nguyên doctorId, slot, timezone và request API.
+- **Carousel Home:** Dịch vụ, Bác sĩ, Kiến thức dùng chung widget điều hướng. Giữ toàn bộ chiều rộng danh sách, kích thước card/ảnh, chiều cao và khoảng cách cũ; mũi tên nổi 32px, icon 20px sát hai mép, ngang vùng ảnh/avatar để tránh tên, giá và tiêu đề. Vẫn vuốt tay, mở card, Xem tất cả; nút không tạo request API và ẩn khi không cần cuộn.
+- **Kiểm thử:** thêm regression cho voucher/giá trả sai thứ tự, session isolation, các tab lịch, ô giờ, carousel và staff concurrency; không đổi API, schema Firestore hoặc quyền backend.
+
+**Kết quả kiểm thử bản này (mock/fake, không phải Firebase E2E):** backend fake **90 PASS, 0 FAIL, 0 SKIP**; Flutter API-mode mock **393 PASS, 0 FAIL, 13 SKIP**; Flutter mặc định **275 PASS, 0 FAIL, 131 SKIP**. `flutter analyze --no-pub`: không có lỗi/cảnh báo.
+
+Widget tests kiểm tra thêm layout theo kích thước logic của Android Emulator 1080×2400, density 420, gồm độ rộng card/viewport, điều hướng và không có RenderFlex overflow.
+
+**Chưa hoàn tất:** A05 (lịch sử người thân archived), A08 (`followUpId`), A10 (điều kiện hoàn tất session), A21 (clinical status), staff UI và pipeline completed → visit còn chờ chốt hợp đồng. Chưa nghiệm thu Firebase sandbox, chưa kết luận END-TO-END READY cho demo 03/11/2026.
+
+Chi tiết: [Audit Booking](frontend/docs/handover/BOOKING_FLOW_AUDIT.md), [bản đồ tích hợp và các quyết định cần duyệt](frontend/docs/handover/BOOKING_TO_FOLLOWUP_INTEGRATION.md). Hai báo cáo này là snapshot trước các chỉnh sửa UI/carousel tiếp theo; số liệu kiểm thử mới nhất của bản push nằm ở mục này.
+
 ---
 
 # 1. Tình hình hiện tại

@@ -1,3 +1,4 @@
+import '../../core/widgets/horizontal_card_carousel.dart';
 import '../../data/models/home_appointment.dart';
 import '../../core/config/app_config.dart';
 import '../../providers/content_provider.dart';
@@ -201,29 +202,29 @@ class _HomeOverview extends StatelessWidget {
                         context, 'Dịch vụ nha khoa', const ServiceListScreen()),
                   ),
                   const SizedBox(height: 12),
-                  SizedBox(
-                    height: 182 + 140 * extraScale,
-                    child: _contentState(content) ??
-                        (featuredServices.isEmpty
-                            ? const Center(
-                                child: Text('Chưa có dịch vụ nổi bật.'))
-                            : ListView.separated(
-                                scrollDirection: Axis.horizontal,
-                                itemCount: featuredServices.length,
-                                separatorBuilder: (_, __) =>
-                                    const SizedBox(width: 12),
-                                itemBuilder: (context, index) {
-                                  final service = featuredServices[index];
-                                  return _ServiceTile(
-                                    service: service,
-                                    onTap: () => CatalogNavigation.open(
-                                        context,
-                                        'Chi tiết dịch vụ',
-                                        ServiceDetailScreen(service: service)),
-                                  );
-                                },
-                              )),
-                  ),
+                  _contentState(content) ??
+                      (featuredServices.isEmpty
+                          ? const Center(
+                              child: Text('Chưa có dịch vụ nổi bật.'))
+                          : HorizontalCardCarousel(
+                              key: const ValueKey(
+                                  'home-featuredServices-carousel'),
+                              label: 'Dịch vụ nha khoa',
+                              navigationCenterY: 43,
+                              itemWidth: 176,
+                              itemHeight: 182 + 140 * extraScale,
+                              itemCount: featuredServices.length,
+                              itemBuilder: (context, index) {
+                                final service = featuredServices[index];
+                                return _ServiceTile(
+                                  service: service,
+                                  onTap: () => CatalogNavigation.open(
+                                      context,
+                                      'Chi tiết dịch vụ',
+                                      ServiceDetailScreen(service: service)),
+                                );
+                              },
+                            )),
                   const SizedBox(height: 24),
                   _buildSectionHeader(
                     icon: Icons.groups_rounded,
@@ -233,29 +234,28 @@ class _HomeOverview extends StatelessWidget {
                         context, 'Đội ngũ bác sĩ', const DoctorListScreen()),
                   ),
                   const SizedBox(height: 12),
-                  SizedBox(
-                    height: 156 + 90 * extraScale,
-                    child: _contentState(content) ??
-                        (doctors.isEmpty
-                            ? const Center(
-                                child: Text('Chưa có thông tin bác sĩ.'))
-                            : ListView.separated(
-                                scrollDirection: Axis.horizontal,
-                                itemCount: doctors.length,
-                                separatorBuilder: (_, __) =>
-                                    const SizedBox(width: 12),
-                                itemBuilder: (context, index) {
-                                  final doctor = doctors[index];
-                                  return _DoctorTile(
-                                    doctor: doctor,
-                                    onTap: () => CatalogNavigation.open(
-                                        context,
-                                        'Chi tiết bác sĩ',
-                                        DoctorDetailScreen(doctor: doctor)),
-                                  );
-                                },
-                              )),
-                  ),
+                  _contentState(content) ??
+                      (doctors.isEmpty
+                          ? const Center(
+                              child: Text('Chưa có thông tin bác sĩ.'))
+                          : HorizontalCardCarousel(
+                              key: const ValueKey('home-doctors-carousel'),
+                              label: 'Bác sĩ',
+                              navigationCenterY: 42,
+                              itemWidth: 120,
+                              itemHeight: 156 + 90 * extraScale,
+                              itemCount: doctors.length,
+                              itemBuilder: (context, index) {
+                                final doctor = doctors[index];
+                                return _DoctorTile(
+                                  doctor: doctor,
+                                  onTap: () => CatalogNavigation.open(
+                                      context,
+                                      'Chi tiết bác sĩ',
+                                      DoctorDetailScreen(doctor: doctor)),
+                                );
+                              },
+                            )),
                   const SizedBox(height: 24),
                   _buildSectionHeader(
                     icon: Icons.menu_book_rounded,
@@ -265,28 +265,27 @@ class _HomeOverview extends StatelessWidget {
                         'Kiến thức nha khoa', const ArticleListScreen()),
                   ),
                   const SizedBox(height: 12),
-                  SizedBox(
-                    height: 206 + 160 * extraScale,
-                    child: _contentState(content) ??
-                        (articles.isEmpty
-                            ? const Center(child: Text('Chưa có bài viết.'))
-                            : ListView.separated(
-                                scrollDirection: Axis.horizontal,
-                                itemCount: articles.length,
-                                separatorBuilder: (_, __) =>
-                                    const SizedBox(width: 12),
-                                itemBuilder: (context, index) {
-                                  final article = articles[index];
-                                  return _ArticleTile(
-                                    article: article,
-                                    onTap: () => CatalogNavigation.open(
-                                        context,
-                                        'Chi tiết bài viết',
-                                        ArticleDetailScreen(article: article)),
-                                  );
-                                },
-                              )),
-                  ),
+                  _contentState(content) ??
+                      (articles.isEmpty
+                          ? const Center(child: Text('Chưa có bài viết.'))
+                          : HorizontalCardCarousel(
+                              key: const ValueKey('home-articles-carousel'),
+                              label: 'Kiến thức nha khoa',
+                              navigationCenterY: 58,
+                              itemWidth: 180,
+                              itemHeight: 206 + 160 * extraScale,
+                              itemCount: articles.length,
+                              itemBuilder: (context, index) {
+                                final article = articles[index];
+                                return _ArticleTile(
+                                  article: article,
+                                  onTap: () => CatalogNavigation.open(
+                                      context,
+                                      'Chi tiết bài viết',
+                                      ArticleDetailScreen(article: article)),
+                                );
+                              },
+                            )),
                 ],
               ),
             ),

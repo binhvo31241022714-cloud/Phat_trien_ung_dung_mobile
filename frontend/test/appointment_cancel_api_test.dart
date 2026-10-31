@@ -1,3 +1,4 @@
+import 'package:frontend/features/records/records_widgets.dart';
 import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/material.dart';
@@ -234,8 +235,20 @@ void main() {
       await t.pumpAndSettle();
       await t.tap(find.text('Danh sách'));
       await t.pumpAndSettle();
-      expect(find.text('Đã hủy'), findsOneWidget);
-      expect(find.text('Chờ xác nhận'), findsOneWidget);
+      await t.tap(find.widgetWithText(Tab, 'Đã hủy'));
+      await t.pumpAndSettle();
+      expect(
+          find.descendant(
+              of: find.byKey(const ValueKey('appointment-card-appointment_A')),
+              matching: find.text('Đã hủy')),
+          findsOneWidget);
+      await t.tap(find.widgetWithText(Tab, 'Chờ xác nhận'));
+      await t.pumpAndSettle();
+      expect(
+          find.descendant(
+              of: find.byType(RecordBadge),
+              matching: find.text('Chờ xác nhận')),
+          findsOneWidget);
       expect(b.patches, 1);
       await t.pumpWidget(const SizedBox());
       d.dispose();

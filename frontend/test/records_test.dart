@@ -259,7 +259,13 @@ void main() {
     expect(find.text('Hủy lịch'), findsNothing);
     expect(d.appointments.length, count + 1);
     await back(tester);
-    expect(find.text('Đã hủy'), findsOneWidget);
+    await tester.ensureVisible(find.widgetWithText(Tab, 'Đã hủy'));
+    await tester.tap(find.widgetWithText(Tab, 'Đã hủy'));
+    await tester.pumpAndSettle();
+    expect(
+        find.descendant(
+            of: find.byType(RecordBadge), matching: find.text('Đã hủy')),
+        findsOneWidget);
     await back(tester);
     expect(
         tester.widget<Text>(find.byKey(const ValueKey('records-count-0'))).data,

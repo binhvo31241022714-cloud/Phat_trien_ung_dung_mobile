@@ -20,16 +20,19 @@ class AppointmentDetailScreen extends StatefulWidget {
       _AppointmentDetailScreenState();
 }
 
-class _AppointmentDetailScreenState extends State<AppointmentDetailScreen> {
+class _AppointmentDetailScreenState extends State<AppointmentDetailScreen>
+    with WidgetsBindingObserver {
   AppointmentCancellationInfo? _cancellation;
   String? _cancelError;
   bool _checking = true;
   bool _busy = false;
+  bool _refreshInFlight = false;
   bool get isApi => AppConfig.current.dataSource == DataSource.api;
   @override
   void initState() {
     super.initState();
     if (isApi) {
+      WidgetsBinding.instance.addObserver(this);
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted) return;
         _refresh();
@@ -41,10 +44,25 @@ class _AppointmentDetailScreenState extends State<AppointmentDetailScreen> {
     }
   }
 
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (isApi && mounted && state == AppLifecycleState.resumed) {
+      _refresh();
+    }
+  }
+
   /// Luôn đọc lại lịch từ GET /api/appointments/:id khi mở màn hình, cập nhật
   /// cả AppointmentsProvider và PatientDataProvider. Trong lúc tải vẫn hiện dữ
   /// liệu cũ; nút hủy chỉ hiện theo dữ liệu mới.
   Future<void> _refresh() async {
+    if (_refreshInFlight || _busy) return;
+    _refreshInFlight = true;
     final data = context.read<PatientDataProvider>();
     final provider = context.read<AppointmentsProvider>();
     final generation = data.sessionGeneration;
@@ -83,6 +101,7 @@ class _AppointmentDetailScreenState extends State<AppointmentDetailScreen> {
           ? e.message
           : 'Không tải được thông tin mới nhất của lịch hẹn.');
     } finally {
+      _refreshInFlight = false;
       if (mounted &&
           data.isSessionCurrent(generation) &&
           provider.isSessionCurrent(providerGeneration)) {
@@ -212,6 +231,7 @@ class _AppointmentDetailScreenState extends State<AppointmentDetailScreen> {
       return RecordsPage(
           title: 'Chi tiết lịch hẹn',
           useRecordsState: false,
+          onRefresh: isApi ? _refresh : null,
           children: [
             if (isApi) const AppointmentApiStatus(),
             if (isApi && _checking)
@@ -230,6 +250,7 @@ class _AppointmentDetailScreenState extends State<AppointmentDetailScreen> {
     return RecordsPage(
         title: 'Chi tiết lịch hẹn',
         useRecordsState: false,
+        onRefresh: isApi ? _refresh : null,
         children: [
           if (isApi) const AppointmentApiStatus(),
           if (catalog != null &&

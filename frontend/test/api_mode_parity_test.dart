@@ -311,6 +311,8 @@ void main() {
     await t.tap(find.text('Hồ sơ').last);
     await t.pumpAndSettle();
     await openMe(t, 'Lịch hẹn');
+    await t.tap(find.widgetWithText(Tab, 'Đã xác nhận'));
+    await t.pumpAndSettle();
     await openMe(t, 'Dịch vụ API');
     await openMe(t, 'Hủy lịch');
     await openMe(t, 'Giữ lịch');

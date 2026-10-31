@@ -185,11 +185,21 @@ void main() {
       final s = Server();
       final (d, p) = s.providers('confirmed');
       await mount(t, d, p, const AppointmentsScreen(patientId: 'A'));
-      expect(find.text('Chờ xác nhận'), findsOneWidget);
+      expect(
+          find.descendant(
+              of: find.byKey(const ValueKey('appointment-card-appt_1')),
+              matching: find.text('Chờ xác nhận')),
+          findsOneWidget);
       await t.fling(find.text('Lịch hẹn của A'), const Offset(0, 400), 1000);
       await t.pumpAndSettle();
       expect(s.listCalls, 1);
-      expect(find.text('Đã xác nhận'), findsOneWidget);
+      await t.tap(find.widgetWithText(Tab, 'Đã xác nhận'));
+      await t.pumpAndSettle();
+      expect(
+          find.descendant(
+              of: find.byKey(const ValueKey('appointment-card-appt_1')),
+              matching: find.text('Đã xác nhận')),
+          findsOneWidget);
       expect(statusIn(d.appointments), AppointmentStatus.confirmed);
     });
 
@@ -217,6 +227,58 @@ void main() {
       expect(s.listCalls, 2);
     });
   }, skip: AppConfig.current.dataSource != DataSource.api);
+
+  group('detail refresh integration', () {
+    setUp(() {
+      final previous = AppConfig.current;
+      AppConfig.current = AppConfig.fromValues(source: 'api');
+      addTearDown(() => AppConfig.current = previous);
+    });
+
+    testWidgets('pull refresh observes staff cancellation in both stores',
+        (t) async {
+      final s = Server();
+      final (d, p) = s.providers('confirmed');
+      await mount(
+          t, d, p, const AppointmentDetailScreen(appointmentId: 'appt_1'));
+      s.json['status'] = 'cancelled';
+      final refresh =
+          t.state<RefreshIndicatorState>(find.byType(RefreshIndicator)).show();
+      await t.pumpAndSettle();
+      await refresh;
+      expect(s.detailCalls, 2);
+      expect(statusIn(d.appointments), AppointmentStatus.cancelled);
+      expect(statusIn(p.appointments), AppointmentStatus.cancelled);
+      expect(find.text('Hủy lịch'), findsNothing);
+    });
+
+    testWidgets(
+        'resume refresh observes confirmed and rejects overlapping fetch',
+        (t) async {
+      final s = Server();
+      final (d, p) = s.providers('booked');
+      await mount(
+          t, d, p, const AppointmentDetailScreen(appointmentId: 'appt_1'));
+      s.json['status'] = 'confirmed';
+      s.detailGate = Completer<void>();
+      t.binding.handleAppLifecycleStateChanged(AppLifecycleState.paused);
+      t.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+      await t.pump();
+      t.binding.handleAppLifecycleStateChanged(AppLifecycleState.paused);
+      t.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+      await t.pump();
+      expect(s.detailCalls, 2);
+      s.detailGate!.complete();
+      await t.pumpAndSettle();
+      expect(statusIn(d.appointments), AppointmentStatus.confirmed);
+      expect(statusIn(p.appointments), AppointmentStatus.confirmed);
+      await t.pumpWidget(const SizedBox());
+      t.binding.handleAppLifecycleStateChanged(AppLifecycleState.paused);
+      t.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+      await t.pump();
+      expect(s.detailCalls, 2, reason: 'disposed screen must remove observer');
+    });
+  });
 
   testWidgets(
       'A07: bấm thông báo appointment_confirmed tải lại lịch trước khi mở',

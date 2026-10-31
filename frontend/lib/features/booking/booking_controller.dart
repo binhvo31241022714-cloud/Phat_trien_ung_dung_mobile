@@ -33,6 +33,8 @@ class BookingController extends ChangeNotifier {
         availabilityService = availabilityService ?? AvailabilityService(),
         patientId =
             initialPatientId ?? profile?.profile?.id ?? data.selectedPatientId {
+    _dataSession = data.sessionGeneration;
+    data.addListener(_onDataChanged);
     catalog?.addListener(_onCatalogChanged);
     profile?.addListener(_onProfileChanged);
 
@@ -48,7 +50,7 @@ class BookingController extends ChangeNotifier {
       doctorChosen = true;
     }
 
-    _verifyDoctorForCurrentCombo();
+    _verifyDoctorForSelection();
 
     if (hasSelectedItems) {
       _reloadIfPossible();
@@ -100,7 +102,8 @@ class BookingController extends ChangeNotifier {
   String? quoteError;
   bool get apiMode => AppConfig.current.dataSource == DataSource.api;
   bool get quoteReady =>
-      !apiMode || (!quoteLoading && quoteError == null && _apiTotal != null);
+      !voucherLoading &&
+      (!apiMode || (!quoteLoading && quoteError == null && _apiTotal != null));
 
   String note = '';
 
@@ -127,11 +130,74 @@ class BookingController extends ChangeNotifier {
 
   bool _disposed = false;
   int _availabilityRequestId = 0;
+  // Quote and voucher share a revision: neither can overwrite newer pricing.
   int _quoteRequestId = 0;
+  late int _dataSession;
+
+  void _onDataChanged() {
+    if (_disposed || _dataSession == data.sessionGeneration) return;
+    _dataSession = data.sessionGeneration;
+    _quoteRequestId++;
+    quoteLoading = false;
+    voucherLoading = false;
+    _clearVoucher();
+    _apiSubtotal = null;
+    _apiTotal = null;
+    quoteError = null;
+    serviceIds.clear();
+    comboId = null;
+    patientId = '';
+    _durationMinutes = 30;
+    note = '';
+    date = null;
+    _preferredDoctorId = null;
+    doctorChosen = false;
+    _resetAvailability();
+    created = null;
+    awaitingRetry = false;
+    _requestKey = null;
+    _requestFingerprint = null;
+    lastSent = null;
+    step = 0;
+    notifyListeners();
+  }
+
+  void _clearVoucher() {
+    appliedVoucher = null;
+    voucher = '';
+    voucherError = null;
+    _apiDiscount = 0;
+  }
+
+  String get _selectionFingerprint =>
+      '${(serviceIds.toList()..sort()).join(',')}|${comboId ?? ''}';
+
+  bool _pricingCurrent(int session, int request, String selection) =>
+      !_disposed &&
+      data.isSessionCurrent(session) &&
+      request == _quoteRequestId &&
+      selection == _selectionFingerprint;
+
+  void _acceptQuote(BookingQuote quote) {
+    if (apiMode &&
+        (quote.durationMinutes <= 0 ||
+            quote.subtotal < 0 ||
+            quote.discount < 0 ||
+            quote.totalPrice < 0 ||
+            quote.discount > quote.subtotal ||
+            quote.totalPrice != quote.subtotal - quote.discount)) {
+      throw const ApiException(
+          'Báo giá máy chủ không hợp lệ. Vui lòng thử lại.');
+    }
+    _apiSubtotal = quote.subtotal;
+    _apiDiscount = quote.discount;
+    _apiTotal = quote.totalPrice;
+    _durationMinutes = quote.durationMinutes;
+  }
 
   void _onCatalogChanged() {
     if (_disposed) return;
-    _verifyDoctorForCurrentCombo();
+    _verifyDoctorForSelection();
     notifyListeners();
   }
 
@@ -164,6 +230,7 @@ class BookingController extends ChangeNotifier {
     _disposed = true;
     _availabilityRequestId++;
     _quoteRequestId++;
+    data.removeListener(_onDataChanged);
     catalog?.removeListener(_onCatalogChanged);
     profile?.removeListener(_onProfileChanged);
     super.dispose();
@@ -196,11 +263,12 @@ class BookingController extends ChangeNotifier {
 
     if (item.isCombo) {
       comboId = comboId == item.id ? null : item.id;
-      _verifyDoctorForCurrentCombo();
     } else {
       if (!serviceIds.add(item.id)) serviceIds.remove(item.id);
     }
 
+    _verifyDoctorForSelection();
+    _clearVoucher();
     _resetAvailability();
     unawaited(refreshQuote());
     notifyListeners();
@@ -213,6 +281,8 @@ class BookingController extends ChangeNotifier {
 
     if (!serviceIds.add(id)) serviceIds.remove(id);
 
+    _verifyDoctorForSelection();
+    _clearVoucher();
     _resetAvailability();
     unawaited(refreshQuote());
     notifyListeners();
@@ -245,6 +315,7 @@ class BookingController extends ChangeNotifier {
   /// Gọi POST /api/bookings/quote để lấy giá và thời lượng chuẩn.
   Future<void> refreshQuote() async {
     if (_disposed) return;
+    voucherLoading = false;
 
     if (!hasSelectedItems) {
       quoteError = null;
@@ -260,6 +331,7 @@ class BookingController extends ChangeNotifier {
 
     final session = data.sessionGeneration;
     final requestId = ++_quoteRequestId;
+    final selection = _selectionFingerprint;
     quoteError = null;
     _apiSubtotal = null;
     _apiTotal = null;
@@ -274,28 +346,13 @@ class BookingController extends ChangeNotifier {
         voucherCode: appliedVoucher,
       );
 
-      if (_disposed ||
-          !data.isSessionCurrent(session) ||
-          requestId != _quoteRequestId) {
+      if (!_pricingCurrent(session, requestId, selection)) {
         return;
       }
 
-      if (apiMode &&
-          (quote.durationMinutes <= 0 ||
-              quote.subtotal < 0 ||
-              quote.discount < 0 ||
-              quote.totalPrice < 0)) {
-        throw const ApiException(
-            'Báo giá máy chủ không hợp lệ. Vui lòng thử lại.');
-      }
-      _apiSubtotal = quote.subtotal;
-      _apiDiscount = quote.discount;
-      _apiTotal = quote.totalPrice;
-      _durationMinutes = quote.durationMinutes;
+      _acceptQuote(quote);
     } catch (error) {
-      if (_disposed ||
-          !data.isSessionCurrent(session) ||
-          requestId != _quoteRequestId) {
+      if (!_pricingCurrent(session, requestId, selection)) {
         return;
       }
       if (apiMode) {
@@ -318,62 +375,66 @@ class BookingController extends ChangeNotifier {
 
   /// Gọi POST /api/vouchers/validate để kiểm tra voucher.
   Future<bool> applyVoucher(String code) async {
-    if (awaitingRetry) return false;
-    if (_disposed) return false;
-
+    if (_disposed || locked || created != null) return false;
     final trimmed = code.trim();
-    if (trimmed.isEmpty) {
-      voucherError = 'Vui lòng nhập mã ưu đãi';
-      notifyListeners();
-      return false;
-    }
-    if (!hasSelectedItems) {
-      voucherError = 'Vui lòng chọn dịch vụ trước';
+    if (trimmed.isEmpty || !hasSelectedItems) {
+      voucherError = trimmed.isEmpty
+          ? 'Vui lòng nhập mã ưu đãi'
+          : 'Vui lòng chọn dịch vụ trước';
       notifyListeners();
       return false;
     }
 
+    final session = data.sessionGeneration;
+    final request = ++_quoteRequestId;
+    final selection = _selectionFingerprint;
+    final selectedServices = serviceIds.toList();
+    final selectedCombo = comboId;
+    bool current() => _pricingCurrent(session, request, selection);
     voucherLoading = true;
+    quoteLoading = false;
+    quoteError = null;
     voucherError = null;
+    appliedVoucher = null;
+    _apiSubtotal = null;
+    _apiTotal = null;
+    _apiDiscount = 0;
     notifyListeners();
 
     try {
       final result = await bookingService.validateVoucher(
         code: trimmed,
-        serviceIds: serviceIds.toList(),
-        comboId: comboId,
+        serviceIds: selectedServices,
+        comboId: selectedCombo,
       );
-
-      if (_disposed) return false;
-
+      if (!current()) return false;
+      if (!result.valid || result.code.trim().isEmpty) {
+        throw const ApiException('Phản hồi mã ưu đãi không hợp lệ.');
+      }
+      // Use the full quote for price AND duration; validate is only a preview.
+      final quote = await bookingService.quote(
+        serviceIds: selectedServices,
+        comboId: selectedCombo,
+        voucherCode: result.code,
+      );
+      if (!current()) return false;
+      _acceptQuote(quote);
       appliedVoucher = result.code;
       voucher = result.code;
-      _apiSubtotal = result.subtotal;
-      _apiDiscount = result.discount;
-      _apiTotal = result.totalPrice;
-      voucherError = null;
-      notifyListeners();
       return true;
-    } on ApiException catch (error) {
-      if (_disposed) return false;
-
-      voucherError = error.message;
+    } catch (error) {
+      if (!current()) return false;
+      voucherError = error is ApiException
+          ? error.message
+          : 'Không thể kiểm tra mã ưu đãi. Vui lòng thử lại.';
       appliedVoucher = null;
+      _apiSubtotal = null;
       _apiDiscount = 0;
       _apiTotal = null;
-      notifyListeners();
-      return false;
-    } catch (_) {
-      if (_disposed) return false;
-
-      voucherError = 'Không thể kiểm tra mã ưu đãi. Vui lòng thử lại.';
-      appliedVoucher = null;
-      _apiDiscount = 0;
-      _apiTotal = null;
-      notifyListeners();
+      quoteError = 'Vui lòng tải lại báo giá hoặc áp dụng lại mã ưu đãi.';
       return false;
     } finally {
-      if (!_disposed) {
+      if (current()) {
         voucherLoading = false;
         notifyListeners();
       }
@@ -381,34 +442,31 @@ class BookingController extends ChangeNotifier {
   }
 
   void removeVoucher() {
-    if (awaitingRetry) return;
-    if (_disposed) return;
-
-    appliedVoucher = null;
-    voucher = '';
-    voucherError = null;
-    _apiDiscount = 0;
+    if (_disposed || locked || created != null) return;
+    _clearVoucher();
     _apiTotal = null;
     unawaited(refreshQuote());
-    notifyListeners();
   }
 
-  /// Bác sĩ của combo phải thực hiện được toàn bộ dịch vụ trong combo.
-  void _verifyDoctorForCurrentCombo() {
-    if (comboId == null || catalog == null || _preferredDoctorId == null) {
+  /// Recheck the complete selection, including services outside a combo.
+  void _verifyDoctorForSelection() {
+    if (locked ||
+        created != null ||
+        catalog == null ||
+        !catalog!.loaded ||
+        _preferredDoctorId == null) {
       return;
     }
-
+    final required = <String>{...serviceIds};
     final combo = _findCombo(comboId);
-    // Catalog có thể chưa tải xong; không tự loại bác sĩ khi chưa có dữ liệu.
-    if (combo == null) return;
-
-    final eligibleDoctors = catalog!.doctorsFor(combo);
-    final isEligible = eligibleDoctors.any(
-      (doctor) => doctor.id == _preferredDoctorId,
-    );
-
-    if (!isEligible) {
+    if (combo != null) required.addAll(combo.serviceIds);
+    final validCombo =
+        comboId == null || (combo != null && combo.serviceIds.isNotEmpty);
+    final eligible = validCombo &&
+        catalog!.doctors.any((doctor) =>
+            doctor.id == _preferredDoctorId &&
+            required.every(doctor.serviceIds.contains));
+    if (!eligible) {
       _preferredDoctorId = null;
       doctorId = null;
       doctorChosen = false;
@@ -444,6 +502,7 @@ class BookingController extends ChangeNotifier {
       return;
     }
 
+    final session = data.sessionGeneration;
     final requestId = ++_availabilityRequestId;
     availabilityLoading = true;
     availabilityError = null;
@@ -460,18 +519,28 @@ class BookingController extends ChangeNotifier {
         doctorId: _preferredDoctorId,
       );
 
-      if (_disposed || requestId != _availabilityRequestId) return;
+      if (_disposed ||
+          !data.isSessionCurrent(session) ||
+          requestId != _availabilityRequestId) {
+        return;
+      }
 
       // Loại phần tử null nếu service/model trả về danh sách có phần tử nullable.
       availabilitySlots = result.whereType<AvailabilitySlot>().toList();
     } catch (error) {
-      if (_disposed || requestId != _availabilityRequestId) return;
+      if (_disposed ||
+          !data.isSessionCurrent(session) ||
+          requestId != _availabilityRequestId) {
+        return;
+      }
 
       availabilityError =
           error is ApiException ? error.message : error.toString();
       availabilitySlots = <AvailabilitySlot>[];
     } finally {
-      if (!_disposed && requestId == _availabilityRequestId) {
+      if (!_disposed &&
+          data.isSessionCurrent(session) &&
+          requestId == _availabilityRequestId) {
         availabilityLoading = false;
         notifyListeners();
       }
@@ -653,7 +722,8 @@ class BookingController extends ChangeNotifier {
       final suggested = apiMode ? clinicWallTime(suggestedDate) : suggestedDate;
       date = DateTime(suggested.year, suggested.month, suggested.day);
     }
-    _verifyDoctorForCurrentCombo();
+    _verifyDoctorForSelection();
+    _clearVoucher();
     _resetAvailability();
     unawaited(refreshQuote());
 
@@ -724,7 +794,7 @@ class BookingController extends ChangeNotifier {
   Future<Appointment?> submit({
     AppointmentsProvider? appointmentsProvider,
   }) async {
-    if (_disposed) return null;
+    if (_disposed || voucherLoading) return null;
     if (submitting || created != null) return created;
 
     if (!hasSelectedItems ||
@@ -782,8 +852,10 @@ class BookingController extends ChangeNotifier {
         awaitingRetry = false;
       } on ApiException catch (e) {
         // Mất kết nối: lịch có thể đã được tạo trên máy chủ, khóa lựa chọn.
-        awaitingRetry =
-            e.kind == ApiErrorKind.connection || e.kind == ApiErrorKind.timeout;
+        if (!_disposed && data.isSessionCurrent(patientGeneration)) {
+          awaitingRetry = e.kind == ApiErrorKind.connection ||
+              e.kind == ApiErrorKind.timeout;
+        }
         rethrow;
       } catch (_) {
         awaitingRetry = false;

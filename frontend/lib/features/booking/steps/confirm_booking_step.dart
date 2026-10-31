@@ -271,6 +271,7 @@ class ConfirmBookingStep extends StatelessWidget {
               onChanged: (value) {
                 c.note = value;
               },
+              maxLength: 500,
               minLines: 2,
               maxLines: 5,
               enabled: !c.locked,

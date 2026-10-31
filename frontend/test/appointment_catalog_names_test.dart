@@ -1,3 +1,4 @@
+import 'package:frontend/features/records/records_widgets.dart';
 import 'support/fake_appointments_provider.dart';
 import 'package:frontend/providers/appointments_provider.dart';
 import 'dart:async';
@@ -77,7 +78,11 @@ void main() {
         expect(find.textContaining('Khám răng tổng quát'), findsOneWidget);
         expect(find.textContaining('Lấy cao răng'), findsOneWidget);
         expect(find.textContaining('BS. Nguyễn Văn API'), findsOneWidget);
-        expect(find.text('Chờ xác nhận'), findsOneWidget);
+        expect(
+            find.descendant(
+                of: find.byType(RecordBadge),
+                matching: find.text('Chờ xác nhận')),
+            findsOneWidget);
       });
       testWidgets('prefers appointment doctor snapshot', (tester) async {
         await mount(tester, FakeCatalogBackend().provider(),
