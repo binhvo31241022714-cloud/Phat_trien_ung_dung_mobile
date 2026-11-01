@@ -9,6 +9,9 @@ const fake = createFakeDb();
 installFakeFirebase(fake);
 const { jsonBody, MAX_IMAGE_BYTES } = require('../../src/utils/media');
 
+const JSON_LIMIT_BYTES = 1024 * 1024;
+const jsonBytes = value => Buffer.byteLength(JSON.stringify(value), 'utf8');
+
 const PNG = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==';
 const jpeg = (size) => {
   const buffer = Buffer.alloc(size, 0x11);
@@ -19,9 +22,12 @@ const JPEG = jpeg(64);
 const GIF = Buffer.from('GIF89a\x01\x00\x01\x00\x00\x00\x00', 'latin1').toString('base64');
 
 let server, base;
+let routedRequests = 0;
 before(async () => {
   const app = express();
   app.use(jsonBody);
+  // Reached only after parsing succeeds; proves transport rejection precedes routes.
+  app.use((req, res, next) => { routedRequests++; next(); });
   app.use('/api/users', require('../../src/routes/users'));
   app.use('/api/family-members', require('../../src/routes/familyMembers'));
   app.use('/api/media', require('../../src/routes/media'));
@@ -67,7 +73,10 @@ test('PUT avatar: lưu media base64, gắn avatarMediaId; GET /api/media trả �
   const r = await call('/users/me/avatar', { method: 'PUT', body: { image: PNG, mimeType: 'image/png' } });
   assert.equal(r.status, 200);
   const id = r.body.avatarMediaId;
-  assert.equal(r.body.avatarUrl, `/api/media/${id}`);
+  // Approved contract: avatarMediaId only; image bytes are fetched by ID.
+  assert.equal(typeof id, 'string');
+  assert.match(id, /^[^/]+$/);
+  assert.deepEqual(r.body, { avatarMediaId: id });
   assert.equal(fake.store['users/A'].avatarMediaId, id);
   const doc = fake.store[`media/${id}`];
   assert.deepEqual([doc.ownerAccountId, doc.patientId, doc.kind, doc.mimeType, doc.createdBy, doc.data],
@@ -93,9 +102,13 @@ test('thay avatar xóa ảnh cũ, DELETE gỡ ảnh; data URL JPEG được nh�
   assert.equal(fake.store[`media/${second.body.avatarMediaId}`].mimeType, 'image/jpeg');
   assert.notEqual(first.body.avatarMediaId, second.body.avatarMediaId);
   const removed = await call('/users/me/avatar', { method: 'DELETE' });
-  assert.deepEqual(removed.body, { avatarMediaId: null, avatarUrl: null });
+  // Approved DELETE response remains a message, with actual deletion checked below.
+  assert.equal(removed.status, 200);
+  assert.deepEqual(removed.body, { message: 'Đã gỡ ảnh' });
   assert.equal(fake.store['users/A'].avatarMediaId, null);
   assert.deepEqual(media(), []);
+  assert.equal((await call(`/media/${first.body.avatarMediaId}`)).status, 404);
+  assert.equal((await call(`/media/${second.body.avatarMediaId}`)).status, 404);
 });
 
 test('avatar người thân: còn hoạt động thì được, đã xóa hoặc không phải của mình thì 404', async () => {
@@ -119,30 +132,119 @@ const BAD_IMAGES = [
   ['ảnh GIF', { image: GIF }, 400],
   ['base64 hỏng', { image: 'không phải base64!' }, 400],
   ['văn bản đổi đuôi', { image: Buffer.from('hello world, not an image').toString('base64'), mimeType: 'image/png' }, 400],
-  ['mimeType không khớp nội dung', { image: PNG, mimeType: 'image/jpeg' }, 400],
-  ['data URL khai báo GIF', { image: `data:image/gif;base64,${PNG}` }, 400],
-  ['quá 700 KB', { image: jpeg(MAX_IMAGE_BYTES + 1) }, 413],
-  ['body quá 1 MB', { image: jpeg(800 * 1024) }, 413],
+  ['bytes GIF giả khai báo PNG', { image: GIF, mimeType: 'image/png' }, 400],
+  ['quá 716800 bytes sau giải mã', { image: jpeg(MAX_IMAGE_BYTES + 1) }, 413],
+  ['body quá 1 MiB', { image: jpeg(800 * 1024) }, 413],
 ];
 for (const [label, body, status] of BAD_IMAGES) {
   test(`ảnh sai (${label}) trả ${status}, không ghi gì`, async () => {
     const old = snapshot();
+    for (const payload of [body, { phase: 'before', ...body }]) {
+      if (label === 'quá 716800 bytes sau giải mã') {
+        assert.ok(jsonBytes(payload) < JSON_LIMIT_BYTES);
+        assert.equal(Buffer.from(payload.image, 'base64').length, MAX_IMAGE_BYTES + 1);
+      }
+      if (label === 'body quá 1 MiB') {
+        assert.ok(jsonBytes(payload) > JSON_LIMIT_BYTES);
+      }
+    }
     assert.equal((await call('/users/me/avatar', { method: 'PUT', body })).status, status);
+    assert.equal((await call('/family-members/kid/avatar', { method: 'PUT', body })).status, status);
     assert.equal((await call('/treatments/t1/photos', { method: 'POST', body: { phase: 'before', ...body } })).status, status);
     assert.deepEqual(fake.store, old);
   });
 }
 
-test('ảnh đúng 700 KB vẫn nhận', async () => {
-  const r = await call('/users/me/avatar', { method: 'PUT', body: { image: jpeg(MAX_IMAGE_BYTES) } });
-  assert.equal(r.status, 200);
-  assert.equal(fake.store[`media/${r.body.avatarMediaId}`].size, MAX_IMAGE_BYTES);
+// Approved policy: contradictory client metadata cannot replace the detected byte MIME.
+// Preserve both former failure cases, checking avatar AND treatment-photo paths.
+for (const [label, body] of [
+  ['mimeType không khớp nội dung', { image: PNG, mimeType: 'image/jpeg' }],
+  ['data URL khai báo GIF', { image: `data:image/gif;base64,${PNG}` }],
+]) {
+  test(`${label}: bytes PNG quyết định MIME lưu và Content-Type, không đổi nội dung`, async () => {
+    for (const [endpoint, method, payload] of [
+      ['/users/me/avatar', 'PUT', body],
+      ['/treatments/t1/photos', 'POST', { phase: 'before', ...body }],
+    ]) {
+      const uploaded = await call(endpoint, { method, body: payload });
+      assert.equal(uploaded.status, method === 'PUT' ? 200 : 201);
+      const id = method === 'PUT' ? uploaded.body.avatarMediaId : uploaded.body.mediaId;
+      assert.equal(typeof id, 'string');
+      assert.match(id, /^[^/]+$/);
+      const stored = fake.store[`media/${id}`];
+      assert.equal(stored.mimeType, 'image/png');
+      assert.equal(stored.data, PNG);
+      assert.equal(stored.size, Buffer.from(PNG, 'base64').length);
+      const image = await call(`/media/${id}`, { raw: true });
+      assert.equal(image.status, 200);
+      assert.equal(image.type, 'image/png');
+      assert.deepEqual(image.bytes, Buffer.from(PNG, 'base64'));
+    }
+  });
+}
+
+test('ảnh đúng 716800 bytes vẫn nhận khi JSON dưới 1 MiB', async () => {
+  assert.equal(MAX_IMAGE_BYTES, 716800);
+  const body = { image: jpeg(MAX_IMAGE_BYTES) };
+  assert.ok(jsonBytes(body) < JSON_LIMIT_BYTES);
+  for (const [path, method, payload] of [
+    ['/users/me/avatar', 'PUT', body],
+    ['/family-members/kid/avatar', 'PUT', body],
+    ['/treatments/t1/photos', 'POST', { phase: 'before', ...body }],
+  ]) {
+    assert.ok(jsonBytes(payload) < JSON_LIMIT_BYTES);
+    const r = await call(path, { method, body: payload });
+    assert.equal(r.status, method === 'POST' ? 201 : 200);
+    const id = method === 'POST' ? r.body.mediaId : r.body.avatarMediaId;
+    assert.equal(fake.store[`media/${id}`].size, MAX_IMAGE_BYTES);
+    const image = await call(`/media/${id}`, { raw: true });
+    assert.equal(image.status, 200);
+    assert.deepEqual(image.bytes, Buffer.from(body.image, 'base64'));
+  }
 });
 
-test('route thường vẫn giới hạn body 100 KB', async () => {
-  const r = await call('/users/me', { method: 'PATCH', body: { address: 'x'.repeat(150 * 1024) } });
-  assert.equal(r.status, 413);
+test('JSON dưới 1 MiB nhưng address sai: field validation 400, không ghi', async () => {
+  const body = { address: 'x'.repeat(150 * 1024) };
+  assert.ok(jsonBytes(body) > 100 * 1024);
+  assert.ok(jsonBytes(body) < JSON_LIMIT_BYTES);
+  const old = snapshot(), beforeRoutes = routedRequests;
+  const r = await call('/users/me', { method: 'PATCH', body });
+  assert.equal(r.status, 400);
+  assert.equal(r.body.message, 'address tối đa 200 ký tự');
+  assert.equal(routedRequests, beforeRoutes + 1);
+  assert.deepEqual(fake.store, old);
 });
+
+test('JSON đúng 1 MiB đi qua parser, field validation vẫn trả 400 và không ghi', async () => {
+  const overhead = jsonBytes({ address: '' });
+  const body = { address: 'x'.repeat(JSON_LIMIT_BYTES - overhead) };
+  assert.equal(jsonBytes(body), JSON_LIMIT_BYTES);
+  const old = snapshot(), beforeRoutes = routedRequests;
+  const r = await call('/users/me', { method: 'PATCH', body });
+  assert.equal(r.status, 400);
+  assert.equal(r.body.message, 'address tối đa 200 ký tự');
+  assert.equal(routedRequests, beforeRoutes + 1);
+  assert.deepEqual(fake.store, old);
+});
+
+for (const [path, method] of [
+  ['/users/me', 'PATCH'], ['/users/me/avatar', 'PUT'],
+  ['/family-members/kid/avatar', 'PUT'], ['/treatments/t1/photos', 'POST'],
+]) {
+  test(`JSON vượt 1 MiB: ${method} ${path} trả 413 trước route, không ghi`, async () => {
+    const overhead = jsonBytes({ address: '' });
+    const body = { address: 'x'.repeat(JSON_LIMIT_BYTES + 1 - overhead) };
+    assert.equal(jsonBytes(body), JSON_LIMIT_BYTES + 1);
+    const serialized = JSON.stringify(body);
+    assert.equal(Buffer.byteLength(serialized, 'utf8'), JSON_LIMIT_BYTES + 1);
+    const old = snapshot(), beforeRoutes = routedRequests;
+    const r = await call(path, { method, body: serialized });
+    assert.equal(r.status, 413);
+    assert.deepEqual(r.body, { message: 'quá lớn' });
+    assert.equal(routedRequests, beforeRoutes);
+    assert.deepEqual(fake.store, old);
+  });
+}
 
 test('bệnh nhân tải ảnh trước/sau, GET trả ảnh cũ và mới, chỉ ảnh mới có canDelete', async () => {
   const up = await call('/treatments/t1/photos', { method: 'POST', body: { phase: 'before', image: JPEG, sessionId: 't1_s1', note: ' Trước khi niềng ' } });
@@ -176,9 +278,19 @@ test('ảnh người thân: còn hoạt động thì tải được; đã xóa c
   const old = snapshot();
   const denied = await call('/treatments/told/photos', { method: 'POST', body: { phase: 'after', image: PNG } });
   assert.equal(denied.status, 403);
-  assert.match(denied.body.message, /chỉ xem được ảnh cũ/);
+  // AUD-06 keeps the generic 403 guard; verify the complete write/read boundary.
+  assert.deepEqual(denied.body, { message: 'Bạn không có quyền truy cập hồ sơ này' });
   assert.deepEqual(fake.store, old);
-  assert.equal((await call('/treatments/told/photos')).body.length, 1);
+  assert.deepEqual(fake.store['treatments/told'], old['treatments/told']);
+  assert.deepEqual(media(), Object.keys(old).filter(path => path.startsWith('media/')).sort());
+  const history = await call('/treatments/told/photos');
+  assert.equal(history.status, 200);
+  assert.equal(history.body.length, 1);
+  assert.equal(history.body[0].id, 'oldphoto');
+  assert.equal(history.body[0].imageUrl, 'https://x/o.jpg');
+  assert.equal(history.body[0].canDelete, false);
+  assert.equal((await call('/treatments/told/photos', { token: 'B' })).status, 403);
+  assert.deepEqual(fake.store, old);
 });
 
 test('staff tải ảnh cho bệnh nhân: media thuộc tài khoản bệnh nhân, bệnh nhân xem được', async () => {

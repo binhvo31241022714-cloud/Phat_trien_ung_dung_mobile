@@ -39,7 +39,15 @@ class ProfileService {
       _api.patch(_me, {'notificationsEnabled': enabled});
 
   Future<List<FamilyMember>> getFamily() async {
-    final data = await _api.get(_family);
+    return _readFamily(_family);
+  }
+
+  /// Explicit history request; existing callers remain active-only.
+  Future<List<FamilyMember>> getHistoryFamily() =>
+      _readFamily('$_family?includeArchived=true');
+
+  Future<List<FamilyMember>> _readFamily(String path) async {
+    final data = await _api.get(path);
     if (data is! List) throw _invalid;
     return [
       for (final row in data)

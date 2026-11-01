@@ -1,0 +1,73 @@
+const { db } = require('../config/firebase');
+const { isValidDateKey, parseTime } = require('./booking');
+const { appointmentReminderId } = require('../jobs/reminders');
+const REMINDER = 'appointment_reminder';
+const CONCURRENCY = 8;
+
+// Bound outstanding reads/transactions. On failure, stop scheduling and drain
+// in-flight work before propagating the error (no background writes after 500).
+async function boundedMap(items, task) {
+  const results = new Array(items.length);
+  let next = 0, failure;
+  async function worker() {
+    while (!failure && next < items.length) {
+      const index = next++;
+      try { results[index] = await task(items[index]); }
+      catch (error) { failure ||= error; }
+    }
+  }
+  await Promise.all(Array.from({ length: Math.min(CONCURRENCY, items.length) }, worker));
+  if (failure) throw failure;
+  return results;
+}
+function hasCurrentReminderShape(id, data) {
+  if (typeof data.refId !== 'string' || !data.refId.trim() || data.refId.includes('/')) return false;
+  const prefix = `${data.refId}_`;
+  return typeof id === 'string' && id.startsWith(prefix) &&
+    /^\d{4}-\d{2}-\d{2}_(?:[01]\d|2[0-3]):[0-5]\d$/.test(id.slice(prefix.length));
+}
+function reminderVisible(uid, id, data, appointment, profile) {
+  if (data.userId !== uid || data.type !== REMINDER || !hasCurrentReminderShape(id, data)) return false;
+  if (!appointment || appointment.accountId !== uid || appointment.status !== 'confirmed') return false;
+  if (!isValidDateKey(appointment.date)) return false;
+  try { parseTime(appointment.startTime); } catch { return false; }
+  // Creation window is NOT a display window: past/far-future confirmed sources
+  // stay visible while the original schedule/owner/preference remain valid.
+  return profile?.notificationsEnabled !== false &&
+    id === appointmentReminderId(data.refId, appointment.date, appointment.startTime);
+}
+async function visibleNotificationDocs(uid, docs) {
+  const owned = docs.filter(doc => doc.data().userId === uid);
+  const reminders = owned.filter(doc => doc.data().type === REMINDER);
+  if (!reminders.length) return owned;
+  const profile = await db.collection('users').doc(uid).get();
+  const user = profile.exists ? profile.data() : null;
+  if (user?.notificationsEnabled === false) return owned.filter(doc => doc.data().type !== REMINDER);
+  // Invalid/legacy IDs never cause source lookups. Fetch each distinct source once.
+  const ids = [...new Set(reminders.filter(doc => hasCurrentReminderShape(doc.id, doc.data())).map(doc => doc.data().refId))];
+  const sources = new Map(await boundedMap(ids, async id => {
+    const snap = await db.collection('appointments').doc(id).get();
+    return [id, snap.exists ? snap.data() : null];
+  }));
+  return owned.filter(doc => {
+    const data = doc.data();
+    return data.type !== REMINDER || reminderVisible(uid, doc.id, data, sources.get(data.refId), user);
+  });
+}
+async function readValidReminders(uid, docs) {
+  const candidates = docs.filter(doc => hasCurrentReminderShape(doc.id, doc.data()));
+  const results = await boundedMap(candidates, doc => db.runTransaction(async transaction => {
+    const current = await transaction.get(doc.ref);
+    if (!current.exists) return 0;
+    const data = current.data();
+    if (data.userId !== uid || data.type !== REMINDER || data.isRead !== false || !hasCurrentReminderShape(current.id, data)) return 0;
+    const source = await transaction.get(db.collection('appointments').doc(data.refId));
+    const profile = await transaction.get(db.collection('users').doc(uid));
+    if (!reminderVisible(uid, current.id, data, source.exists ? source.data() : null, profile.exists ? profile.data() : null)) return 0;
+    transaction.update(current.ref, { isRead: true });
+    return 1;
+  }));
+  // Only count final committed attempts, not retries or already-read documents.
+  return results.reduce((sum, count) => sum + count, 0);
+}
+module.exports = { visibleNotificationDocs, readValidReminders };

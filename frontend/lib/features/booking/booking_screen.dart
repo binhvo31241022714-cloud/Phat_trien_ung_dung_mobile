@@ -144,8 +144,7 @@ class _BookingScreenState extends State<BookingScreen> {
       );
     }
 
-    final requestedPatient =
-        c.locked ? null : data.takeBookingPatientRequest();
+    final requestedPatient = c.locked ? null : data.takeBookingPatientRequest();
 
     if (requestedPatient != null) {
       if (c.created != null) {
@@ -453,8 +452,10 @@ class _BookingScreenState extends State<BookingScreen> {
         profile.familyLoaded || profile.familyError != null;
 
     if (useApiPatients &&
+        !data.isArchivedPatient(c.patientId) &&
         !patientIds.contains(c.patientId) &&
-        (isCurrentIdMock || familyLoadResolved) &&
+        (isCurrentIdMock ||
+            familyLoadResolved && profile.historyFamilyLoaded) &&
         !c.submitting &&
         c.created == null) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -480,7 +481,8 @@ class _BookingScreenState extends State<BookingScreen> {
         };
 
         // Nếu ID vừa được xác nhận là người thân hợp lệ, giữ nguyên.
-        if (validIds.contains(currentController.patientId)) {
+        if (data.isArchivedPatient(currentController.patientId) ||
+            validIds.contains(currentController.patientId)) {
           return;
         }
 
@@ -490,7 +492,8 @@ class _BookingScreenState extends State<BookingScreen> {
         final latestFamilyResolved =
             latestProfile.familyLoaded || latestProfile.familyError != null;
 
-        if (stillMockId || latestFamilyResolved) {
+        if (stillMockId ||
+            latestFamilyResolved && latestProfile.historyFamilyLoaded) {
           currentController.selectPatient(latestAccountId);
         }
       });

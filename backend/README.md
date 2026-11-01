@@ -88,8 +88,8 @@ Khi test báº±ng `api-test.http`: táº¡o `backend/.env` theo `backend/.env.e
 
 áº¢nh lÆ°u trong Firestore dáº¡ng base64 á»Ÿ `media/{id}`: `{ ownerAccountId, patientId, kind ("avatar" | "treatment_photo"), mimeType, data, size, createdAt, createdBy }`.
 - Chá»‰ nháº­n JPEG hoáº·c PNG, kiá»ƒm tra theo byte Ä‘áº§u cá»§a file (khĂ´ng tin `mimeType` gá»­i lĂªn); `image` cĂ³ thá»ƒ lĂ  base64 thuáº§n hoáº·c `data:image/...;base64,...`.
-- Tá»‘i Ä‘a 700 KB sau giáº£i mĂ£ (base64 khoáº£ng 933 KB, vá»«a giá»›i háº¡n 1 MiB cá»§a má»™t document). QuĂ¡ thĂ¬ `413`, sai Ä‘á»‹nh dáº¡ng thĂ¬ `400`.
-- Chá»‰ cĂ¡c route áº£nh nháº­n body tá»›i 1 MB (`utils/media.js` > `jsonBody`); route khĂ¡c giá»¯ 100 KB.
+- Ảnh JPEG/PNG sau giải mã tối đa **716.800 bytes (700 KiB)**; vượt giới hạn trả `413`, sai định dạng trả `400`. Giới hạn này độc lập với JSON transport và không thay đổi.
+- JSON request body toàn API: **1 MiB = 1.048.576 bytes** (`utils/media.js` → `jsonBody`), gồm `PUT /api/users/me/avatar`, `PUT /api/family-members/:id/avatar`, `POST /api/treatments/:id/photos`. Đo bằng `Buffer.byteLength(JSON.stringify(body), "utf8")`, gồm cả base64 và metadata. JSON vượt giới hạn trả `413` trước route; dưới/trong giới hạn vẫn có thể trả `400` do field validation (ví dụ address tối đa 200 ký tự). Bình/Phương/Ngân đã duyệt phương án B cho demo; không dùng parser dispatcher.
 - Há»“ sÆ¡ lÆ°u `avatarMediaId`; thay áº£nh thĂ¬ áº£nh cÅ© bá»‹ xĂ³a trong cĂ¹ng transaction. Staff chá»‰ xem, khĂ´ng Ä‘á»•i áº£nh Ä‘áº¡i diá»‡n.
 
 ### Dá»¯ liá»‡u `users/{uid}` vĂ  `users/{uid}/family_members/{id}`
@@ -228,8 +228,8 @@ confirmed â†’ completed | cancelled
 ### Nháº¯c lá»‹ch tá»± Ä‘á»™ng (`src/jobs/reminders.js`, A03)
 
 - Server cháº¡y job khi khá»Ÿi Ä‘á»™ng vĂ  má»—i 10 phĂºt (test khĂ´ng náº¡p `server.js` nĂªn khĂ´ng cháº¡y). Staff cháº¡y ngay báº±ng `POST /api/notifications/run-reminders`.
-- `appointment_reminder`: lá»‹ch `confirmed` báº¯t Ä‘áº§u trong 24 giá» tá»›i; id `remind_{idLá»‹ch}_{ngĂ y}_{giá»}` (Ä‘á»•i giá» thĂ¬ cĂ³ nháº¯c má»›i).
-- `follow_up_reminder`: Ä‘á» xuáº¥t `suggested`/`scheduled` cĂ³ `scheduledAt` trong 3 ngĂ y tá»›i; id `furemind_{id}_{ngĂ y}`.
+- `appointment_reminder`: appointment `confirmed` trong cửa sổ 24 giờ; ID `{appointmentId}_{YYYY-MM-DD}_{HH:mm}`. Giữ transaction/chống trùng AUD-05 và inbox visibility AUD-08; không thêm mốc 1 giờ/2 giờ trong thay đổi này.
+- `follow_up_reminder`: **AUD-07 DEFERRED (out of demo scope), chưa triển khai**; owners Nhi/Phương/Ngân. Một test acceptance giữ callback/assertions dưới TODO, không tính PASS. Mở lại sau khi owners duyệt timing/eligibility và triển khai riêng; bỏ TODO sau khi kiểm chứng. Không nhầm với event thông báo follow-up đã có.
 - Má»—i nháº¯c táº¡o trong transaction Ä‘á»c láº¡i tráº¡ng thĂ¡i, giá», `notificationsEnabled` cá»§a tĂ i khoáº£n; Ä‘Ă£ cĂ³ thĂ¬ bá» qua. Há»§y hoáº·c tá»« chá»‘i lá»‹ch xĂ³a nháº¯c Ä‘Ă£ gá»­i. `GET /api/notifications` khĂ´ng táº¡o thĂ´ng bĂ¡o.
 
 ### Ghi chĂº lá»‹ch háº¹n (`note`)

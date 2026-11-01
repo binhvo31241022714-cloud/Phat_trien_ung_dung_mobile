@@ -245,7 +245,7 @@ void main() {
         expect(find.text('Trần Thị Test'), findsOneWidget);
         expect(find.byType(NavigationBar), findsOneWidget);
         await openMe(tester, 'Thông tin cá nhân');
-        expect(find.text('Thay ảnh (demo)'), findsOneWidget);
+        expect(find.text('Thay ảnh'), findsOneWidget);
         await backMe(tester);
         await openMe(tester, 'Quản lý người thân');
         expect(find.text('Nguyễn Thị Mẹ'), findsOneWidget);

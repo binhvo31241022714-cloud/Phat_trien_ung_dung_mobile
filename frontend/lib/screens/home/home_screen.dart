@@ -7,6 +7,7 @@ import 'package:provider/provider.dart';
 
 import '../../app/patient_navigation.dart';
 import '../../features/shared/catalog_navigation.dart';
+import '../../features/shared/person_avatar.dart';
 import '../../features/services/service_list_screen.dart';
 import '../../features/services/service_detail_screen.dart';
 import '../../features/doctors/doctor_list_screen.dart';
@@ -55,9 +56,9 @@ class _HomeOverview extends StatelessWidget {
   Widget build(BuildContext context) {
     final data = context.watch<PatientDataProvider>();
     // Tên lấy từ /api/users/me; chưa tải được thì hiện email đăng nhập.
-    final displayName = context
-        .watch<ProfileProvider>()
-        .displayName(context.watch<UserProvider>().account.email);
+    final profile = context.watch<ProfileProvider>();
+    final displayName =
+        profile.displayName(context.watch<UserProvider>().account.email);
     final content = AppConfig.current.dataSource == DataSource.api
         ? context.watch<ContentProvider>()
         : null;
@@ -142,18 +143,13 @@ class _HomeOverview extends StatelessWidget {
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
-                      Container(
-                        width: 56,
-                        height: 56,
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFDAEBFF),
-                          borderRadius: BorderRadius.circular(28),
-                        ),
-                        child: const Icon(
-                          Icons.person_rounded,
-                          color: AppColors.primary,
-                          size: 28,
-                        ),
+                      PersonAvatar(
+                        key: const ValueKey('home-avatar'),
+                        mediaId: profile.profile?.avatarMediaId,
+                        radius: 28,
+                        icon: Icons.person_rounded,
+                        iconColor: AppColors.primary,
+                        background: const Color(0xFFDAEBFF),
                       ),
                       const SizedBox(width: 12),
                       Expanded(

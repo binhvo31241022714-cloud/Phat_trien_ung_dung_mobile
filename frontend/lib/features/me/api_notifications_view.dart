@@ -71,7 +71,16 @@ class _ApiNotificationsViewState extends State<ApiNotificationsView> {
   void dispose() {
     // Rời màn Thông báo: cập nhật số chưa đọc trên chuông.
     final content = _content;
-    if (content != null && content.signedIn) unawaited(content.loadUnread());
+    if (content != null && content.signedIn) {
+      final session = content.sessionGeneration;
+      // dispose runs while the widget tree is locked. Refresh after unmounting,
+      // and skip the request if the provider was disposed or the account changed.
+      scheduleMicrotask(() {
+        if (content.isSessionCurrent(session) && content.signedIn) {
+          unawaited(content.loadUnread());
+        }
+      });
+    }
     super.dispose();
   }
 
@@ -109,7 +118,8 @@ class _ApiNotificationsViewState extends State<ApiNotificationsView> {
     }());
     if (!current() || n.refId.isEmpty) return;
 
-    Future<void> openWith(Future<bool> Function() focus, String fallback) async {
+    Future<void> openWith(
+        Future<bool> Function() focus, String fallback) async {
       try {
         if (await focus()) showTab();
       } on ApiException catch (error) {
@@ -133,8 +143,7 @@ class _ApiNotificationsViewState extends State<ApiNotificationsView> {
     try {
       await appointments.refreshOne(n.refId);
     } on ApiException catch (error) {
-      if (current() &&
-          (error.statusCode == 403 || error.statusCode == 404)) {
+      if (current() && (error.statusCode == 403 || error.statusCode == 404)) {
         data.removeApiAppointment(n.refId, generation: dataSession);
       }
       say(error.message);

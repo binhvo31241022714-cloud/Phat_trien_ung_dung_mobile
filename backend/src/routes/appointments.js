@@ -384,6 +384,9 @@ router.post('/', auth, asyncHandler(async (req, res) => {
               ? 'Đề xuất tái khám này đã được đặt lịch'
               : 'Đề xuất tái khám này không còn hiệu lực');
           }
+          if (followUp.appointmentId !== undefined && followUp.appointmentId !== null && followUp.appointmentId !== '') {
+            throw fatalConflict('Đề xuất tái khám còn liên kết lịch hẹn cũ');
+          }
           if (followUp.serviceId && !quote.serviceIds.includes(followUp.serviceId)) {
             throw new ApiError(400, 'Lịch tái khám phải gồm dịch vụ bác sĩ đã đề xuất');
           }

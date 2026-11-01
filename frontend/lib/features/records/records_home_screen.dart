@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../providers/profile_provider.dart';
 import 'package:provider/provider.dart';
 import '../../core/config/app_config.dart';
 import '../../app/patient_navigation.dart';
@@ -57,7 +58,8 @@ class _RecordsHomeScreenState extends State<RecordsHomeScreen> {
         final navigator = _navigator.currentState;
         navigator?.popUntil((r) => r.isFirst);
         if (visit != null) {
-          navigator?.pushNamed(RecordsRoutes.visits, arguments: visit.patientId);
+          navigator?.pushNamed(RecordsRoutes.visits,
+              arguments: visit.patientId);
           navigator?.pushNamed(RecordsRoutes.visit, arguments: visit);
         } else if (followupsPatientId != null) {
           navigator?.pushNamed(RecordsRoutes.followups,
@@ -137,6 +139,7 @@ class _RecordsOverview extends StatelessWidget {
   Widget build(BuildContext context) {
     final data = context.watch<PatientDataProvider>();
     final p = data.recordsPatient;
+    final profiles = context.watch<ProfileProvider?>();
     final counts = [
       data
           .appointmentsFor(p.id)
@@ -154,6 +157,16 @@ class _RecordsOverview extends StatelessWidget {
       RecordsRoutes.treatments
     ];
     return RecordsPage(title: 'Hồ sơ nha khoa', children: [
+      if (profiles?.historyFamilyLoading == true)
+        const LinearProgressIndicator(),
+      if (profiles?.historyFamilyError != null)
+        Column(children: [
+          Text(
+              'Không tải được danh sách lịch sử: ${profiles!.historyFamilyError}'),
+          TextButton(
+              onPressed: profiles.loadHistoryFamily,
+              child: const Text('Thử lại')),
+        ]),
       RecordCard(children: [
         Row(children: [
           PersonAvatar(
@@ -196,17 +209,17 @@ class _RecordsOverview extends StatelessWidget {
                     borderRadius: BorderRadius.circular(30),
                     borderSide: const BorderSide(color: Color(0xFFCCCCCC)))),
             items: [
-              for (final patient in data.patients)
+              for (final patient in data.recordsPatients)
                 DropdownMenuItem(
                     value: patient.id,
                     child: PatientOptionLabel(
-                        '${patient.fullName} (${patient.isPrimary ? "Bản thân" : patient.relationship})',
+                        '${patient.fullName} (${patient.isPrimary ? "Bản thân" : patient.relationship})${patient.isArchived ? " · Đã lưu trữ · Chỉ xem lịch sử" : ""}',
                         avatarMediaId: patient.avatarMediaId))
             ],
             onChanged: (id) {
               if (id != null) {
                 if (AppConfig.current.dataSource == DataSource.api) {
-                  data.selectPatient(id);
+                  data.selectPatient(id, reload: false);
                 }
                 data.focusAppointmentsFor(id);
               }

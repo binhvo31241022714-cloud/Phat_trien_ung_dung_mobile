@@ -35,7 +35,7 @@ class FollowupScreen extends StatelessWidget {
             Text(recordDateTime(f.scheduledAt)),
             const SizedBox(height: 8),
             Text(names.doctor(f.doctorId, name: f.doctorName)),
-            if (f.isOpen) ...[
+            if (f.isOpen && data.canWritePatient(patientId)) ...[
               _bookingAction(context, names, data, f, generation),
               if (!(f.scheduledAt?.isAfter(DateTime.now()) ?? false))
                 const Text('Vui lòng chọn ngày khám mới trong bước đặt lịch.',
@@ -86,7 +86,8 @@ class FollowupScreen extends StatelessWidget {
         : f.doctorId;
     return RecordButton('Đặt lịch tái khám', () {
       // A callback from an obsolete route/session must not open booking.
-      if (!data.isSessionCurrent(generation) ||
+      if (!data.canWritePatient(patientId) ||
+          !data.isSessionCurrent(generation) ||
           !data.followupsFor(patientId).any(
               (item) => item.id == f.id && item.patientId == f.patientId)) {
         return;

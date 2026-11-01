@@ -22,7 +22,7 @@ class PaymentReceiptScreen extends StatelessWidget {
                 .where((v) => v.id == receipt.visitId)
                 .map((v) => v.patientId),
           };
-    final patients = data.patients
+    final patients = data.recordsPatients
         .where((p) => patientIds.length == 1 && patientIds.contains(p.id));
     return RecordsPage(title: 'Phiếu thanh toán', children: [
       RecordCard(children: [

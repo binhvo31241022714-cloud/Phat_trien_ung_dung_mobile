@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
+import 'package:frontend/data/models/user_profile.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
@@ -431,7 +432,8 @@ void main() {
       addTearDown(t.view.resetPhysicalSize);
       addTearDown(t.view.resetDevicePixelRatio);
       await t.pumpWidget(ChangeNotifierProvider(
-          create: (_) => PatientDataProvider(seedDemo: false),
+          create: (_) => PatientDataProvider(seedDemo: false)
+            ..syncPatients(const UserProfile(id: 'A'), []),
           child: const MaterialApp(home: TreatmentPhotosScreen(plan: plan))));
       await t.pumpAndSettle();
     }
@@ -500,6 +502,71 @@ void main() {
       await t.tap(find.byKey(const ValueKey('confirm-upload-photo')));
       await t.pumpAndSettle();
       expect(find.text('Liệu trình đã đủ 30 ảnh, hãy xóa bớt ảnh cũ'), findsOneWidget);
+    });
+
+    PatientDataProvider photoData(WidgetTester t) => t.element(find.byType(TreatmentPhotosScreen)).read<PatientDataProvider>();
+    void archivePhotoPatient(PatientDataProvider data) => data.syncPatients(
+        const UserProfile(id: 'B'), [], historyFamily: [FamilyMember.fromJson({
+          'id': 'A', 'fullName': 'Archived', 'isArchived': true,
+        })]);
+
+    testWidgets('archived photos stay viewable; retained upload callback cannot write', (t) async {
+      server.photos.add({'id': 'mine', 'phase': 'before', 'mediaId': 'pm1', 'canDelete': true});
+      await mountPhotos(t);
+      final callback = t.widget<FilledButton>(find.byKey(const ValueKey('add-treatment-photo'))).onPressed!;
+      archivePhotoPatient(photoData(t));
+      await t.pumpAndSettle();
+      expect(t.widget<FilledButton>(find.byKey(const ValueKey('add-treatment-photo'))).onPressed, isNull);
+      callback();
+      await t.pumpAndSettle();
+      expect(find.text('Chọn từ thư viện'), findsNothing);
+      await t.tap(find.byKey(const ValueKey('treatment-photo-mine')));
+      await t.pumpAndSettle();
+      expect(find.byType(InteractiveViewer), findsOneWidget);
+      expect(find.byTooltip('Xóa ảnh'), findsNothing);
+      expect(server.calls('POST', '/api/treatments/t1/photos'), isEmpty);
+      expect(server.calls('DELETE', '/api/treatments/t1/photos/mine'), isEmpty);
+    });
+
+    testWidgets('archive while upload dialog open prevents POST', (t) async {
+      await mountPhotos(t);
+      await t.tap(find.byKey(const ValueKey('add-treatment-photo')));
+      await t.pumpAndSettle();
+      await t.tap(find.text('Chụp ảnh'));
+      await t.pumpAndSettle();
+      archivePhotoPatient(photoData(t));
+      await t.tap(find.byKey(const ValueKey('confirm-upload-photo')));
+      await t.pumpAndSettle();
+      expect(server.calls('POST', '/api/treatments/t1/photos'), isEmpty);
+    });
+
+    testWidgets('archive while delete confirmation open prevents DELETE', (t) async {
+      server.photos.add({'id': 'mine', 'phase': 'before', 'mediaId': 'pm1', 'canDelete': true});
+      await mountPhotos(t);
+      await t.tap(find.byKey(const ValueKey('treatment-photo-mine')));
+      await t.pumpAndSettle();
+      await t.tap(find.byTooltip('Xóa ảnh'));
+      await t.pumpAndSettle();
+      archivePhotoPatient(photoData(t));
+      await t.tap(find.text('Xóa'));
+      await t.pumpAndSettle();
+      expect(server.calls('DELETE', '/api/treatments/t1/photos/mine'), isEmpty);
+    });
+
+    testWidgets('session reset removes existing photo overlay and blocks stale action', (t) async {
+      server.photos.add({'id': 'mine', 'phase': 'before', 'mediaId': 'pm1', 'canDelete': true});
+      await mountPhotos(t);
+      final data = photoData(t);
+      await t.tap(find.byKey(const ValueKey('treatment-photo-mine')));
+      await t.pumpAndSettle();
+      expect(find.byType(InteractiveViewer), findsOneWidget);
+      data.clearPrivateState();
+      data.syncPatients(const UserProfile(id:'B'), []);
+      await t.pumpAndSettle();
+      expect(find.byType(InteractiveViewer), findsNothing);
+      expect(find.byTooltip('Xóa ảnh'), findsNothing);
+      expect(find.text('Phiên xem ảnh đã kết thúc'), findsOneWidget);
+      expect(server.calls('DELETE', '/api/treatments/t1/photos/mine'), isEmpty);
     });
 
     testWidgets('đủ 30 ảnh thì khóa nút Thêm ảnh', (t) async {

@@ -43,7 +43,9 @@ class VisitDetailScreen extends StatelessWidget {
                 'Xem đơn thuốc',
                 () =>
                     RecordsRoutes.open(context, RecordsRoutes.prescription, p)),
-          if (!data.recordsAreDemoAndReadOnly && activeTreatments.isNotEmpty)
+          if (!data.recordsAreDemoAndReadOnly &&
+              data.canWritePatient(visit.patientId) &&
+              activeTreatments.isNotEmpty)
             RecordButton(
                 'Thêm vào liệu trình khám',
                 () => _chooseTreatment(
@@ -67,6 +69,10 @@ class VisitDetailScreen extends StatelessWidget {
     PatientDataProvider data,
     List<TreatmentPlan> treatments,
   ) async {
+    final generation = data.sessionGeneration;
+    if (!data.canWritePatient(visit.patientId)) {
+      return;
+    }
     final selected = await showDialog<TreatmentPlan>(
       context: context,
       builder: (context) => SimpleDialog(
@@ -110,7 +116,12 @@ class VisitDetailScreen extends StatelessWidget {
         ],
       ),
     );
-    if (selected == null || !context.mounted) return;
+    if (selected == null ||
+        !context.mounted ||
+        !data.isSessionCurrent(generation) ||
+        !data.canWritePatient(visit.patientId)) {
+      return;
+    }
 
     final availableSessions = selected.sessions
         .where((session) =>
@@ -157,7 +168,12 @@ class VisitDetailScreen extends StatelessWidget {
         ],
       ),
     );
-    if (chosenSession == null || !context.mounted) return;
+    if (chosenSession == null ||
+        !context.mounted ||
+        !data.isSessionCurrent(generation) ||
+        !data.canWritePatient(visit.patientId)) {
+      return;
+    }
 
     try {
       await data.linkVisitToTreatment(

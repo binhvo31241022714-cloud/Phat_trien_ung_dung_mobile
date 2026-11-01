@@ -5,6 +5,7 @@ class Patient {
   final DateTime dateOfBirth;
   final String relationship;
   final bool isPrimary;
+  final bool isArchived;
   final String? avatarAsset;
 
   /// Ảnh đại diện trên backend (media/{id}), ưu tiên hơn [avatarAsset].
@@ -17,6 +18,7 @@ class Patient {
     required this.dateOfBirth,
     required this.relationship,
     this.isPrimary = false,
+    this.isArchived = false,
     this.avatarAsset,
     this.avatarMediaId,
   });

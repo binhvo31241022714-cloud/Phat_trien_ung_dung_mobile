@@ -92,7 +92,8 @@ class _AppointmentsScreenState extends State<AppointmentsScreen> {
     final data = context.watch<PatientDataProvider>();
     final catalog = isApi ? context.watch<CatalogProvider>() : null;
     final source = isApi ? context.watch<AppointmentsProvider?>() : null;
-    final patients = data.patients.where((p) => p.id == widget.patientId);
+    final patients =
+        data.recordsPatients.where((p) => p.id == widget.patientId);
     if (patients.isEmpty) {
       return const RecordsPage(
           title: 'Lịch hẹn',
@@ -142,10 +143,13 @@ class _AppointmentsScreenState extends State<AppointmentsScreen> {
                 appointments.isEmpty
                     ? 'Chưa có lịch hẹn.'
                     : 'Chưa có lịch hẹn trong mục ${_tabs[_tab].label.toLowerCase()}.',
-                action: RecordButton('Đặt lịch khám', () {
-                  data.requestBookingFor(widget.patientId);
-                  PatientNavigation.selectTab(context, 1);
-                })),
+                action: !data.canWritePatient(widget.patientId)
+                    ? null
+                    : RecordButton('Đặt lịch khám', () {
+                        if (!data.canWritePatient(widget.patientId)) return;
+                        data.requestBookingFor(widget.patientId);
+                        PatientNavigation.selectTab(context, 1);
+                      })),
           for (final a in visible) _appointmentCard(context, a, data, catalog),
           if (history.isNotEmpty) ...[
             const Divider(height: 32),

@@ -1,5 +1,7 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
+const { createFakeDb, installFakeFirebase } = require('./module2/support/fakeFirestore.cjs');
+installFakeFirebase(createFakeDb());
 const {
   canTransition,
   isAppointmentActive,

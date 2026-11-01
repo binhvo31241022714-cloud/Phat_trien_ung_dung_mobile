@@ -16,6 +16,9 @@ const {
   db,
   getRecordOrThrow,
   assertRecordAccess,
+  historyChildMatches,
+  historyOwnershipMatches,
+  assertPatientClinicalWrite,
   document,
   documents,
   asyncHandler,
@@ -177,7 +180,7 @@ router.get('/:id/sessions', auth, asyncHandler(async (req, res) => {
     .where('treatmentId', '==', req.params.id)
     .get();
   res.json(snapshot.docs
-    .filter((doc) => doc.data().patientId === treatment.data.patientId)
+    .filter((doc) => historyChildMatches(req.user.uid, treatment.data, doc.data(), 'treatmentId', req.params.id))
     .map((doc) => ({ id: doc.id, ...doc.data() })));
 }));
 
@@ -206,15 +209,7 @@ router.post('/:id/sessions/link-visit', auth, asyncHandler(async (req, res) => {
       return { ref: snapshot.ref, id: snapshot.id, data: snapshot.data() };
     };
     const assertAccess = async (record) => {
-      const patientId = record.data.patientId;
-      const allowed = patientId && (patientId === req.user.uid ||
-        (await transaction.get(db.collection('users').doc(req.user.uid)
-          .collection('family_members').doc(patientId))).exists);
-      if (!allowed) {
-        const error = new Error('Bạn không có quyền xem hồ sơ này');
-        error.status = 403;
-        throw error;
-      }
+      await assertPatientClinicalWrite(transaction, req.user.uid, record.data);
     };
     const treatment = await readRecord('treatments', req.params.id);
     const visit = await readRecord('visits', visitId.trim());
@@ -310,7 +305,9 @@ router.get('/:id/photos', auth, asyncHandler(async (req, res) => {
     ...photosSnapshot.docs,
     ...treatmentPhotosSnapshot.docs,
   ]
-    .filter((doc) => doc.data().patientId === treatment.data.patientId)
+    .filter((doc) => isStaff(req)
+      ? doc.data().patientId === treatment.data.patientId
+      : historyChildMatches(req.user.uid, treatment.data, doc.data(), 'treatmentId', req.params.id))
     .map((doc) => photoView(doc, req));
 
   const embeddedPhotos = Array.isArray(treatment.data.photos)
@@ -320,7 +317,9 @@ router.get('/:id/photos', auth, asyncHandler(async (req, res) => {
     ...storedPhotos,
     ...embeddedPhotos.map((photo, index) => ({
       id: `${req.params.id}_photo_${index + 1}`, ...photo, canDelete: false,
-    })),
+    })).filter(photo => isStaff(req) ||
+      (historyOwnershipMatches(req.user.uid, photo) &&
+       (photo.patientId === undefined || photo.patientId === treatment.data.patientId))),
   ]);
 }));
 
@@ -347,6 +346,7 @@ router.post('/:id/photos', auth, asyncHandler(async (req, res) => {
       if (!ownerAccountId) throw fail(400, 'Liệu trình chưa gắn tài khoản bệnh nhân (thiếu accountId)');
     } else {
       const uid = req.user.uid;
+      await assertPatientClinicalWrite(transaction, uid, treatment);
       if (treatment.accountId && treatment.accountId !== uid) {
         throw fail(403, 'Bạn không có quyền với liệu trình này');
       }
@@ -408,6 +408,12 @@ router.delete('/:id/photos/:photoId', auth, asyncHandler(async (req, res) => {
     if (!photo.mediaId) throw fail(409, 'Ảnh cũ của phòng khám, không xóa được trong ứng dụng');
     if (photo.createdBy !== req.user.uid && !isStaff(req)) {
       throw fail(403, 'Chỉ người tải ảnh lên hoặc nhân viên phòng khám được xóa ảnh này');
+    }
+    if (!isStaff(req)) {
+      const treatment = await transaction.get(db.collection('treatments').doc(req.params.id));
+      if (!treatment.exists) throw fail(404, 'Không tìm thấy liệu trình');
+      await assertPatientClinicalWrite(transaction, req.user.uid, treatment.data());
+      if (!historyChildMatches(req.user.uid, treatment.data(), photo, 'treatmentId', req.params.id)) throw fail(403, 'Bạn không có quyền với ảnh này');
     }
     transaction.delete(db.collection('media').doc(photo.mediaId));
     transaction.delete(photoRef);

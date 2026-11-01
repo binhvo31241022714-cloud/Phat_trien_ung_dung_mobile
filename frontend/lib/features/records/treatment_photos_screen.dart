@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../../data/providers/patient_data_provider.dart';
 import '../../core/config/app_config.dart';
 import '../../core/media/photo_picker.dart';
 import '../../data/models/patient_records.dart';
@@ -52,10 +54,8 @@ enum _Phase { before, after, other }
 class _TreatmentPhoto {
   _TreatmentPhoto.fromJson(Map<String, dynamic> json)
       : id = json['id']?.toString() ?? '',
-        phase = switch ((json['phase'] ?? json['type'])
-            ?.toString()
-            .trim()
-            .toLowerCase()) {
+        phase = switch (
+            (json['phase'] ?? json['type'])?.toString().trim().toLowerCase()) {
           'before' || 'trước' => _Phase.before,
           'after' || 'sau' => _Phase.after,
           _ => _Phase.other,
@@ -88,14 +88,19 @@ class _ApiTreatmentPhotosState extends State<_ApiTreatmentPhotos> {
   String? _error;
   bool _uploading = false;
   int _request = 0;
+  late final int _session;
 
   @override
   void initState() {
     super.initState();
+    _session = context.read<PatientDataProvider>().sessionGeneration;
     _load();
   }
 
   Future<void> _load() async {
+    final data = context.read<PatientDataProvider>();
+    final generation = data.sessionGeneration;
+    if (!data.isSessionCurrent(_session)) return;
     final request = ++_request;
     setState(() {
       _loading = true;
@@ -103,17 +108,24 @@ class _ApiTreatmentPhotosState extends State<_ApiTreatmentPhotos> {
     });
     try {
       final rows = await MediaService.shared.treatmentPhotos(widget.plan.id);
-      if (!mounted || request != _request) return;
+      if (!mounted ||
+          !data.isSessionCurrent(generation) ||
+          request != _request) {
+        return;
+      }
       setState(() {
         _photos = rows.map(_TreatmentPhoto.fromJson).toList();
         _loading = false;
       });
     } catch (e) {
-      if (!mounted || request != _request) return;
+      if (!mounted ||
+          !data.isSessionCurrent(generation) ||
+          request != _request) {
+        return;
+      }
       setState(() {
-        _error = e is ApiException
-            ? e.message
-            : 'Không tải được hình ảnh điều trị.';
+        _error =
+            e is ApiException ? e.message : 'Không tải được hình ảnh điều trị.';
         _loading = false;
       });
     }
@@ -126,6 +138,13 @@ class _ApiTreatmentPhotosState extends State<_ApiTreatmentPhotos> {
   }
 
   Future<void> _add() async {
+    final data = context.read<PatientDataProvider>();
+    final generation = data.sessionGeneration;
+    bool allowed() =>
+        mounted &&
+        data.isSessionCurrent(generation) &&
+        data.canWritePatient(widget.plan.patientId);
+    if (!allowed()) return;
     final PhotoChoice? choice;
     try {
       choice = await choosePhoto(context, title: 'Thêm ảnh điều trị');
@@ -133,11 +152,11 @@ class _ApiTreatmentPhotosState extends State<_ApiTreatmentPhotos> {
       if (mounted) _message(e.message);
       return;
     }
-    if (choice is! PhotoPicked || !mounted) return;
+    if (choice is! PhotoPicked || !mounted || !allowed()) return;
     final details = await showDialog<_UploadDetails>(
         context: context,
         builder: (_) => _UploadDialog(sessions: widget.plan.sessions));
-    if (details == null || !mounted) return;
+    if (details == null || !allowed()) return;
     setState(() => _uploading = true);
     try {
       await MediaService.shared.uploadTreatmentPhoto(widget.plan.id,
@@ -145,7 +164,7 @@ class _ApiTreatmentPhotosState extends State<_ApiTreatmentPhotos> {
           image: choice.image,
           sessionId: details.sessionId,
           note: details.note);
-      if (!mounted) return;
+      if (!allowed()) return;
       _message('Đã tải ảnh lên.');
       await _load();
     } catch (e) {
@@ -158,6 +177,13 @@ class _ApiTreatmentPhotosState extends State<_ApiTreatmentPhotos> {
   }
 
   Future<void> _delete(_TreatmentPhoto photo) async {
+    final data = context.read<PatientDataProvider>();
+    final generation = data.sessionGeneration;
+    bool allowed() =>
+        mounted &&
+        data.isSessionCurrent(generation) &&
+        data.canWritePatient(widget.plan.patientId);
+    if (!allowed()) return;
     final confirmed = await showDialog<bool>(
         context: context,
         builder: (dialogContext) => AlertDialog(
@@ -172,11 +198,11 @@ class _ApiTreatmentPhotosState extends State<_ApiTreatmentPhotos> {
                     child: const Text('Xóa')),
               ],
             ));
-    if (confirmed != true || !mounted) return;
+    if (confirmed != true || !allowed()) return;
     try {
       await MediaService.shared.deleteTreatmentPhoto(widget.plan.id, photo.id);
       MediaCache.evict(photo.mediaId);
-      if (!mounted) return;
+      if (!allowed()) return;
       _message('Đã xóa ảnh.');
       await _load();
     } catch (e) {
@@ -186,48 +212,70 @@ class _ApiTreatmentPhotosState extends State<_ApiTreatmentPhotos> {
     }
   }
 
-  void _open(_TreatmentPhoto photo) => showDialog<void>(
-        context: context,
-        builder: (dialogContext) => Dialog.fullscreen(
-          backgroundColor: Colors.black,
-          child: Stack(children: [
-            Positioned.fill(
-              child: InteractiveViewer(
-                maxScale: 5,
-                child: Center(child: _PhotoImage(photo, fit: BoxFit.contain)),
+  void _open(_TreatmentPhoto photo) {
+    final data = context.read<PatientDataProvider>();
+    if (!data.isSessionCurrent(_session)) return;
+    showDialog<void>(
+      context: context,
+      builder: (dialogContext) => ListenableBuilder(
+        listenable: data,
+        builder: (context, child) {
+          if (!data.isSessionCurrent(_session) ||
+              !data.recordsPatients.any((p) => p.id == widget.plan.patientId)) {
+            return AlertDialog(
+                title: const Text('Phiên xem ảnh đã kết thúc'),
+                actions: [
+                  TextButton(
+                      onPressed: () => Navigator.pop(dialogContext),
+                      child: const Text('Đóng'))
+                ]);
+          }
+          return Dialog.fullscreen(
+            backgroundColor: Colors.black,
+            child: Stack(children: [
+              Positioned.fill(
+                child: InteractiveViewer(
+                  maxScale: 5,
+                  child: Center(child: _PhotoImage(photo, fit: BoxFit.contain)),
+                ),
               ),
-            ),
-            SafeArea(
-              child: Row(children: [
-                IconButton(
-                    tooltip: 'Đóng',
-                    color: Colors.white,
-                    onPressed: () => Navigator.pop(dialogContext),
-                    icon: const Icon(Icons.close)),
-                const Spacer(),
-                if (photo.canDelete)
+              SafeArea(
+                child: Row(children: [
                   IconButton(
-                      tooltip: 'Xóa ảnh',
+                      tooltip: 'Đóng',
                       color: Colors.white,
-                      onPressed: () {
-                        Navigator.pop(dialogContext);
-                        _delete(photo);
-                      },
-                      icon: const Icon(Icons.delete_outline)),
-              ]),
-            ),
-            if (photo.note != null)
-              Positioned(
-                left: 16,
-                right: 16,
-                bottom: 24,
-                child: Text(photo.note!,
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(color: Colors.white)),
+                      onPressed: () => Navigator.pop(dialogContext),
+                      icon: const Icon(Icons.close)),
+                  const Spacer(),
+                  if (photo.canDelete &&
+                      context
+                          .read<PatientDataProvider>()
+                          .canWritePatient(widget.plan.patientId))
+                    IconButton(
+                        tooltip: 'Xóa ảnh',
+                        color: Colors.white,
+                        onPressed: () {
+                          Navigator.pop(dialogContext);
+                          _delete(photo);
+                        },
+                        icon: const Icon(Icons.delete_outline)),
+                ]),
               ),
-          ]),
-        ),
-      );
+              if (photo.note != null)
+                Positioned(
+                  left: 16,
+                  right: 16,
+                  bottom: 24,
+                  child: Text(photo.note!,
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(color: Colors.white)),
+                ),
+            ]),
+          );
+        },
+      ),
+    );
+  }
 
   Widget _section(String title, List<_TreatmentPhoto> photos) =>
       Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
@@ -265,6 +313,14 @@ class _ApiTreatmentPhotosState extends State<_ApiTreatmentPhotos> {
 
   @override
   Widget build(BuildContext context) {
+    final data = context.watch<PatientDataProvider>();
+    if (!data.isSessionCurrent(_session) ||
+        !data.recordsPatients.any((p) => p.id == widget.plan.patientId)) {
+      return const RecordsPage(
+          title: 'Hình ảnh điều trị',
+          useRecordsState: false,
+          children: [RecordEmpty('Hồ sơ không còn khả dụng trong phiên này.')]);
+    }
     final byPhase = {
       for (final phase in _Phase.values)
         phase: _photos.where((p) => p.phase == phase).toList(),
@@ -300,7 +356,13 @@ class _ApiTreatmentPhotosState extends State<_ApiTreatmentPhotos> {
             width: double.infinity,
             child: FilledButton.icon(
               key: const ValueKey('add-treatment-photo'),
-              onPressed: _uploading || full ? null : _add,
+              onPressed: _uploading ||
+                      full ||
+                      !context
+                          .watch<PatientDataProvider>()
+                          .canWritePatient(widget.plan.patientId)
+                  ? null
+                  : _add,
               icon: _uploading
                   ? const SizedBox.square(
                       dimension: 16,
@@ -338,8 +400,7 @@ class _PhotoImage extends StatelessWidget {
     }
     if (url != null && url.startsWith('https://')) {
       return Image.network(url,
-          fit: fit,
-          errorBuilder: (context, error, stack) => _placeholder);
+          fit: fit, errorBuilder: (context, error, stack) => _placeholder);
     }
     return _placeholder;
   }
@@ -383,8 +444,7 @@ class _UploadDialogState extends State<_UploadDialog> {
               ButtonSegment(value: _Phase.after, label: Text('Sau')),
             ],
             selected: {_phase},
-            onSelectionChanged: (value) =>
-                setState(() => _phase = value.first),
+            onSelectionChanged: (value) => setState(() => _phase = value.first),
           ),
           if (sessions.isNotEmpty) ...[
             const SizedBox(height: 12),
@@ -405,14 +465,14 @@ class _UploadDialogState extends State<_UploadDialog> {
           TextField(
             controller: _note,
             maxLength: 500,
-            decoration: const InputDecoration(labelText: 'Ghi chú (không bắt buộc)'),
+            decoration:
+                const InputDecoration(labelText: 'Ghi chú (không bắt buộc)'),
           ),
         ]),
       ),
       actions: [
         TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Hủy')),
+            onPressed: () => Navigator.pop(context), child: const Text('Hủy')),
         FilledButton(
             key: const ValueKey('confirm-upload-photo'),
             onPressed: () => Navigator.pop(

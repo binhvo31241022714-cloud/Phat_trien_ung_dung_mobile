@@ -1,6 +1,7 @@
 const express = require('express');
 const { db } = require('../config/firebase');
 const { ApiError } = require('./booking');
+const MAX_IMAGE_BYTES = 700 * 1024;
 const jsonBody = express.json({ limit: '1mb' });
 function decodeImage(body = {}) {
   if (typeof body.image !== 'string' || !body.image.trim()) throw new ApiError(400, 'Thiếu ảnh');
@@ -11,7 +12,7 @@ function decodeImage(body = {}) {
   }
   let buffer;
   try { buffer = Buffer.from(encoded, 'base64'); } catch (_) { throw new ApiError(400, 'Ảnh base64 không hợp lệ'); }
-  if (!buffer.length || buffer.length > 700 * 1024) throw new ApiError(buffer.length > 700 * 1024 ? 413 : 400, 'Ảnh phải có kích thước từ 1 byte đến 700 KB');
+  if (!buffer.length || buffer.length > MAX_IMAGE_BYTES) throw new ApiError(buffer.length > MAX_IMAGE_BYTES ? 413 : 400, 'Ảnh phải có kích thước từ 1 byte đến 700 KB');
   const mimeType = buffer[0] === 0xff && buffer[1] === 0xd8 && buffer[2] === 0xff ? 'image/jpeg' :
     buffer[0] === 0x89 && buffer[1] === 0x50 && buffer[2] === 0x4e && buffer[3] === 0x47 ? 'image/png' : null;
   if (!mimeType) throw new ApiError(400, 'Chỉ hỗ trợ ảnh JPEG hoặc PNG');
@@ -36,4 +37,4 @@ async function replaceAvatar(profileRef, { uid, patientId, image, isAllowed }) {
   });
   return result;
 }
-module.exports = { jsonBody, decodeImage, mediaDocument, mediaUrl, replaceAvatar };
+module.exports = { jsonBody, MAX_IMAGE_BYTES, decodeImage, mediaDocument, mediaUrl, replaceAvatar };

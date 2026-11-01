@@ -3,6 +3,7 @@ const { db } = require('../config/firebase');
 const auth = require('../middleware/auth');
 const requireStaff = require('../middleware/requireStaff');
 const { runReminders } = require('../jobs/reminders');
+const { visibleNotificationDocs, readValidReminders } = require('../utils/notificationVisibility');
 
 router.use(auth);
 const owned = uid => db.collection('notifications').where('userId', '==', uid);
@@ -18,7 +19,8 @@ function millis(value) {
 
 router.get('/', async (req, res) => {
   const snap = await owned(req.user.uid).get();
-  const notifications = snap.docs.map(doc => ({ ...doc.data(), id: doc.id }))
+  const visible = await visibleNotificationDocs(req.user.uid, snap.docs);
+  const notifications = visible.map(doc => ({ ...doc.data(), id: doc.id }))
     .filter(item => item.userId === req.user.uid);
   notifications.sort((a, b) => millis(b.createdAt) - millis(a.createdAt) || a.id.localeCompare(b.id));
   res.json(notifications);
@@ -26,19 +28,26 @@ router.get('/', async (req, res) => {
 
 router.get('/unread-count', async (req, res) => {
   const snap = await owned(req.user.uid).get();
-  res.json({ count: snap.docs.filter(doc => doc.data().userId === req.user.uid && doc.data().isRead === false).length });
+  const visible = await visibleNotificationDocs(req.user.uid, snap.docs);
+  res.json({ count: visible.filter(doc => doc.data().isRead === false).length });
 });
 
 router.patch('/read-all', async (req, res) => {
   const snap = await owned(req.user.uid).get();
   const unread = snap.docs.filter(doc => doc.data().userId === req.user.uid && doc.data().isRead === false);
-  // Stay below the Firestore write batch limit. Each batch is atomic; retries are idempotent.
-  for (let offset = 0; offset < unread.length; offset += 450) {
+  const events = unread.filter(doc => doc.data().type !== 'appointment_reminder');
+  const reminders = unread.filter(doc => doc.data().type === 'appointment_reminder');
+  let updatedCount = 0;
+  // Preserve event batches. Reminder validity is rechecked inside small transactions.
+  for (let offset = 0; offset < events.length; offset += 450) {
     const batch = db.batch();
-    for (const doc of unread.slice(offset, offset + 450)) batch.update(doc.ref, { isRead: true });
+    const chunk = events.slice(offset, offset + 450);
+    for (const doc of chunk) batch.update(doc.ref, { isRead: true });
     await batch.commit();
+    updatedCount += chunk.length;
   }
-  res.json({ updatedCount: unread.length });
+  updatedCount += await readValidReminders(req.user.uid, reminders);
+  res.json({ updatedCount });
 });
 
 // POST /api/notifications/run-reminders - staff chạy nhắc lịch ngay (demo).

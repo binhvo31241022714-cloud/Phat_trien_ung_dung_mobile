@@ -10,6 +10,7 @@ class FamilyMember {
   final String phone;
   final String gender;
   final HealthInfo health;
+  final bool isArchived;
 
   /// Ảnh đại diện (media/{id}); null khi chưa có ảnh. Không gửi trong toJson.
   final String? avatarMediaId;
@@ -23,6 +24,7 @@ class FamilyMember {
     this.gender = '',
     this.health = const HealthInfo(),
     this.avatarMediaId,
+    this.isArchived = false,
   });
 
   FamilyMember withAvatar(String? mediaId) => FamilyMember(
@@ -34,10 +36,12 @@ class FamilyMember {
         gender: gender,
         health: health,
         avatarMediaId: mediaId,
+        isArchived: isArchived,
       );
 
   factory FamilyMember.fromJson(Map<String, dynamic> json) => FamilyMember(
         id: readString(json['id']),
+        isArchived: json['isArchived'] == true,
         fullName: readString(json['fullName']),
         relationship: readString(json['relationship']),
         birthday: readDate(json['birthday']),

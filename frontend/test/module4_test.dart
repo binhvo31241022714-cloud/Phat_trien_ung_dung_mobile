@@ -385,6 +385,31 @@ void main() {
     expect(find.text('Đã đọc'), findsOneWidget);
     expect(p.unreadCount, 0);
   });
+  testWidgets('leaving notifications refreshes unread after unmount',
+      (tester) async {
+    final b = Backend();
+    final p = await ready(b);
+    final visible = ValueNotifier(true);
+    await mount(tester, b, p, Builder(builder: (context) {
+      context.watch<ContentProvider>();
+      return ValueListenableBuilder<bool>(
+          valueListenable: visible,
+          builder: (_, show, __) =>
+              show ? const ApiNotificationsView() : const SizedBox.shrink());
+    }));
+    b.requests.clear();
+    visible.value = false;
+    await tester.pumpAndSettle();
+    expect(tester.takeException(), isNull);
+    expect(
+        b.requests
+            .where((r) => r.url.path == '/api/notifications/unread-count'),
+        hasLength(1));
+    await tester.pumpWidget(const SizedBox.shrink());
+    visible.dispose();
+    p.dispose();
+  });
+
   testWidgets('notifications empty UI', (tester) async {
     final b = Backend()..empty = true;
     final p = await ready(b);

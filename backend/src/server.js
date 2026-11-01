@@ -3,7 +3,8 @@ const cors = require('cors');
 
 const app = express();
 app.use(cors());
-// Route ảnh nhận body tới 1 MB, các route khác giữ 100 KB (xem utils/media.js)
+// JSON toàn API: 1 MiB (1.048.576 bytes), gồm các route ảnh.
+// Ảnh sau giải mã: tối đa 716.800 bytes; field validation độc lập với transport limit.
 app.use(require('./utils/media').jsonBody);
 
 app.get('/', (req, res) => res.send('API nha khoa đang chạy'));

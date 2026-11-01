@@ -32,10 +32,17 @@ class PatientDataProvider extends SessionNotifier {
   }
 
   int _recordsRequest = 0;
+  int _focusRequest = 0;
+  int _unavailableRecords = 0;
+  ApiException? _recordsFailure;
   void clearPrivateState() {
     invalidateSession();
     _recordsRequest++;
+    _focusRequest++;
+    _unavailableRecords = 0;
+    _recordsFailure = null;
     _patients.clear();
+    _historyPatients.clear();
     _appointments.clear();
     _notifications.clear();
     _savedArticleIds.clear();
@@ -61,6 +68,7 @@ class PatientDataProvider extends SessionNotifier {
   }
 
   final List<Patient> _patients = List.of(MockData.patients);
+  final List<Patient> _historyPatients = [];
   final List<Appointment> _appointments = List.of(MockData.appointments);
   final List<PatientNotification> _notifications =
       List.of(MockData.notifications);
@@ -75,6 +83,23 @@ class PatientDataProvider extends SessionNotifier {
   String? _recordsError;
 
   UnmodifiableListView<Patient> get patients => UnmodifiableListView(_patients);
+  List<Patient> get recordsPatients => List.unmodifiable([
+        ..._patients,
+        for (final p in _historyPatients)
+          if (!_patients.any((a) => a.id == p.id))
+            Patient(
+                id: p.id,
+                fullName: p.fullName,
+                phone: p.phone,
+                dateOfBirth: p.dateOfBirth,
+                relationship: p.relationship,
+                avatarMediaId: p.avatarMediaId,
+                isArchived: true),
+      ]);
+  bool canWritePatient(String id) =>
+      !isDisposed && _patients.any((p) => p.id == id && !p.isArchived);
+  bool isArchivedPatient(String id) =>
+      recordsPatients.any((p) => p.id == id && p.isArchived);
   List<Patient> get familyMembers => patients;
   List<DentalService> get services => MockData.services;
   List<Doctor> get doctors => MockData.doctors;
@@ -100,6 +125,7 @@ class PatientDataProvider extends SessionNotifier {
       : MockData.followups;
   bool get recordsLoading => _recordsLoading;
   String? get recordsError => _recordsError;
+  int get unavailableRecords => _unavailableRecords;
   UnmodifiableListView<PatientNotification> get notifications =>
       UnmodifiableListView(_notifications);
   UnmodifiableSetView<String> get savedArticleIds =>
@@ -129,7 +155,8 @@ class PatientDataProvider extends SessionNotifier {
   String? recordsFollowupsPatientId;
   void focusAppointmentsFor(String patientId,
       {bool showAppointments = false, String? appointmentId}) {
-    if (!patients.any((p) => p.id == patientId)) return;
+    if (!recordsPatients.any((p) => p.id == patientId)) return;
+    _focusRequest++;
     _appointmentPatientId = patientId;
     recordsFocusVersion++;
     recordsShowAppointments = showAppointments;
@@ -144,16 +171,35 @@ class PatientDataProvider extends SessionNotifier {
   /// có dữ liệu), chọn đúng người khám, tải lại hồ sơ rồi yêu cầu tab Hồ sơ mở
   /// màn Lịch tái khám. Trả false nếu phiên đổi giữa chừng; lỗi API ném ra.
   Future<bool> focusFollowUp(String followUpId) async {
+    final focus = ++_focusRequest;
+    recordsVisit = null;
+    recordsFollowupsPatientId = null;
     final generation = sessionGeneration;
-    final detail = Followup.fromJson(await _recordsService.followup(followUpId));
-    if (!isSessionCurrent(generation)) return false;
-    if (!_patients.any((p) => p.id == detail.patientId)) {
-      throw const ApiException('Hồ sơ này không còn trong danh sách người thân.');
+    final raw = await _recordsService.followup(followUpId);
+    if (!isSessionCurrent(generation) || focus != _focusRequest) return false;
+    _checkRecord(raw,
+        patientId: raw['patientId'] as String? ?? '', expectedId: followUpId);
+    final detail = Followup.fromJson(raw);
+    if (!isSessionCurrent(generation) || focus != _focusRequest) return false;
+    if (!recordsPatients.any((p) => p.id == detail.patientId)) {
+      throw const ApiException(
+          'Hồ sơ này không còn trong danh sách người thân.');
     }
     _selectedPatientId = detail.patientId;
     _appointmentPatientId = detail.patientId;
-    await loadRecords(patientId: detail.patientId);
-    if (!isSessionCurrent(generation)) return false;
+    final loading = loadRecords(patientId: detail.patientId);
+    final request = _recordsRequest;
+    await loading;
+    if (!isSessionCurrent(generation) ||
+        focus != _focusRequest ||
+        request != _recordsRequest) {
+      return false;
+    }
+    if (_recordsFailure != null) throw _recordsFailure!;
+    if (!_apiFollowups.any((f) => f.id == followUpId)) {
+      throw const ApiException('Hồ sơ không còn khả dụng. Vui lòng tải lại.',
+          statusCode: 404);
+    }
     recordsFollowupsPatientId = detail.patientId;
     recordsVisit = null;
     recordsAppointmentId = null;
@@ -168,18 +214,37 @@ class PatientDataProvider extends SessionNotifier {
   /// cầu tab Hồ sơ mở lần khám. Trả về false nếu phiên đã đổi giữa chừng.
   /// Lỗi API (403, 404, mất mạng) được ném ra cho nơi gọi báo người dùng.
   Future<bool> focusVisit(String visitId) async {
+    final focus = ++_focusRequest;
+    recordsVisit = null;
+    recordsFollowupsPatientId = null;
     final generation = sessionGeneration;
-    final detail = Visit.fromJson(await _recordsService.visit(visitId));
-    if (!isSessionCurrent(generation)) return false;
-    if (!_patients.any((p) => p.id == detail.patientId)) {
-      throw const ApiException('Hồ sơ này không còn trong danh sách người thân.');
+    final raw = await _recordsService.visit(visitId);
+    if (!isSessionCurrent(generation) || focus != _focusRequest) return false;
+    _checkRecord(raw,
+        patientId: raw['patientId'] as String? ?? '', expectedId: visitId);
+    final detail = Visit.fromJson(raw);
+    if (!isSessionCurrent(generation) || focus != _focusRequest) return false;
+    if (!recordsPatients.any((p) => p.id == detail.patientId)) {
+      throw const ApiException(
+          'Hồ sơ này không còn trong danh sách người thân.');
     }
     _selectedPatientId = detail.patientId;
     _appointmentPatientId = detail.patientId;
-    await loadRecords(patientId: detail.patientId);
-    if (!isSessionCurrent(generation)) return false;
-    recordsVisit =
-        _apiVisits.where((v) => v.id == detail.id).firstOrNull ?? detail;
+    final loading = loadRecords(patientId: detail.patientId);
+    final request = _recordsRequest;
+    await loading;
+    if (!isSessionCurrent(generation) ||
+        focus != _focusRequest ||
+        request != _recordsRequest) {
+      return false;
+    }
+    if (_recordsFailure != null) throw _recordsFailure!;
+    final fresh = _apiVisits.where((v) => v.id == visitId).firstOrNull;
+    if (fresh == null) {
+      throw const ApiException('Hồ sơ không còn khả dụng. Vui lòng tải lại.',
+          statusCode: 404);
+    }
+    recordsVisit = fresh;
     recordsFollowupsPatientId = null;
     recordsAppointmentId = null;
     recordsShowAppointments = false;
@@ -191,10 +256,10 @@ class PatientDataProvider extends SessionNotifier {
   String get selectedPatientId => _selectedPatientId;
 
   Patient get selectedPatient =>
-      patients.firstWhere((patient) => patient.id == _selectedPatientId);
+      recordsPatients.firstWhere((patient) => patient.id == _selectedPatientId);
 
   void syncPatients(UserProfile profile, List<FamilyMember> family,
-      {int? generation}) {
+      {int? generation, List<FamilyMember>? historyFamily}) {
     if (isDisposed || generation != null && !isSessionCurrent(generation)) {
       return;
     }
@@ -209,21 +274,38 @@ class PatientDataProvider extends SessionNotifier {
         avatarMediaId: profile.avatarMediaId,
       ),
       for (final member in family)
-        Patient(
-          id: member.id,
-          fullName: member.fullName,
-          phone: member.phone,
-          dateOfBirth: member.birthday ?? DateTime(1970),
-          relationship: member.relationship,
-          avatarMediaId: member.avatarMediaId,
-        ),
+        if (!member.isArchived)
+          Patient(
+            id: member.id,
+            fullName: member.fullName,
+            phone: member.phone,
+            dateOfBirth: member.birthday ?? DateTime(1970),
+            relationship: member.relationship,
+            avatarMediaId: member.avatarMediaId,
+          ),
     ];
     if (patients.isEmpty) return;
     _patients
       ..clear()
       ..addAll(patients);
+    if (historyFamily != null) {
+      _historyPatients
+        ..clear()
+        ..addAll([
+          patients.first,
+          for (final member in historyFamily)
+            Patient(
+                id: member.id,
+                fullName: member.fullName,
+                phone: member.phone,
+                dateOfBirth: member.birthday ?? DateTime(1970),
+                relationship: member.relationship,
+                avatarMediaId: member.avatarMediaId,
+                isArchived: member.isArchived),
+        ]);
+    }
     bool missing(String? id) =>
-        id != null && !_patients.any((patient) => patient.id == id);
+        id != null && !recordsPatients.any((patient) => patient.id == id);
     if (missing(_selectedPatientId)) {
       _selectedPatientId = profile.id;
     }
@@ -249,9 +331,10 @@ class PatientDataProvider extends SessionNotifier {
       return;
     }
 
-    if (isDisposed || _patients.isEmpty) return;
+    if (isDisposed || recordsPatients.isEmpty) return;
     final id = patientId ?? _selectedPatientId;
-    if (!_patients.any((patient) => patient.id == id) && patientId != null) {
+    if (!recordsPatients.any((patient) => patient.id == id) &&
+        patientId != null) {
       return;
     }
 
@@ -261,6 +344,8 @@ class PatientDataProvider extends SessionNotifier {
         isSessionCurrent(generation) && request == _recordsRequest;
     _recordsLoading = true;
     _recordsError = null;
+    _recordsFailure = null;
+    _unavailableRecords = 0;
     notifyListeners();
     try {
       final visitRows = await _recordsService.visits(id);
@@ -271,58 +356,207 @@ class PatientDataProvider extends SessionNotifier {
       if (!current()) return;
       final followupRows = await _recordsService.followups(id);
       if (!current()) return;
+      // Validate list entries before using their IDs in detail URLs. Legacy
+      // optional fields remain optional; explicit contradictory links do not.
+      final visitEntries = _recordRows(visitRows, patientId: id);
+      final invoiceEntries = _recordRows(invoiceRows, patientId: id);
+      final treatmentEntries = _recordRows(treatmentRows, patientId: id);
+      final followupEntries = _recordRows(followupRows, patientId: id);
       final visits = <Visit>[];
       final prescriptions = <Prescription>[];
-      for (final row in visitRows.whereType<Map<String, dynamic>>()) {
-        final visit = Visit.fromJson(row);
-        final detail = await _recordsService.visit(visit.id);
-        if (!current()) return;
-        visits.add(Visit.fromJson(detail));
-        final prescriptionRows = await _recordsService.prescriptions(visit.id);
-        if (!current()) return;
-        prescriptions.addAll(prescriptionRows
-            .whereType<Map<String, dynamic>>()
-            .map(Prescription.fromJson));
-      }
       final receipts = <Receipt>[];
-      for (final row in invoiceRows.whereType<Map<String, dynamic>>()) {
-        final invoice = await _recordsService.invoice(row['id'].toString());
-        if (!current()) return;
-        receipts.add(Receipt.fromJson(invoice));
-      }
       final plans = <TreatmentPlan>[];
-      for (final row in treatmentRows.whereType<Map<String, dynamic>>()) {
-        final treatmentId = row['id'].toString();
-        final detail = await _recordsService.treatment(treatmentId);
-        if (!current()) return;
-        final sessionRows = await _recordsService.sessions(treatmentId);
-        if (!current()) return;
-        final sessions = sessionRows
-            .whereType<Map<String, dynamic>>()
-            .map(TreatmentSession.fromJson)
-            .toList();
-        plans.add(TreatmentPlan.fromJson(detail, sessions: sessions));
+      var unavailable = 0;
+      for (final row in visitEntries) {
+        final visitId = row['id'] as String;
+        try {
+          final detail = await _recordsService.visit(visitId);
+          if (!current()) return;
+          if (detail['patientId'] != id) {
+            throw const ApiException('Bệnh nhân của hồ sơ không hợp lệ.');
+          }
+          _checkRecord(detail, patientId: id, expectedId: visitId);
+          _checkLinks(row, detail);
+          final rx = await _recordsService.prescriptions(visitId);
+          if (!current()) return;
+          final rxEntries = _recordRows(rx,
+              patientId: id, parentKey: 'visitId', parentId: visitId);
+          // Commit the visit and its children together, after both reads.
+          final parsedRx = rxEntries.map(Prescription.fromJson).toList();
+          final parsedVisit = Visit.fromJson(detail);
+          visits.add(parsedVisit);
+          prescriptions.addAll(parsedRx);
+        } on ApiException catch (error) {
+          if (error.statusCode != 404) rethrow;
+          unavailable++;
+        }
       }
-      if (current() && id == _selectedPatientId) {
+      for (final row in invoiceEntries) {
+        final invoiceId = row['id'] as String;
+        try {
+          final detail = await _recordsService.invoice(invoiceId);
+          if (!current()) return;
+          if (detail['patientId'] != id) {
+            throw const ApiException('Bệnh nhân của hồ sơ không hợp lệ.');
+          }
+          _checkRecord(detail, patientId: id, expectedId: invoiceId);
+          _checkLinks(row, detail);
+          final receipt = Receipt.fromJson(detail);
+          final visit =
+              visits.where((v) => v.id == receipt.visitId).firstOrNull;
+          if (visit != null &&
+              receipt.appointmentId != null &&
+              visit.appointmentId != null &&
+              receipt.appointmentId != visit.appointmentId) {
+            throw const ApiException('Liên kết hóa đơn không nhất quán.');
+          }
+          receipts.add(receipt);
+        } on ApiException catch (error) {
+          if (error.statusCode != 404) rethrow;
+          unavailable++;
+        }
+      }
+      for (final row in treatmentEntries) {
+        final treatmentId = row['id'] as String;
+        try {
+          final detail = await _recordsService.treatment(treatmentId);
+          if (!current()) return;
+          if (detail['patientId'] != id) {
+            throw const ApiException('Bệnh nhân của hồ sơ không hợp lệ.');
+          }
+          _checkRecord(detail, patientId: id, expectedId: treatmentId);
+          _checkLinks(row, detail);
+          final rows = await _recordsService.sessions(treatmentId);
+          if (!current()) return;
+          final sessions = _recordRows(rows,
+                  patientId: id,
+                  parentKey: 'treatmentId',
+                  parentId: treatmentId)
+              .map(TreatmentSession.fromJson)
+              .toList();
+          plans.add(TreatmentPlan.fromJson(detail, sessions: sessions));
+        } on ApiException catch (error) {
+          if (error.statusCode != 404) rethrow;
+          unavailable++;
+        }
+      }
+      if (!current()) return;
+      if (unavailable > 0 &&
+          visits.isEmpty &&
+          receipts.isEmpty &&
+          plans.isEmpty) {
+        throw const ApiException(
+            'Hồ sơ hiện không còn khả dụng. Vui lòng thử tải lại.');
+      }
+      if (id == _selectedPatientId) {
         _apiVisits = visits;
         _apiPrescriptions = prescriptions;
         _apiReceipts = receipts;
         _apiTreatmentPlans = plans;
-        _apiFollowups = followupRows
-            .whereType<Map<String, dynamic>>()
-            .map(Followup.fromJson)
-            .toList();
+        _apiFollowups = followupEntries.map(Followup.fromJson).toList();
+        _unavailableRecords = unavailable;
       }
     } catch (error) {
       if (current()) {
-        _recordsError = error is ApiException
-            ? error.message
-            : 'Không thể tải hồ sơ. Vui lòng thử lại.';
+        _apiVisits = const [];
+        _apiPrescriptions = const [];
+        _apiReceipts = const [];
+        _apiTreatmentPlans = const [];
+        _apiFollowups = const [];
+        _unavailableRecords = 0;
+        _recordsFailure = error is ApiException
+            ? error
+            : const ApiException('Không thể tải hồ sơ. Vui lòng thử lại.');
+        _recordsError = _recordsFailure!.message;
       }
     } finally {
       if (current()) {
         _recordsLoading = false;
         notifyListeners();
+      }
+    }
+  }
+
+  void _checkRecord(Map<String, dynamic> row,
+      {required String patientId,
+      String? expectedId,
+      String? parentKey,
+      String? parentId}) {
+    final owner = _patients.where((p) => p.isPrimary).firstOrNull?.id;
+    for (final key in ['accountId', 'userId']) {
+      if (row[key] != null && row[key] != owner) {
+        throw const ApiException('Quyền sở hữu hồ sơ không nhất quán.');
+      }
+    }
+    for (final key in [
+      'patientId',
+      'appointmentId',
+      'visitId',
+      'treatmentId'
+    ]) {
+      final value = row[key];
+      if (value != null &&
+          (value is! String || value.trim().isEmpty || value.contains('/'))) {
+        throw const ApiException('Liên kết hồ sơ không hợp lệ.');
+      }
+    }
+    for (final key in ['items', 'serviceIds', 'serviceNames']) {
+      final value = row[key];
+      if (value != null &&
+          (value is! List ||
+              (key == 'items'
+                  ? value.any((v) => v is! Map<String, dynamic>)
+                  : value.any((v) => v is! String)))) {
+        throw const ApiException('Dữ liệu hồ sơ không hợp lệ.');
+      }
+    }
+    final id = row['id'];
+    if (id is! String ||
+        id.trim().isEmpty ||
+        id != id.trim() ||
+        id.contains('/') ||
+        id == '.' ||
+        id == '..' ||
+        expectedId != null && id != expectedId ||
+        row['patientId'] != null && row['patientId'] != patientId ||
+        parentKey != null &&
+            row[parentKey] != null &&
+            row[parentKey] != parentId) {
+      throw const ApiException('Dữ liệu hồ sơ không hợp lệ.');
+    }
+  }
+
+  List<Map<String, dynamic>> _recordRows(List<dynamic> rows,
+      {required String patientId, String? parentKey, String? parentId}) {
+    final result = <Map<String, dynamic>>[];
+    final ids = <String>{};
+    for (final row in rows) {
+      if (row is! Map<String, dynamic>) {
+        throw const ApiException('Dữ liệu hồ sơ không hợp lệ.');
+      }
+      _checkRecord(row,
+          patientId: patientId, parentKey: parentKey, parentId: parentId);
+      if (!ids.add(row['id'] as String)) {
+        throw const ApiException('Dữ liệu hồ sơ không hợp lệ.');
+      }
+      result.add(row);
+    }
+    return result;
+  }
+
+  static void _checkLinks(
+      Map<String, dynamic> listed, Map<String, dynamic> detail) {
+    for (final key in [
+      'patientId',
+      'appointmentId',
+      'visitId',
+      'accountId',
+      'userId'
+    ]) {
+      if (listed[key] != null &&
+          detail[key] != null &&
+          listed[key] != detail[key]) {
+        throw const ApiException('Liên kết hồ sơ không nhất quán.');
       }
     }
   }
@@ -337,21 +571,30 @@ class PatientDataProvider extends SessionNotifier {
     }
     final generation = sessionGeneration;
     if (isDisposed) return;
+    final visit = visits.where((v) => v.id == visitId).firstOrNull;
+    final plan = treatmentPlans.where((p) => p.id == treatmentId).firstOrNull;
+    if (visit == null ||
+        plan == null ||
+        !canWritePatient(visit.patientId) ||
+        !canWritePatient(plan.patientId)) {
+      throw const ApiException('Đã lưu trữ · Chỉ xem lịch sử');
+    }
     await _recordsService.linkVisitToTreatment(treatmentId, visitId, sessionId);
     if (isSessionCurrent(generation)) await loadRecords();
   }
 
-  void selectPatient(String patientId) {
-    if (!_patients.any((patient) => patient.id == patientId)) {
+  void selectPatient(String patientId, {bool reload = true}) {
+    if (!recordsPatients.any((patient) => patient.id == patientId)) {
       throw ArgumentError.value(
           patientId, 'patientId', 'Không tìm thấy bệnh nhân');
     }
 
     if (_selectedPatientId == patientId) return;
+    _focusRequest++;
     _selectedPatientId = patientId;
     _appointmentPatientId = null;
     notifyListeners();
-    unawaited(loadRecords(patientId: patientId));
+    if (reload) unawaited(loadRecords(patientId: patientId));
   }
 
   void addFamilyMember(Patient patient) {
@@ -506,7 +749,7 @@ class PatientDataProvider extends SessionNotifier {
   }
 
   Patient get recordsPatient =>
-      patients.firstWhere((p) => p.id == appointmentPatientId);
+      recordsPatients.firstWhere((p) => p.id == appointmentPatientId);
 
   List<Appointment> appointmentsFor(String patientId, {DateTime? now}) {
     final current = now ?? DateTime.now();
@@ -574,7 +817,7 @@ class PatientDataProvider extends SessionNotifier {
   }
 
   void requestBookingFor(String patientId) {
-    if (!patients.any((p) => p.id == patientId)) return;
+    if (!canWritePatient(patientId)) return;
     _bookingPatientRequest = patientId;
     notifyListeners();
   }

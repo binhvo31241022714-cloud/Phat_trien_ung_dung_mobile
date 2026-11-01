@@ -27,6 +27,7 @@ class _MainShellState extends State<MainShell> with WidgetsBindingObserver {
   int _selectedIndex = 0;
   UserProfile? _appliedProfile;
   List<FamilyMember>? _appliedFamily;
+  List<FamilyMember>? _appliedHistoryFamily;
 
   @override
   void initState() {
@@ -73,8 +74,12 @@ class _MainShellState extends State<MainShell> with WidgetsBindingObserver {
     if (!current() || profiles.profile == null) return;
     if (!profiles.familyLoaded) await profiles.loadFamily();
     if (!current()) return;
+    await profiles.loadHistoryFamily();
+    if (!current()) return;
     records.syncPatients(profiles.profile!, profiles.family,
-        generation: generation);
+        generation: generation,
+        historyFamily:
+            profiles.historyFamilyLoaded ? profiles.historyFamily : null);
     await records.loadRecords();
     if (!current()) return;
     await appointments.ensureLoaded();
@@ -93,16 +98,28 @@ class _MainShellState extends State<MainShell> with WidgetsBindingObserver {
     if (AppConfig.current.dataSource == DataSource.api &&
         profiles.familyLoaded &&
         profiles.profile != null &&
-        !identical(family, _appliedFamily)) {
+        (!identical(family, _appliedFamily) ||
+            !identical(profiles.historyFamily, _appliedHistoryFamily))) {
       _appliedFamily = family;
+      _appliedHistoryFamily = profiles.historyFamily;
       final records = context.read<PatientDataProvider>();
       final generation = records.sessionGeneration;
       WidgetsBinding.instance.addPostFrameCallback((_) {
         final latest = profiles.profile;
-        if (!mounted || !records.isSessionCurrent(generation) || latest == null) {
+        if (!mounted ||
+            !records.isSessionCurrent(generation) ||
+            latest == null) {
           return;
         }
-        records.syncPatients(latest, profiles.family, generation: generation);
+        records.syncPatients(latest, profiles.family,
+            generation: generation,
+            historyFamily:
+                profiles.historyFamilyLoaded ? profiles.historyFamily : null);
+        if (!profiles.historyFamilyLoaded &&
+            !profiles.historyFamilyLoading &&
+            profiles.historyFamilyError == null) {
+          profiles.loadHistoryFamily();
+        }
       });
     }
 

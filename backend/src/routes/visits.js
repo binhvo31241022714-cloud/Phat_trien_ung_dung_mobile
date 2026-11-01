@@ -4,6 +4,7 @@ const {
   db,
   getRecordOrThrow,
   assertRecordAccess,
+  historyChildMatches,
   document,
   documents,
   asyncHandler,
@@ -22,7 +23,7 @@ router.get('/:id/prescriptions', auth, asyncHandler(async (req, res) => {
     .where('visitId', '==', req.params.id)
     .get();
   res.json(snapshot.docs
-    .filter((doc) => doc.data().patientId === visit.data.patientId)
+    .filter((doc) => historyChildMatches(req.user.uid, visit.data, doc.data(), 'visitId', req.params.id))
     .map((doc) => ({ id: doc.id, ...doc.data() })));
 }));
 

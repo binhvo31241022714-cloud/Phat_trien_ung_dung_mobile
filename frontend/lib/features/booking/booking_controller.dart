@@ -228,7 +228,10 @@ class BookingController extends ChangeNotifier {
 
     // Chỉ đổi ID mẫu sang UID tài khoản khi chạy API.
     // Không ghi đè ID người thân đã được xác định.
-    if (patientId != realId && isMockPatient && !isFamilyMember) {
+    if (!data.isArchivedPatient(patientId) &&
+        patientId != realId &&
+        isMockPatient &&
+        !isFamilyMember) {
       patientId = realId;
       notifyListeners();
     }
@@ -806,11 +809,22 @@ class BookingController extends ChangeNotifier {
     notifyListeners();
   }
 
+  bool get _patientEligible {
+    if (data.isArchivedPatient(patientId)) return false;
+    final owner = profile?.profile?.id;
+    if (!apiMode || owner == null) return true;
+    return patientId == owner ||
+        profile!.family.any((p) => p.id == patientId && !p.isArchived);
+  }
+
   /// Tạo lịch hẹn qua POST /api/appointments.
   Future<Appointment?> submit({
     AppointmentsProvider? appointmentsProvider,
   }) async {
     if (_disposed || voucherLoading) return null;
+    if (!_patientEligible) {
+      throw const ApiException('Người khám không còn đủ điều kiện đặt lịch.');
+    }
     if (submitting || created != null) return created;
 
     if (!hasSelectedItems ||
@@ -834,6 +848,9 @@ class BookingController extends ChangeNotifier {
             !quoteReady) {
           return null;
         }
+      }
+      if (!_patientEligible) {
+        throw const ApiException('Người khám không còn đủ điều kiện đặt lịch.');
       }
       final dateKey = _dateKey(date!);
       final fingerprint = [

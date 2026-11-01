@@ -89,6 +89,7 @@ test('A01: bệnh nhân tự xác nhận bị 403, không ghi gì', async () => 
 });
 
 test('A01: xác nhận rồi hoàn tất, mỗi bước đúng 1 thông báo cho chủ tài khoản', async () => {
+  store['appointments/a1'].totalPrice = 100000;
   const confirmed = await call('/a1/status', { body: { status: 'confirmed' } });
   assert.equal(confirmed.status, 200);
   assert.equal(store['appointments/a1'].status, 'confirmed');
@@ -106,6 +107,19 @@ test('A01: xác nhận rồi hoàn tất, mỗi bước đúng 1 thông báo cho
   // Xác nhận không giải phóng slot, không đổi voucher.
   assert.ok(lockIds.every(id => store[`appointment_slots/${id}`]));
   assert.equal(store['vouchers/GIAM10'].usedCount, 3);
+});
+
+test('A01: hoàn tất thiếu giá chốt trả 409 và không ghi dữ liệu dở', async () => {
+  store['appointments/a1'].status = 'confirmed';
+  const before = clone(store);
+  const done = await call('/a1/status', { body: { status: 'completed' } });
+  assert.equal(done.status, 409);
+  assert.equal(done.body.message, 'Lịch hẹn chưa có dữ liệu giá chốt hợp lệ');
+  assert.deepEqual(store, before);
+  assert.equal(store['visits/visit_a1'], undefined);
+  assert.equal(store['invoices/inv_a1'], undefined);
+  assert.equal(store['prescriptions/rx_a1'], undefined);
+  assert.equal(notifications().length, 0);
 });
 
 test('A01: từ chối thiếu lý do 400; có lý do thì giải phóng slot, trả lượt voucher', async () => {

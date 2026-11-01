@@ -25,6 +25,47 @@ class ProfileProvider extends SessionNotifier {
 
   int _profileRequest = 0;
   int _familyRequest = 0;
+  int _historyFamilyRequest = 0;
+  List<FamilyMember> _historyFamily = const [];
+  bool _historyFamilyLoading = false;
+  bool _historyFamilyLoaded = false;
+  String? _historyFamilyError;
+  List<FamilyMember> get historyFamily => _historyFamily;
+  bool get historyFamilyLoading => _historyFamilyLoading;
+  bool get historyFamilyLoaded => _historyFamilyLoaded;
+  String? get historyFamilyError => _historyFamilyError;
+
+  void _invalidateHistoryFamily() {
+    _historyFamilyRequest++;
+    _historyFamily = const [];
+    _historyFamilyLoading = false;
+    _historyFamilyLoaded = false;
+    _historyFamilyError = null;
+  }
+
+  Future<void> loadHistoryFamily() async {
+    if (isDisposed) return;
+    final session = sessionGeneration;
+    final request = ++_historyFamilyRequest;
+    bool current() =>
+        isSessionCurrent(session) && request == _historyFamilyRequest;
+    _historyFamilyLoading = true;
+    _historyFamilyError = null;
+    notifyListeners();
+    try {
+      final result = await _service.getHistoryFamily();
+      if (!current()) return;
+      _historyFamily = List.unmodifiable(result);
+      _historyFamilyLoaded = true;
+    } catch (e) {
+      if (!current()) return;
+      _historyFamilyError =
+          e is ApiException ? e.message : 'Không thể tải lịch sử người thân.';
+    }
+    if (!current()) return;
+    _historyFamilyLoading = false;
+    notifyListeners();
+  }
 
   UserProfile? _profile;
   bool _profileLoading = false;
@@ -181,6 +222,7 @@ class ProfileProvider extends SessionNotifier {
         for (final member in _family)
           member.id == memberId ? member.withAvatar(id) : member,
       ]);
+      _invalidateHistoryFamily();
       notifyListeners();
       return null;
     } catch (e) {
@@ -204,7 +246,7 @@ class ProfileProvider extends SessionNotifier {
     try {
       final result = await _service.getFamily();
       if (!current()) return;
-      _family = List.unmodifiable(result);
+      _family = List.unmodifiable(result.where((member) => !member.isArchived));
       _familyLoaded = true;
     } catch (e) {
       if (!current()) return;
@@ -234,6 +276,7 @@ class ProfileProvider extends SessionNotifier {
           : 'Phiên đăng nhập đã thay đổi.';
     }
     if (!isSessionCurrent(session)) return 'Phiên đăng nhập đã thay đổi.';
+    _invalidateHistoryFamily();
     await loadFamily();
     return null;
   }
@@ -241,6 +284,7 @@ class ProfileProvider extends SessionNotifier {
   /// Gọi khi đăng xuất để người dùng sau không thấy dữ liệu người trước.
   void clear() {
     invalidateSession();
+    _invalidateHistoryFamily();
     MediaCache.clear();
     _savingNotifications = false;
     _profile = null;

@@ -259,8 +259,12 @@ class _AppointmentDetailScreenState extends State<AppointmentDetailScreen>
           RecordCard(children: [
             appointmentBadge(a),
             RecordLine('Mã lịch hẹn', a.id),
-            RecordLine('Bệnh nhân',
-                data.patients.firstWhere((p) => p.id == a.patientId).fullName),
+            RecordLine(
+                'Bệnh nhân',
+                data.recordsPatients
+                    .where((p) => p.id == a.patientId)
+                    .firstOrNull
+                    ?.fullName),
             RecordLine('Dịch vụ', _services(a, data, catalog)),
             RecordLine('Bác sĩ', _doctor(a, data, catalog)),
             RecordLine('Ngày giờ', appointmentDateText(a)),

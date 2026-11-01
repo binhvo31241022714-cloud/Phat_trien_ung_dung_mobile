@@ -16,9 +16,14 @@ const isArchived = (snap) => snap.data().isArchived === true;
 // GET /api/family-members
 // Ẩn người thân đã xóa. Lọc trong code vì dữ liệu cũ không có trường isArchived.
 router.get('/', auth, async (req, res) => {
+  const includeArchived = req.query.includeArchived;
+  if (Object.keys(req.query).some(key => key.startsWith('includeArchived[')) ||
+      (includeArchived !== undefined && includeArchived !== 'true' && includeArchived !== 'false')) {
+    return res.status(400).json({ message: 'includeArchived phải là true hoặc false' });
+  }
   const snap = await col(req.user.uid).get();
   res.json(snap.docs
-    .filter((d) => !isArchived(d))
+    .filter((d) => includeArchived === 'true' || !isArchived(d))
     .map((d) => ({ id: d.id, ...withHealthDefaults(d.data()) })));
 });
 
