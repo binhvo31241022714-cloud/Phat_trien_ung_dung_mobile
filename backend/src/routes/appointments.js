@@ -204,6 +204,10 @@ router.post('/', auth, asyncHandler(async (req, res) => {
   if (!isFutureAppointment(date, startTime)) {
     return res.status(400).json({ message: 'Không thể đặt lịch vào thời gian đã qua' });
   }
+  const requestedAt = new Date(`${date}T${startTime}:00+07:00`);
+  if (requestedAt.getTime() > Date.now() + 30 * 24 * 60 * 60 * 1000) {
+    return res.status(400).json({ message: 'Chỉ được đặt lịch trong vòng 30 ngày tới' });
+  }
   const quoteInput = {
     serviceIds: body.serviceIds || [],
     comboId: body.comboId || null,
@@ -328,6 +332,29 @@ router.post('/', auth, asyncHandler(async (req, res) => {
         });
         if (conflictingAppointment) {
           throw new ApiError(409, 'Khung giờ vừa được đặt; vui lòng chọn giờ khác');
+        }
+
+        // Một bệnh nhân không thể có hai lịch chồng giờ, kể cả với hai bác sĩ khác nhau.
+        const patientAppointments = await transaction.get(
+          db.collection('appointments')
+            .where('date', '==', date),
+        );
+        const patientConflict = patientAppointments.docs.some((doc) => {
+          const data = doc.data();
+          if (data.accountId !== uid || data.patientId !== patientId || !isAppointmentActive(data)) return false;
+          try {
+            return overlaps(
+              startMinute,
+              actualEndMinute,
+              parseTime(data.startTime, 'startTime'),
+              parseTime(data.endTime, 'endTime'),
+            );
+          } catch (_) {
+            return false;
+          }
+        });
+        if (patientConflict) {
+          throw new ApiError(409, 'Bệnh nhân đã có lịch hẹn trùng thời gian');
         }
 
         const lockRefs = getSlotLockRefs(doctor.id, date, startMinute, actualEndMinute);
@@ -635,6 +662,10 @@ router.patch('/:id/cancel', auth, asyncHandler(async (req, res) => {
     }
     if (!appointment.date || !appointment.startTime || !isFutureAppointment(appointment.date, appointment.startTime)) {
       throw new ApiError(400, 'Chỉ có thể hủy lịch hẹn chưa diễn ra');
+    }
+    const appointmentAt = new Date(`${appointment.date}T${appointment.startTime}:00+07:00`);
+    if (appointmentAt.getTime() - Date.now() < 2 * 60 * 60 * 1000) {
+      throw new ApiError(400, 'Không thể hủy lịch hẹn trong vòng 2 giờ trước giờ khám');
     }
     const release = await readRelease(transaction, appointment);
     const followUpRef = await readLinkedFollowUp(transaction, appointmentSnap.id, appointment);

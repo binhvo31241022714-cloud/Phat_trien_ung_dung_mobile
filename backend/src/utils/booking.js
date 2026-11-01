@@ -247,7 +247,13 @@ async function buildBookingQuote(input, transaction = null) {
   let durationMinutes = 0;
   if (combo) {
     subtotal += getFieldNumber(combo, 'price', `Combo ${comboId}`, { allowZero: true });
-    durationMinutes += getFieldNumber(combo, 'durationMinutes', `Combo ${comboId}`);
+    const comboDuration = getFieldNumber(combo, 'durationMinutes', `Combo ${comboId}`);
+    const includedDuration = comboServiceIds.reduce((total, id) =>
+      total + getFieldNumber(serviceDocs.get(id), 'durationMinutes', `Dịch vụ ${id}`), 0);
+    if (comboDuration !== includedDuration) {
+      throw new ApiError(500, `Combo ${comboId} có durationMinutes không khớp tổng thời lượng dịch vụ`);
+    }
+    durationMinutes += comboDuration;
   }
 
   // Khi gửi combo kèm danh sách dịch vụ của combo, không tính giá/thời gian hai lần.

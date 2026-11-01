@@ -1,55 +1,22 @@
-// Kiểm tra các trường hồ sơ cơ bản dùng chung cho users và family_members
-// (họ tên, số điện thoại, ngày sinh, mối quan hệ, địa chỉ)
-
-const { isValidDateKey, toVietnamDateKey } = require('./booking');
-
-const LABELS = {
-  fullName: 'Họ tên',
-  phone: 'Số điện thoại',
-  birthday: 'Ngày sinh',
-  relationship: 'Mối quan hệ',
-  address: 'Địa chỉ',
-};
-const MAX_LENGTH = { fullName: 100, relationship: 50, address: 200 };
-
-// Đọc các trường trong [fields] có trong body. Trả về { data } nếu hợp lệ,
-// { error } nếu sai. Trường không gửi thì bỏ qua (dùng cho PATCH).
-// requireName: bắt buộc có họ tên (khi thêm người thân).
-function readProfile(body, fields, { requireName = false } = {}) {
+function text(value, label, max) {
+  if (value === undefined) return undefined;
+  if (typeof value !== 'string') return { error: `${label} phải là chuỗi` };
+  const result = value.trim();
+  if (result.length > max) return { error: `${label} tối đa ${max} ký tự` };
+  return { value: result };
+}
+function readProfile(body, fields, options = {}) {
   const data = {};
-
-  for (const key of fields) {
-    if (body[key] === undefined) continue;
-    const label = LABELS[key];
-    if (typeof body[key] !== 'string') return { error: `${label} phải là chuỗi` };
-    const value = body[key].trim();
-
-    if (key === 'fullName' && value.length === 0) {
-      return { error: 'Họ tên không được để trống' };
-    }
-    if (MAX_LENGTH[key] && value.length > MAX_LENGTH[key]) {
-      return { error: `${label} tối đa ${MAX_LENGTH[key]} ký tự` };
-    }
-    // Cho phép rỗng (chưa có số điện thoại, chưa có ngày sinh)
-    if (key === 'phone' && value !== '' && !/^\d{9,11}$/.test(value)) {
-      return { error: 'Số điện thoại chỉ gồm chữ số, từ 9 đến 11 số' };
-    }
-    if (key === 'birthday' && value !== '') {
-      if (!isValidDateKey(value)) {
-        return { error: 'Ngày sinh phải là ngày hợp lệ dạng YYYY-MM-DD' };
-      }
-      // So chuỗi YYYY-MM-DD với ngày hôm nay theo giờ Việt Nam
-      if (value > toVietnamDateKey(new Date())) {
-        return { error: 'Ngày sinh không được ở tương lai' };
-      }
-    }
-    data[key] = value;
+  for (const field of fields) {
+    const result = text(body[field], field === 'fullName' ? 'Họ tên' : field, field === 'fullName' ? 100 : field === 'address' ? 200 : 100);
+    if (result && result.error) return { error: result.error };
+    if (result) data[field] = result.value;
   }
-
-  if (requireName && data.fullName === undefined) {
-    return { error: 'Thiếu họ tên' };
+  if (options.requireName && (!data.fullName || !data.fullName.trim())) return { error: 'Họ tên là bắt buộc' };
+  if (data.phone !== undefined && data.phone !== '' && !/^\d{9,11}$/.test(data.phone)) return { error: 'Số điện thoại phải gồm 9 đến 11 chữ số' };
+  if (data.birthday !== undefined && data.birthday !== '') {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(data.birthday) || Number.isNaN(new Date(`${data.birthday}T00:00:00+07:00`).getTime()) || new Date(`${data.birthday}T00:00:00+07:00`) > new Date()) return { error: 'Ngày sinh không hợp lệ' };
   }
   return { data };
 }
-
 module.exports = { readProfile };
