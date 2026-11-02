@@ -256,7 +256,12 @@ void main() {
         await backMe(tester);
         await openMe(tester, 'Cài đặt');
         await openMe(tester, 'Nhận thông báo');
-        expect(u.receiveNotifications, isFalse);
+        // Chế độ API lưu tùy chọn trên máy chủ (PATCH /api/users/me), không lưu trên máy.
+        if (AppConfig.current.dataSource == DataSource.api) {
+          expect(backend.me['notificationsEnabled'], isFalse);
+        } else {
+          expect(u.receiveNotifications, isFalse);
+        }
         await openMe(tester, 'Ngôn ngữ');
         expect(find.text('Tiếng Việt'), findsOneWidget);
         expect(find.text('English'), findsNothing);

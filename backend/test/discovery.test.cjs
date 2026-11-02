@@ -14,8 +14,8 @@ const existing=[
   ...['clinical-history','clinical-records','link-visit','media','reminders-followup'].map(n=>`module3/${n}.test.cjs`),
   'module4/routes.test.cjs',
 ];
-// Thêm sau audit (02/11): AUD-14 chính sách nhân viên, combo lệch thời lượng.
-const added=['module2/combo-duration.test.cjs','module3/staff-policy.test.cjs'];
+// Thêm sau audit (02/11): AUD-14 chính sách nhân viên, combo lệch thời lượng, seed-schedules giờ Việt Nam.
+const added=['module2/combo-duration.test.cjs','module3/staff-policy.test.cjs','seed-schedules.test.cjs'];
 test('discovery: includes all 14 original files plus harness tests, sorted without duplicates',()=>{
   const files=discoverTests(__dirname).map(f=>path.relative(__dirname,f).split(path.sep).join('/'));
   for(const file of [...existing,...added]) assert.ok(files.includes(file),file);
