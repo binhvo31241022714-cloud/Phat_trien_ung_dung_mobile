@@ -1,3 +1,5 @@
+> Tài liệu lịch sử ngày 31/10/2026, không phải hướng dẫn hiện hành, xem [README.md](../../../README.md).
+
 # Booking → Staff approval → Completed → Records → Follow-up
 
 Ngày: 31/10/2026, Asia/Ho_Chi_Minh. Mục tiêu demo: 03/11/2026. Nguồn: workspace hiện có; không kiểm tra Git hoặc remote.

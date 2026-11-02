@@ -1,288 +1,304 @@
-﻿# Backend API nha khoa (Node.js + Express + Firebase)
+# Backend API nha khoa (Node.js + Express + Firebase)
 
-REST API cho app Flutter nha khoa. Dá»¯ liá»‡u lÆ°u trĂªn Firestore, Ä‘Äƒng nháº­p báº±ng Firebase Authentication.
+REST API cho app Flutter nha khoa. Dữ liệu lưu trên Firestore, đăng nhập bằng Firebase Authentication.
 
-## Cháº¡y
+## Chạy
 
-1. Xin file `serviceAccountKey.json` tá»« nhĂ³m, Ä‘áº·t vĂ o thÆ° má»¥c `backend/`.
-   File nĂ y lĂ  khĂ³a quáº£n trá»‹ Firebase, **khĂ´ng commit lĂªn git** (Ä‘Ă£ cĂ³ trong `.gitignore`).
-2. CĂ i thÆ° viá»‡n vĂ  cháº¡y:
+1. Xin file `serviceAccountKey.json` từ nhóm, đặt vào thư mục `backend/`.
+   File này là khóa quản trị Firebase, **không commit lên git** (đã có trong `.gitignore`).
+2. Cài thư viện và chạy:
 
 ```bash
 cd backend
 npm install
-npm run dev     # tá»± khá»Ÿi Ä‘á»™ng láº¡i khi sá»­a code
-# hoáº·c: npm start
+npm run dev     # tự khởi động lại khi sửa code
+# hoặc: npm start
 ```
 
-Server cháº¡y táº¡i `http://localhost:3000`. Má»Ÿ trĂ¬nh duyá»‡t vĂ o Ä‘á»‹a chá»‰ Ä‘Ă³ tháº¥y dĂ²ng "API nha khoa Ä‘ang cháº¡y" lĂ  Ä‘Æ°á»£c.
+Server chạy tại `http://localhost:3000`. Mở trình duyệt vào địa chỉ đó thấy dòng "API nha khoa đang chạy" là được.
 
-## Cáº¥u trĂºc
+## Cấu trúc
 
 ```
 backend/
-â”œâ”€â”€ src/
-â”‚   â”œâ”€â”€ server.js              # Khá»Ÿi Ä‘á»™ng server, gáº¯n route cho tá»«ng module
-â”‚   â”œâ”€â”€ config/firebase.js     # Káº¿t ná»‘i Firebase, xuáº¥t ra db (Firestore) vĂ  auth
-â”‚   â”œâ”€â”€ middleware/auth.js     # Kiá»ƒm tra token Ä‘Äƒng nháº­p, gáº¯n req.user
-â”‚   â””â”€â”€ routes/                # Má»—i file lĂ  má»™t nhĂ³m API
-â”œâ”€â”€ api-test.http              # Request máº«u Ä‘á»ƒ test (extension REST Client)
-â””â”€â”€ serviceAccountKey.json     # KhĂ³a Firebase (khĂ´ng cĂ³ trĂªn git)
+├── src/
+│   ├── server.js              # Khởi động server, gắn route cho từng module
+│   ├── config/firebase.js     # Kết nối Firebase, xuất ra db (Firestore) và auth
+│   ├── middleware/auth.js     # Kiểm tra token đăng nhập, gắn req.user
+│   └── routes/                # Mỗi file là một nhóm API
+├── api-test.http              # Request mẫu để test (extension REST Client)
+└── serviceAccountKey.json     # Khóa Firebase (không có trên git)
 ```
 
-KhĂ´ng sá»­a `server.js`, `config/firebase.js`, `middleware/auth.js` khi chÆ°a bĂ¡o nhĂ³m.
+Không sửa `server.js`, `config/firebase.js`, `middleware/auth.js` khi chưa báo nhóm.
 
-## Quy Æ°á»›c viáº¿t API
+## Quy ước viết API
 
-Xem `routes/familyMembers.js` lĂ m máº«u.
+Xem `routes/familyMembers.js` làm mẫu.
 
-- API cáº§n Ä‘Äƒng nháº­p thĂ¬ thĂªm middleware `auth`. Khi Ä‘Ă³ `req.user.uid` lĂ  id cá»§a user Ä‘ang gá»i.
-- Dá»¯ liá»‡u riĂªng cá»§a user lÆ°u trong `users/{uid}/...` Ä‘á»ƒ ngÆ°á»i khĂ¡c khĂ´ng Ä‘á»c Ä‘Æ°á»£c.
-- Tráº£ vá» document theo dáº¡ng `{ id: doc.id, ...doc.data() }`.
-- Lá»—i tráº£ vá» dáº¡ng `{ "message": "..." }` vá»›i mĂ£:
+- API cần đăng nhập thì thêm middleware `auth`. Khi đó `req.user.uid` là id của user đang gọi.
+- Dữ liệu riêng của user lưu trong `users/{uid}/...` để người khác không đọc được.
+- Trả về document theo dạng `{ id: doc.id, ...doc.data() }`.
+- Lỗi trả về dạng `{ "message": "..." }` với mã:
 
-| MĂ£  | Khi nĂ o |
+| Mã  | Khi nào |
 |-----|---------|
-| 400 | Thiáº¿u dá»¯ liá»‡u hoáº·c dá»¯ liá»‡u sai |
-| 401 | ChÆ°a Ä‘Äƒng nháº­p hoáº·c token háº¿t háº¡n (do `auth.js` tá»± tráº£) |
-| 404 | KhĂ´ng tĂ¬m tháº¥y |
-| 500 | Lá»—i server (do `server.js` tá»± báº¯t, khĂ´ng cáº§n `try/catch`) |
+| 400 | Thiếu dữ liệu hoặc dữ liệu sai |
+| 401 | Chưa đăng nhập hoặc token hết hạn (do `auth.js` tự trả) |
+| 404 | Không tìm thấy |
+| 500 | Lỗi server (do `server.js` tự bắt, không cần `try/catch`) |
 
-## Gá»­i token khi gá»i API
+## Gửi token khi gọi API
 
-App Flutter láº¥y ID token tá»« Firebase Auth rá»“i gá»­i kĂ¨m header:
+App Flutter lấy ID token từ Firebase Auth rồi gửi kèm header:
 
 ```
 Authorization: Bearer <idToken>
 ```
 
-Khi test báº±ng `api-test.http`: táº¡o `backend/.env` theo `backend/.env.example` (máº­t kháº©u há»i BĂ¬nh), báº­t server, báº¥m request á»Ÿ má»¥c **ÄÄ‚NG NHáº¬P (dĂ¹ng chung)** trÆ°á»›c Ä‘á»ƒ cĂ³ `{{token}}` (vĂ  `{{staffToken}}`), sau Ä‘Ă³ má»›i báº¥m cĂ¡c request khĂ¡c. File khĂ´ng chá»©a máº­t kháº©u, máº­t kháº©u Ä‘á»c báº±ng `{{$dotenv ...}}`.
+Khi test bằng `api-test.http`: tạo `backend/.env` theo `backend/.env.example` (mật khẩu hỏi Bình), bật server, bấm request ở mục **ĐĂNG NHẬP (dùng chung)** trước để có `{{token}}` (và `{{staffToken}}`), sau đó mới bấm các request khác. File không chứa mật khẩu, mật khẩu đọc bằng `{{$dotenv ...}}`.
 
-## API Module 1 - TĂ i khoáº£n vĂ  dá»¯ liá»‡u cÆ¡ báº£n
+## API Module 1 - Tài khoản và dữ liệu cơ bản
 
-| Method | Endpoint                  | ÄÄƒng nháº­p | MĂ´ táº£ |
+| Method | Endpoint                  | Đăng nhập | Mô tả |
 |--------|---------------------------|-----------|-------|
-| POST   | /api/users/sync           | CĂ³  | Táº¡o há»“ sÆ¡ náº¿u chÆ°a cĂ³. Body: `{ fullName, phone }` |
-| GET    | /api/users/me             | CĂ³  | Xem há»“ sÆ¡ cá»§a mĂ¬nh |
-| PATCH  | /api/users/me             | CĂ³  | Sá»­a `fullName`, `phone`, `birthday`, `address`, giá»›i tĂ­nh, thĂ´ng tin sá»©c khá»e (xem bĂªn dÆ°á»›i) vĂ  `notificationsEnabled` (true/false: táº¯t thĂ¬ khĂ´ng nháº­n nháº¯c lá»‹ch, nháº¯c tĂ¡i khĂ¡m; `GET /me` máº·c Ä‘á»‹nh true) |
-| GET    | /api/family-members       | CĂ³  | Danh sĂ¡ch ngÆ°á»i thĂ¢n (áº©n ngÆ°á»i Ä‘Ă£ xĂ³a) |
-| POST   | /api/family-members       | CĂ³  | ThĂªm ngÆ°á»i thĂ¢n. Báº¯t buá»™c `fullName`; nháº­n thĂªm giá»›i tĂ­nh vĂ  thĂ´ng tin sá»©c khá»e |
-| PATCH  | /api/family-members/:id   | CĂ³  | Sá»­a ngÆ°á»i thĂ¢n (gá»“m cáº£ giá»›i tĂ­nh vĂ  thĂ´ng tin sá»©c khá»e) |
-| DELETE | /api/family-members/:id   | CĂ³  | XĂ³a má»m ngÆ°á»i thĂ¢n (xem "XĂ³a ngÆ°á»i thĂ¢n" bĂªn dÆ°á»›i) |
-| PUT    | /api/users/me/avatar      | CĂ³  | Äáº·t áº£nh Ä‘áº¡i diá»‡n. Body `{ image: base64, mimeType? }` (xem "áº¢nh" bĂªn dÆ°á»›i) |
-| DELETE | /api/users/me/avatar      | CĂ³  | Gá»¡ áº£nh Ä‘áº¡i diá»‡n |
-| PUT    | /api/family-members/:id/avatar | CĂ³ | áº¢nh Ä‘áº¡i diá»‡n ngÆ°á»i thĂ¢n cĂ²n hoáº¡t Ä‘á»™ng |
-| DELETE | /api/family-members/:id/avatar | CĂ³ | Gá»¡ áº£nh Ä‘áº¡i diá»‡n ngÆ°á»i thĂ¢n |
-| GET    | /api/media/:id            | CĂ³  | Tráº£ áº£nh nhá»‹ phĂ¢n. Chá»‰ chá»§ tĂ i khoáº£n (`ownerAccountId`) hoáº·c staff, ngÆ°á»i khĂ¡c 403 |
-| GET    | /api/services             | KhĂ´ng | Danh sĂ¡ch dá»‹ch vá»¥ |
-| GET    | /api/services/:id         | KhĂ´ng | Chi tiáº¿t dá»‹ch vá»¥ |
-| GET    | /api/combos               | KhĂ´ng | Danh sĂ¡ch combo |
-| GET    | /api/combos/:id           | KhĂ´ng | Chi tiáº¿t combo |
-| GET    | /api/doctors              | KhĂ´ng | Danh sĂ¡ch bĂ¡c sÄ© |
-| GET    | /api/doctors/:id          | KhĂ´ng | Chi tiáº¿t bĂ¡c sÄ© |
-| GET    | /api/favorites            | CĂ³  | Danh sĂ¡ch ná»™i dung Ä‘Ă£ lÆ°u |
-| POST   | /api/favorites            | CĂ³  | LÆ°u ná»™i dung. Body: `{ type, itemId }` |
-| DELETE | /api/favorites/:id        | CĂ³  | Bá» lÆ°u má»™t má»¥c |
+| POST   | /api/users/sync           | Có  | Tạo hồ sơ nếu chưa có. Body: `{ fullName, phone }` |
+| GET    | /api/users/me             | Có  | Xem hồ sơ của mình |
+| PATCH  | /api/users/me             | Có  | Sửa `fullName`, `phone`, `birthday`, `address`, giới tính, thông tin sức khỏe (xem bên dưới) và `notificationsEnabled` (true/false: tắt thì không nhận nhắc lịch, nhắc tái khám; `GET /me` mặc định true) |
+| GET    | /api/family-members       | Có  | Danh sách người thân (ẩn người đã xóa) |
+| POST   | /api/family-members       | Có  | Thêm người thân. Bắt buộc `fullName`; nhận thêm giới tính và thông tin sức khỏe |
+| PATCH  | /api/family-members/:id   | Có  | Sửa người thân (gồm cả giới tính và thông tin sức khỏe) |
+| DELETE | /api/family-members/:id   | Có  | Xóa mềm người thân (xem "Xóa người thân" bên dưới) |
+| PUT    | /api/users/me/avatar      | Có  | Đặt ảnh đại diện. Body `{ image: base64, mimeType? }` (xem "Ảnh" bên dưới) |
+| DELETE | /api/users/me/avatar      | Có  | Gỡ ảnh đại diện |
+| PUT    | /api/family-members/:id/avatar | Có | Ảnh đại diện người thân còn hoạt động |
+| DELETE | /api/family-members/:id/avatar | Có | Gỡ ảnh đại diện người thân |
+| GET    | /api/media/:id            | Có  | Trả ảnh nhị phân. Chỉ chủ tài khoản (`ownerAccountId`) hoặc staff, người khác 403 |
+| GET    | /api/services             | Không | Danh sách dịch vụ |
+| GET    | /api/services/:id         | Không | Chi tiết dịch vụ |
+| GET    | /api/combos               | Không | Danh sách combo |
+| GET    | /api/combos/:id           | Không | Chi tiết combo |
+| GET    | /api/doctors              | Không | Danh sách bác sĩ |
+| GET    | /api/doctors/:id          | Không | Chi tiết bác sĩ |
+| GET    | /api/favorites            | Có  | Danh sách nội dung đã lưu |
+| POST   | /api/favorites            | Có  | Lưu nội dung. Body: `{ type, itemId }` |
+| DELETE | /api/favorites/:id        | Có  | Bỏ lưu một mục |
 
-### áº¢nh (khĂ´ng dĂ¹ng Firebase Storage)
+### Ảnh (không dùng Firebase Storage)
 
-áº¢nh lÆ°u trong Firestore dáº¡ng base64 á»Ÿ `media/{id}`: `{ ownerAccountId, patientId, kind ("avatar" | "treatment_photo"), mimeType, data, size, createdAt, createdBy }`.
-- Chá»‰ nháº­n JPEG hoáº·c PNG, kiá»ƒm tra theo byte Ä‘áº§u cá»§a file (khĂ´ng tin `mimeType` gá»­i lĂªn); `image` cĂ³ thá»ƒ lĂ  base64 thuáº§n hoáº·c `data:image/...;base64,...`.
+Ảnh lưu trong Firestore dạng base64 ở `media/{id}`: `{ ownerAccountId, patientId, kind ("avatar" | "treatment_photo"), mimeType, data, size, createdAt, createdBy }`.
+- Chỉ nhận JPEG hoặc PNG, kiểm tra theo byte đầu của file (không tin `mimeType` gửi lên); `image` có thể là base64 thuần hoặc `data:image/...;base64,...`.
 - Ảnh JPEG/PNG sau giải mã tối đa **716.800 bytes (700 KiB)**; vượt giới hạn trả `413`, sai định dạng trả `400`. Giới hạn này độc lập với JSON transport và không thay đổi.
 - JSON request body toàn API: **1 MiB = 1.048.576 bytes** (`utils/media.js` → `jsonBody`), gồm `PUT /api/users/me/avatar`, `PUT /api/family-members/:id/avatar`, `POST /api/treatments/:id/photos`. Đo bằng `Buffer.byteLength(JSON.stringify(body), "utf8")`, gồm cả base64 và metadata. JSON vượt giới hạn trả `413` trước route; dưới/trong giới hạn vẫn có thể trả `400` do field validation (ví dụ address tối đa 200 ký tự). Bình/Phương/Ngân đã duyệt phương án B cho demo; không dùng parser dispatcher.
-- Há»“ sÆ¡ lÆ°u `avatarMediaId`; thay áº£nh thĂ¬ áº£nh cÅ© bá»‹ xĂ³a trong cĂ¹ng transaction. Staff chá»‰ xem, khĂ´ng Ä‘á»•i áº£nh Ä‘áº¡i diá»‡n.
+- Hồ sơ lưu `avatarMediaId`; thay ảnh thì ảnh cũ bị xóa trong cùng transaction. Staff chỉ xem, không đổi ảnh đại diện.
 
-### Dá»¯ liá»‡u `users/{uid}` vĂ  `users/{uid}/family_members/{id}`
+### Dữ liệu `users/{uid}` và `users/{uid}/family_members/{id}`
 
-| TrÆ°á»ng | Kiá»ƒu | CĂ³ á»Ÿ | Ghi chĂº |
+| Trường | Kiểu | Có ở | Ghi chú |
 |---|---|---|---|
-| `fullName` | chuá»—i, 1 Ä‘áº¿n 100 kĂ½ tá»± | cáº£ hai | Báº¯t buá»™c khi thĂªm ngÆ°á»i thĂ¢n; cĂ³ gá»­i thĂ¬ khĂ´ng Ä‘Æ°á»£c rá»—ng |
-| `phone` | chuá»—i 9 Ä‘áº¿n 11 chá»¯ sá»‘ | cáº£ hai | `""` náº¿u chÆ°a cĂ³. KhĂ´ng nháº­n `+84`, dáº¥u cĂ¡ch, dáº¥u cháº¥m (app tá»± chuáº©n hĂ³a trÆ°á»›c khi gá»­i) |
-| `birthday` | chuá»—i `"YYYY-MM-DD"` | cáº£ hai | `""` náº¿u chÆ°a cĂ³. Pháº£i lĂ  ngĂ y cĂ³ tháº­t, khĂ´ng á»Ÿ tÆ°Æ¡ng lai (giá» Viá»‡t Nam) |
-| `email` | chuá»—i | users | Email Ä‘Äƒng nháº­p Firebase, khĂ´ng sá»­a qua API |
-| `address` | chuá»—i, tá»‘i Ä‘a 200 kĂ½ tá»± | users | |
-| `relationship` | chuá»—i, tá»‘i Ä‘a 50 kĂ½ tá»± | family_members | VĂ­ dá»¥ "Máº¹", "Con" |
-| `gender` | `"male"` \| `"female"` \| `"other"` \| `""` | cáº£ hai | `""` lĂ  chÆ°a chá»n. GiĂ¡ trá»‹ khĂ¡c tráº£ 400 |
-| `allergies` | chuá»—i, tá»‘i Ä‘a 500 kĂ½ tá»± | cáº£ hai | Dá»‹ á»©ng thuá»‘c, vĂ­ dá»¥ `"Penicillin, Lidocaine"` |
-| `medicalConditions` | máº£ng chuá»—i | cáº£ hai | Chá»‰ nháº­n: `diabetes` (tiá»ƒu Ä‘Æ°á»ng), `heart_disease` (bá»‡nh tim máº¡ch), `hypertension` (huyáº¿t Ă¡p cao), `bleeding_disorder` (rá»‘i loáº¡n Ä‘Ă´ng mĂ¡u), `asthma` (hen suyá»…n), `hepatitis` (viĂªm gan), `other` (khĂ¡c). GiĂ¡ trá»‹ láº¡ tráº£ 400 |
-| `currentMedications` | chuá»—i, tá»‘i Ä‘a 500 kĂ½ tá»± | cáº£ hai | Thuá»‘c Ä‘ang dĂ¹ng |
-| `isPregnant` | `true` \| `false` | cáº£ hai | Pháº£i lĂ  boolean, chuá»—i `"true"` tráº£ 400 |
-| `healthNotes` | chuá»—i, tá»‘i Ä‘a 500 kĂ½ tá»± | cáº£ hai | Ghi chĂº khĂ¡c |
-| `createdAt` | Timestamp | cáº£ hai | |
+| `fullName` | chuỗi, 1 đến 100 ký tự | cả hai | Bắt buộc khi thêm người thân; có gửi thì không được rỗng |
+| `phone` | chuỗi 9 đến 11 chữ số | cả hai | `""` nếu chưa có. Không nhận `+84`, dấu cách, dấu chấm (app tự chuẩn hóa trước khi gửi) |
+| `birthday` | chuỗi `"YYYY-MM-DD"` | cả hai | `""` nếu chưa có. Phải là ngày có thật, không ở tương lai (giờ Việt Nam) |
+| `email` | chuỗi | users | Email đăng nhập Firebase, không sửa qua API |
+| `address` | chuỗi, tối đa 200 ký tự | users | |
+| `relationship` | chuỗi, tối đa 50 ký tự | family_members | Ví dụ "Mẹ", "Con" |
+| `gender` | `"male"` \| `"female"` \| `"other"` \| `""` | cả hai | `""` là chưa chọn. Giá trị khác trả 400 |
+| `allergies` | chuỗi, tối đa 500 ký tự | cả hai | Dị ứng thuốc, ví dụ `"Penicillin, Lidocaine"` |
+| `medicalConditions` | mảng chuỗi | cả hai | Chỉ nhận: `diabetes` (tiểu đường), `heart_disease` (bệnh tim mạch), `hypertension` (huyết áp cao), `bleeding_disorder` (rối loạn đông máu), `asthma` (hen suyễn), `hepatitis` (viêm gan), `other` (khác). Giá trị lạ trả 400 |
+| `currentMedications` | chuỗi, tối đa 500 ký tự | cả hai | Thuốc đang dùng |
+| `isPregnant` | `true` \| `false` | cả hai | Phải là boolean, chuỗi `"true"` trả 400 |
+| `healthNotes` | chuỗi, tối đa 500 ký tự | cả hai | Ghi chú khác |
+| `createdAt` | Timestamp | cả hai | |
 
-- Kiá»ƒm tra há» tĂªn, sá»‘ Ä‘iá»‡n thoáº¡i, ngĂ y sinh, má»‘i quan há»‡, Ä‘á»‹a chá»‰ dĂ¹ng chung á»Ÿ `src/utils/profile.js` (`readProfile`). Sai kiá»ƒu hoáº·c sai Ä‘á»™ dĂ i tráº£ 400 kĂ¨m cĂ¢u bĂ¡o tiáº¿ng Viá»‡t. Chuá»—i Ä‘Æ°á»£c bá» khoáº£ng tráº¯ng Ä‘áº§u cuá»‘i trÆ°á»›c khi lÆ°u.
-- Kiá»ƒm tra giá»›i tĂ­nh vĂ  sá»©c khá»e dĂ¹ng chung á»Ÿ `src/utils/health.js` (`readHealth`).
-- Khi GET, trÆ°á»ng cĂ²n thiáº¿u (dá»¯ liá»‡u cÅ©) Ä‘Æ°á»£c tráº£ giĂ¡ trá»‹ máº·c Ä‘á»‹nh: `""`, `[]` hoáº·c `false` (`withHealthDefaults`).
-- PATCH chá»‰ Ä‘á»•i nhá»¯ng trÆ°á»ng cĂ³ gá»­i lĂªn; POST ngÆ°á»i thĂ¢n thiáº¿u trÆ°á»ng thĂ¬ lÆ°u máº·c Ä‘á»‹nh.
+- Kiểm tra họ tên, số điện thoại, ngày sinh, mối quan hệ, địa chỉ dùng chung ở `src/utils/profile.js` (`readProfile`). Sai kiểu hoặc sai độ dài trả 400 kèm câu báo tiếng Việt. Chuỗi được bỏ khoảng trắng đầu cuối trước khi lưu.
+- Kiểm tra giới tính và sức khỏe dùng chung ở `src/utils/health.js` (`readHealth`).
+- Khi GET, trường còn thiếu (dữ liệu cũ) được trả giá trị mặc định: `""`, `[]` hoặc `false` (`withHealthDefaults`).
+- PATCH chỉ đổi những trường có gửi lên; POST người thân thiếu trường thì lưu mặc định.
 
-### XĂ³a ngÆ°á»i thĂ¢n (xĂ³a má»m)
+### Xóa người thân (xóa mềm)
 
-- `DELETE /api/family-members/:id` khĂ´ng xĂ³a document mĂ  Ä‘áº·t `isArchived: true` vĂ  `archivedAt` (Timestamp), Ä‘á»ƒ há»“ sÆ¡ khĂ¡m, hĂ³a Ä‘Æ¡n, lá»‹ch háº¹n cÅ© váº«n cĂ²n.
-- NgÆ°á»i thĂ¢n cĂ²n lá»‹ch háº¹n chÆ°a há»§y vĂ  chÆ°a diá»…n ra thĂ¬ tráº£ **409**, pháº£i há»§y lá»‹ch trÆ°á»›c.
-- NgÆ°á»i thĂ¢n Ä‘Ă£ xĂ³a: khĂ´ng hiá»‡n trong `GET /api/family-members`, `PATCH`/`DELETE` tráº£ 404, **khĂ´ng Ä‘áº·t lá»‹ch má»›i Ä‘Æ°á»£c** (`POST /api/appointments` tráº£ 400), nhÆ°ng chá»§ tĂ i khoáº£n **váº«n xem Ä‘Æ°á»£c há»“ sÆ¡ khĂ¡m cÅ©** (`utils/records.js` chá»‰ kiá»ƒm tra document cĂ²n tá»“n táº¡i).
-- Module khĂ¡c Ä‘á»c `family_members` Ä‘á»ƒ kiá»ƒm tra ngÆ°á»i khĂ¡m thĂ¬ nhá»› xĂ©t `isArchived` náº¿u lĂ  thao tĂ¡c táº¡o má»›i.
+- `DELETE /api/family-members/:id` không xóa document mà đặt `isArchived: true` và `archivedAt` (Timestamp), để hồ sơ khám, hóa đơn, lịch hẹn cũ vẫn còn.
+- Người thân còn lịch hẹn chưa hủy và chưa diễn ra thì trả **409**, phải hủy lịch trước.
+- Người thân đã xóa: không hiện trong `GET /api/family-members`, `PATCH`/`DELETE` trả 404, **không đặt lịch mới được** (`POST /api/appointments` trả 400), nhưng chủ tài khoản **vẫn xem được hồ sơ khám cũ** (`utils/records.js` chỉ kiểm tra document còn tồn tại).
+- Module khác đọc `family_members` để kiểm tra người khám thì nhớ xét `isArchived` nếu là thao tác tạo mới.
 
-### Ghi chĂº vá» isActive
+### Ghi chú về isActive
 
-- API danh sĂ¡ch (`GET /api/services`, `/api/combos`, `/api/doctors`) áº©n má»¥c cĂ³ `isActive: false`. Má»¥c khĂ´ng cĂ³ trÆ°á»ng `isActive` coi nhÆ° Ä‘ang báº­t.
-- API chi tiáº¿t (`GET /:id`) váº«n tráº£ má»¥c Ä‘Ă£ táº¯t, Ä‘á»ƒ xem láº¡i Ä‘Æ°á»£c tá»« danh sĂ¡ch yĂªu thĂ­ch hoáº·c lá»‹ch sá»­.
+- API danh sách (`GET /api/services`, `/api/combos`, `/api/doctors`) ẩn mục có `isActive: false`. Mục không có trường `isActive` coi như đang bật.
+- API chi tiết (`GET /:id`) vẫn trả mục đã tắt, để xem lại được từ danh sách yêu thích hoặc lịch sử.
 
-### Ghi chĂº vá» favorites
+### Ghi chú về favorites
 
-- KhĂ´ng lÆ°u Ä‘Æ°á»£c má»¥c cĂ³ `isActive: false` (tráº£ 400).
+- Không lưu được mục có `isActive: false` (trả 400).
 
-- `type` lĂ  má»™t trong: `service`, `combo`, `doctor`, `article`. `itemId` lĂ  id document trong collection tÆ°Æ¡ng á»©ng (`services`, `combos`, `doctors`, `articles`).
-- Id cá»§a má»¥c Ä‘Ă£ lÆ°u lĂ  `${type}_${itemId}`, vĂ­ dá»¥ `service_svc_01`. LÆ°u cĂ¹ng má»™t mĂ³n nhiá»u láº§n váº«n chá»‰ cĂ³ 1 má»¥c.
-- Muá»‘n bá» lÆ°u thĂ¬ gá»i `DELETE /api/favorites/service_svc_01`.
+- `type` là một trong: `service`, `combo`, `doctor`, `article`. `itemId` là id document trong collection tương ứng (`services`, `combos`, `doctors`, `articles`).
+- Id của mục đã lưu là `${type}_${itemId}`, ví dụ `service_svc_01`. Lưu cùng một món nhiều lần vẫn chỉ có 1 mục.
+- Muốn bỏ lưu thì gọi `DELETE /api/favorites/service_svc_01`.
 
-## Module khĂ¡c
+## Module 3 - Hồ sơ nha khoa
 
-Module 2 (Ä‘áº·t lá»‹ch), Module 3 (há»“ sÆ¡ nha khoa), Module 4 (ná»™i dung vĂ  thĂ´ng bĂ¡o): ngÆ°á»i phá»¥ trĂ¡ch bá»• sung báº£ng API cá»§a mĂ¬nh vĂ o Ä‘Ă¢y khi viáº¿t xong.
-
-## Module 3 - Há»“ sÆ¡ nha khoa
-
-| Method | Endpoint | ÄÄƒng nháº­p | MĂ´ táº£ |
+| Method | Endpoint | Đăng nhập | Mô tả |
 |---|---|---|---|
-| GET | `/api/patients/:id/visits` | CĂ³ | Lá»‹ch sá»­ khĂ¡m cá»§a báº£n thĂ¢n hoáº·c ngÆ°á»i thĂ¢n |
-| GET | `/api/visits/:id` | CĂ³ | Káº¿t quáº£ khĂ¡m vĂ  cháº©n Ä‘oĂ¡n |
-| GET | `/api/visits/:id/prescriptions` | CĂ³ | ÄÆ¡n thuá»‘c cá»§a láº§n khĂ¡m |
-| GET | `/api/patients/:id/invoices` | CĂ³ | Danh sĂ¡ch hĂ³a Ä‘Æ¡n |
-| GET | `/api/invoices/:id` | CĂ³ | Chi tiáº¿t hĂ³a Ä‘Æ¡n |
-| GET | `/api/patients/:id/treatments` | CĂ³ | Danh sĂ¡ch liá»‡u trĂ¬nh |
-| GET | `/api/treatments/:id` | CĂ³ | Chi tiáº¿t vĂ  tiáº¿n Ä‘á»™ liá»‡u trĂ¬nh |
-| GET | `/api/treatments/:id/sessions` | CĂ³ | CĂ¡c buá»•i Ä‘iá»u trá»‹ |
-| POST | `/api/treatments/:id/sessions/link-visit` | CĂ³ | Gáº¯n má»™t láº§n khĂ¡m Ä‘Ă£ hoĂ n thĂ nh vĂ o buá»•i do ngÆ°á»i dĂ¹ng chá»n. Body: `{ visitId, sessionId }`. Visit pháº£i cĂ³ `status: "completed"` (A10) |
-| POST | `/api/treatments` | Staff | Táº¡o liá»‡u trĂ¬nh kĂ¨m cĂ¡c buá»•i dá»± kiáº¿n. Body `{ accountId, patientId?, doctorId?, name, diagnosis?, startAt?, endAt?, sessions: [{ scheduledAt?, notes? }] }`. Liá»‡u trĂ¬nh vĂ  buá»•i Ä‘á»u `planned` |
-| PATCH | `/api/treatments/:id/sessions/:sessionId` | Staff | ÄĂ¡nh dáº¥u buá»•i Ä‘Ă£ lĂ m. Body `{ status: "completed", visitId, notes? }`; visit pháº£i hoĂ n táº¥t, cĂ¹ng bá»‡nh nhĂ¢n, chÆ°a gáº¯n buá»•i khĂ¡c. Liá»‡u trĂ¬nh tá»± chuyá»ƒn `in_progress`, xong háº¿t buá»•i thĂ¬ `completed` |
-| GET | `/api/treatments/:id/photos` | CĂ³ hoáº·c Staff | áº¢nh cÅ© (`photos`, `treatment_photos`, máº£ng `photos` cá»§a treatment) vĂ  áº£nh má»›i; áº£nh má»›i cĂ³ `imageUrl` = `/api/media/:mediaId`, má»i áº£nh cĂ³ `canDelete` |
-| POST | `/api/treatments/:id/photos` | CĂ³ hoáº·c Staff | Táº£i áº£nh. Body `{ phase: "before" \| "after", sessionId?, image, mimeType?, note? }`. Chá»§ tĂ i khoáº£n (báº£n thĂ¢n hoáº·c ngÆ°á»i thĂ¢n cĂ²n hoáº¡t Ä‘á»™ng) hoáº·c staff; tá»‘i Ä‘a 30 áº£nh má»—i liá»‡u trĂ¬nh (409) |
-| DELETE | `/api/treatments/:id/photos/:photoId` | CĂ³ hoáº·c Staff | XĂ³a áº£nh vĂ  media; chá»‰ ngÆ°á»i táº£i lĂªn hoáº·c staff. áº¢nh cÅ© khĂ´ng cĂ³ `mediaId` tráº£ 409 |
-| GET | `/api/patients/:id/follow-ups` | CĂ³ | Lá»‹ch tĂ¡i khĂ¡m |
-| GET | `/api/follow-ups/:id` | CĂ³ hoáº·c Staff | Chi tiáº¿t Ä‘á» xuáº¥t tĂ¡i khĂ¡m (app dĂ¹ng khi báº¥m thĂ´ng bĂ¡o `follow_up`) |
-| POST | `/api/follow-ups` | Staff | Äá» xuáº¥t tĂ¡i khĂ¡m. Body `{ accountId, patientId?, scheduledAt, reason, notes?, doctorId?, visitId?, treatmentId?, serviceId? }`. LÆ°u `status: "suggested"`, táº¡o thĂ´ng bĂ¡o `follow_up` |
+| GET | `/api/patients/:id/visits` | Có | Lịch sử khám của bản thân hoặc người thân |
+| GET | `/api/visits/:id` | Có | Kết quả khám và chẩn đoán |
+| GET | `/api/visits/:id/prescriptions` | Có | Đơn thuốc của lần khám |
+| GET | `/api/patients/:id/invoices` | Có | Danh sách hóa đơn |
+| GET | `/api/invoices/:id` | Có | Chi tiết hóa đơn |
+| GET | `/api/patients/:id/treatments` | Có | Danh sách liệu trình |
+| GET | `/api/treatments/:id` | Có | Chi tiết và tiến độ liệu trình |
+| GET | `/api/treatments/:id/sessions` | Có | Các buổi điều trị |
+| POST | `/api/treatments/:id/sessions/link-visit` | Có | Gắn một lần khám đã hoàn thành vào buổi do người dùng chọn. Body: `{ visitId, sessionId }`. Visit phải có `status: "completed"` (A10) |
+| POST | `/api/treatments` | Staff | Tạo liệu trình kèm các buổi dự kiến. Body `{ accountId, patientId?, doctorId?, name, diagnosis?, startAt?, endAt?, sessions: [{ scheduledAt?, notes? }] }`. Liệu trình và buổi đều `planned` |
+| PATCH | `/api/treatments/:id/sessions/:sessionId` | Staff | Đánh dấu buổi đã làm. Body `{ status: "completed", visitId, notes? }`; visit phải hoàn tất, cùng bệnh nhân, chưa gắn buổi khác. Liệu trình tự chuyển `in_progress`, xong hết buổi thì `completed` |
+| GET | `/api/treatments/:id/photos` | Có hoặc Staff | Ảnh cũ (`photos`, `treatment_photos`, mảng `photos` của treatment) và ảnh mới; ảnh mới có `imageUrl` = `/api/media/:mediaId`, mọi ảnh có `canDelete` |
+| POST | `/api/treatments/:id/photos` | Có hoặc Staff | Tải ảnh. Body `{ phase: "before" \| "after", sessionId?, image, mimeType?, note? }`. Chủ tài khoản (bản thân hoặc người thân còn hoạt động) hoặc staff; tối đa 30 ảnh mỗi liệu trình (409) |
+| DELETE | `/api/treatments/:id/photos/:photoId` | Có hoặc Staff | Xóa ảnh và media; chỉ người tải lên hoặc staff. Ảnh cũ không có `mediaId` trả 409 |
+| GET | `/api/patients/:id/follow-ups` | Có | Lịch tái khám |
+| GET | `/api/follow-ups/:id` | Có hoặc Staff | Chi tiết đề xuất tái khám (app dùng khi bấm thông báo `follow_up`) |
+| POST | `/api/follow-ups` | Staff | Đề xuất tái khám. Body `{ accountId, patientId?, scheduledAt, reason, notes?, doctorId?, visitId?, treatmentId?, serviceId? }`. Lưu `status: "suggested"`, tạo thông báo `follow_up` |
 
-### Há»“ sÆ¡ khĂ¡m táº¡o khi staff hoĂ n táº¥t lá»‹ch
+### Hồ sơ khám tạo khi staff hoàn tất lịch
 
-`PATCH /api/appointments/:id/status` vá»›i `status: "completed"` cĂ³ thá»ƒ gá»­i thĂªm
+`PATCH /api/appointments/:id/status` với `status: "completed"` có thể gửi thêm
 `visit { diagnosis, result, notes }`, `prescriptions [{ medicineName, dosage, frequency, durationDays, instructions }]`,
 `invoice { items?: [{ name, quantity, unitPrice }], discount?, paymentMethod?, paid? }`.
-Trong cĂ¹ng transaction backend táº¡o `visits/visit_{id lá»‹ch}` (`status: "completed"`, `scheduledAt` lĂ  ngĂ y giá» lá»‹ch,
-`doctorNote` láº¥y tá»« `notes`), `prescriptions/rx_{id lá»‹ch}` (chá»‰ khi cĂ³ thuá»‘c, thuá»‘c náº±m trong `items[]`),
-`invoices/inv_{id lá»‹ch}` (cĂ³ cáº£ `visitId` vĂ  `appointmentId`) vĂ  1 thĂ´ng bĂ¡o `visit_result` cĂ³ `refId` lĂ  visitId.
-KhĂ´ng gá»­i `invoice` thĂ¬ hĂ³a Ä‘Æ¡n tá»± láº­p tá»« combo, dá»‹ch vá»¥, voucher cá»§a lá»‹ch, máº·c Ä‘á»‹nh `unpaid`.
-`paymentMethod` lĂ  `cash`, `bank_transfer`, `card` hoáº·c `e_wallet`. Gá»i hoĂ n táº¥t láº¡i tráº£ `409`, khĂ´ng táº¡o trĂ¹ng.
+Trong cùng transaction backend tạo `visits/visit_{id lịch}` (`status: "completed"`, `scheduledAt` là ngày giờ lịch,
+`doctorNote` lấy từ `notes`), `prescriptions/rx_{id lịch}` (chỉ khi có thuốc, thuốc nằm trong `items[]`),
+`invoices/inv_{id lịch}` (có cả `visitId` và `appointmentId`) và 1 thông báo `visit_result` có `refId` là visitId.
+Không gửi `invoice` thì hóa đơn tự lập từ combo, dịch vụ, voucher của lịch, mặc định `unpaid`.
+`paymentMethod` là `cash`, `bank_transfer`, `card` hoặc `e_wallet`. Gọi hoàn tất lại trả `409`, không tạo trùng.
 
-CĂ¡c API staff kiá»ƒm tra `patientId` lĂ  chĂ­nh chá»§ `accountId` hoáº·c ngÆ°á»i thĂ¢n cĂ²n hoáº¡t Ä‘á»™ng cá»§a tĂ i khoáº£n Ä‘Ă³.
-Äá» xuáº¥t tĂ¡i khĂ¡m cÅ© cĂ³ `status: "scheduled"` Ä‘Æ°á»£c app hiá»ƒu lĂ  "ÄĂ£ Ä‘á» xuáº¥t".
+Các API staff kiểm tra `patientId` là chính chủ `accountId` hoặc người thân còn hoạt động của tài khoản đó.
+Đề xuất tái khám cũ có `status: "scheduled"` được app hiểu là "Đã đề xuất".
 
-`patientId` khĂ´ng Ä‘Æ°á»£c láº¥y tá»« body/query cá»§a client. Vá»›i API danh sĂ¡ch, `:id` chá»‰ Ä‘Æ°á»£c phĂ©p lĂ 
-`req.user.uid` hoáº·c id document trong `users/{req.user.uid}/family_members`. Vá»›i API theo
-document id, backend Ä‘á»c document trÆ°á»›c rá»“i kiá»ƒm tra `patientId`; tĂ i khoáº£n khĂ´ng cĂ³ quyá»n
-nháº­n `403`.
+`patientId` không được lấy từ body/query của client. Với API danh sách, `:id` chỉ được phép là
+`req.user.uid` hoặc id document trong `users/{req.user.uid}/family_members`. Với API theo
+document id, backend đọc document trước rồi kiểm tra `patientId`; tài khoản không có quyền
+nhận `403`.
 
-## Module 2 - Äáº·t lá»‹ch nha khoa
+## Module 2 - Đặt lịch nha khoa
 
-| Method | Endpoint | ÄÄƒng nháº­p | MĂ´ táº£ |
+| Method | Endpoint | Đăng nhập | Mô tả |
 |---|---|---|---|
-| POST | `/api/bookings/quote` | KhĂ´ng | BĂ¡o giĂ¡ dá»‹ch vá»¥/combo, tráº£ `subtotal`, `discount`, `totalPrice`, `durationMinutes`; cĂ³ thá»ƒ gá»­i `voucherCode` |
-| GET | `/api/availability?date=YYYY-MM-DD&durationMinutes=30` | KhĂ´ng | Giá» trá»‘ng theo ngĂ y; cĂ³ thá»ƒ truyá»n `doctorId`, `comboId`, `serviceIds` (cĂ¡c mĂ£ phĂ¢n tĂ¡ch báº±ng dáº¥u pháº©y) |
-| POST | `/api/vouchers/validate` | KhĂ´ng | Body gá»“m `code` vĂ  `serviceIds` vĂ /hoáº·c `comboId`; giĂ¡ Ä‘Æ°á»£c tĂ­nh láº¡i trĂªn backend |
-| POST | `/api/appointments` | CĂ³ | Táº¡o lá»‹ch cho báº£n thĂ¢n hoáº·c ngÆ°á»i thĂ¢n; `doctorId` cĂ³ thá»ƒ bá» trá»‘ng Ä‘á»ƒ chá»n ngáº«u nhiĂªn; body cĂ³ `patientId?`, `serviceIds?`, `comboId?`, `date`, `startTime`, `voucherCode?`, `note?`, `followUpId?`; header tĂ¹y chá»n `Idempotency-Key` |
-| GET | `/api/appointments` | CĂ³ | Lá»‹ch cá»§a tĂ i khoáº£n Ä‘ang Ä‘Äƒng nháº­p, bao gá»“m lá»‹ch Ä‘áº·t cho ngÆ°á»i thĂ¢n |
-| GET | `/api/appointments/:id` | CĂ³ | Chi tiáº¿t lá»‹ch; chá»‰ chá»§ tĂ i khoáº£n Ä‘Æ°á»£c xem |
-| PATCH | `/api/appointments/:id/cancel` | CĂ³ | Há»§y lá»‹ch tÆ°Æ¡ng lai vĂ  giáº£i phĂ³ng cĂ¡c slot Ä‘Ă£ giá»¯ |
-| GET | `/api/appointments/staff?status=booked&date=YYYY-MM-DD&sort=newest` | Staff | NhĂ¢n viĂªn xem lá»‹ch theo tráº¡ng thĂ¡i (máº·c Ä‘á»‹nh `booked`), lá»c ngĂ y tĂ¹y chá»n, má»—i lá»‹ch cĂ³ `patientName`. `sort=newest`: má»›i Ä‘áº·t/má»›i Ä‘á»•i tráº¡ng thĂ¡i lĂªn trÆ°á»›c (máº·c Ä‘á»‹nh xáº¿p theo ngĂ y giá» khĂ¡m) |
-| PATCH | `/api/appointments/:id/status` | Staff | NhĂ¢n viĂªn Ä‘á»•i tráº¡ng thĂ¡i. Body `{ status: "confirmed" \| "rejected" \| "completed", reason? }`, `reason` báº¯t buá»™c khi `rejected` (tá»‘i Ä‘a 500 kĂ½ tá»±). Khi `completed` cĂ³ thá»ƒ kĂ¨m káº¿t quáº£ khĂ¡m, Ä‘Æ¡n thuá»‘c, hĂ³a Ä‘Æ¡n (xem Module 3) |
+| POST | `/api/bookings/quote` | Không | Báo giá dịch vụ/combo, trả `subtotal`, `discount`, `totalPrice`, `durationMinutes`; có thể gửi `voucherCode` |
+| GET | `/api/availability?date=YYYY-MM-DD&durationMinutes=30` | Không | Giờ trống theo ngày; có thể truyền `doctorId`, `comboId`, `serviceIds` (các mã phân tách bằng dấu phẩy) |
+| POST | `/api/vouchers/validate` | Không | Body gồm `code` và `serviceIds` và/hoặc `comboId`; giá được tính lại trên backend |
+| POST | `/api/appointments` | Có | Tạo lịch cho bản thân hoặc người thân; `doctorId` có thể bỏ trống để chọn ngẫu nhiên; body có `patientId?`, `serviceIds?`, `comboId?`, `date`, `startTime`, `voucherCode?`, `note?`, `followUpId?`; header tùy chọn `Idempotency-Key` |
+| GET | `/api/appointments` | Có | Lịch của tài khoản đang đăng nhập, bao gồm lịch đặt cho người thân |
+| GET | `/api/appointments/:id` | Có | Chi tiết lịch; chỉ chủ tài khoản được xem |
+| PATCH | `/api/appointments/:id/cancel` | Có | Hủy lịch tương lai và giải phóng các slot đã giữ |
+| GET | `/api/appointments/staff?status=booked&date=YYYY-MM-DD&sort=newest` | Staff | Nhân viên xem lịch theo trạng thái (mặc định `booked`), lọc ngày tùy chọn, mỗi lịch có `patientName`. `sort=newest`: mới đặt/mới đổi trạng thái lên trước (mặc định xếp theo ngày giờ khám) |
+| PATCH | `/api/appointments/:id/status` | Staff | Nhân viên đổi trạng thái. Body `{ status: "confirmed" \| "rejected" \| "completed", reason? }`, `reason` bắt buộc khi `rejected` (tối đa 500 ký tự). Khi `completed` có thể kèm kết quả khám, đơn thuốc, hóa đơn (xem Module 3) |
 
-### Tráº¡ng thĂ¡i lá»‹ch háº¹n
+### Trạng thái lịch hẹn
 
-| Tráº¡ng thĂ¡i | NghÄ©a | App hiá»ƒn thá»‹ |
+| Trạng thái | Nghĩa | App hiển thị |
 |---|---|---|
-| `booked` | Vá»«a Ä‘áº·t, chá» phĂ²ng khĂ¡m xĂ¡c nháº­n | Chá» xĂ¡c nháº­n |
-| `confirmed` | PhĂ²ng khĂ¡m Ä‘Ă£ xĂ¡c nháº­n | ÄĂ£ xĂ¡c nháº­n |
-| `rejected` | PhĂ²ng khĂ¡m tá»« chá»‘i (cĂ³ lĂ½ do trong `statusReason`) | Bá»‹ tá»« chá»‘i |
-| `cancelled` | Bá»‡nh nhĂ¢n há»§y | ÄĂ£ há»§y |
-| `completed` | ÄĂ£ khĂ¡m xong | ÄĂ£ hoĂ n táº¥t |
+| `booked` | Vừa đặt, chờ phòng khám xác nhận | Chờ xác nhận |
+| `confirmed` | Phòng khám đã xác nhận | Đã xác nhận |
+| `rejected` | Phòng khám từ chối (có lý do trong `statusReason`) | Bị từ chối |
+| `cancelled` | Bệnh nhân hủy | Đã hủy |
+| `completed` | Đã khám xong | Đã hoàn tất |
 
-Tráº¡ng thĂ¡i khĂ¡c: app hiá»ƒn thá»‹ "KhĂ´ng xĂ¡c Ä‘á»‹nh".
+Trạng thái khác: app hiển thị "Không xác định".
 
-Chuyá»ƒn há»£p lá»‡ (kiá»ƒm tra báº±ng `canTransition` trong `utils/booking.js`), cĂ²n láº¡i tráº£ **409**, ká»ƒ cáº£ gá»i láº¡i cĂ¹ng tráº¡ng thĂ¡i:
+Chuyển hợp lệ (kiểm tra bằng `canTransition` trong `utils/booking.js`), còn lại trả **409**, kể cả gọi lại cùng trạng thái:
 
 ```
-booked    â†’ confirmed | rejected | cancelled
-confirmed â†’ completed | cancelled
+booked    → confirmed | rejected | cancelled
+confirmed → completed | cancelled
 ```
 
-- Bá»‡nh nhĂ¢n chá»‰ há»§y qua `PATCH /:id/cancel`. NhĂ¢n viĂªn dĂ¹ng `PATCH /:id/status`.
-- Khi Ä‘á»•i tráº¡ng thĂ¡i lÆ°u `status`, `statusUpdatedAt` (Timestamp), `statusUpdatedBy` (uid nhĂ¢n viĂªn), `statusReason` (náº¿u cĂ³).
-- `rejected` giáº£i phĂ³ng slot vĂ  tráº£ 1 lÆ°á»£t voucher giá»‘ng luá»“ng há»§y (hĂ m dĂ¹ng chung `readRelease`/`writeRelease` trong `routes/appointments.js`).
-- Má»—i láº§n Ä‘á»•i tráº¡ng thĂ¡i táº¡o Ä‘Ăºng 1 thĂ´ng bĂ¡o gá»­i `accountId`, id cá»‘ Ä‘á»‹nh `${appointmentId}_${status}`, `type` lĂ  `appointment_confirmed` hoáº·c `appointment_rejected` (`refId` lĂ  id lá»‹ch); hoĂ n táº¥t táº¡o `visit_result` (`refId` lĂ  visitId).
+- Bệnh nhân chỉ hủy qua `PATCH /:id/cancel`. Nhân viên dùng `PATCH /:id/status`.
+- Khi đổi trạng thái lưu `status`, `statusUpdatedAt` (Timestamp), `statusUpdatedBy` (uid nhân viên), `statusReason` (nếu có).
+- `rejected` giải phóng slot và trả 1 lượt voucher giống luồng hủy (hàm dùng chung `readRelease`/`writeRelease` trong `routes/appointments.js`).
+- Mỗi lần đổi trạng thái tạo đúng 1 thông báo gửi `accountId`, id cố định `${appointmentId}_${status}`, `type` là `appointment_confirmed` hoặc `appointment_rejected` (`refId` là id lịch); hoàn tất tạo `visit_result` (`refId` là visitId).
 
-### Äáº·t lá»‹ch tá»« Ä‘á» xuáº¥t tĂ¡i khĂ¡m (`followUpId`, A08)
+### Đặt lịch từ đề xuất tái khám (`followUpId`, A08)
 
-- Follow-up pháº£i cĂ³ tháº­t, Ä‘Ăºng `patientId`, cĂ¹ng tĂ i khoáº£n (náº¿u cĂ³ `accountId`) vĂ  cĂ²n `suggested` hoáº·c `scheduled` (dá»¯ liá»‡u cÅ©); cĂ³ `serviceId` thĂ¬ lá»‹ch pháº£i gá»“m dá»‹ch vá»¥ Ä‘Ă³.
-- CĂ¹ng transaction giá»¯ chá»—: lá»‹ch lÆ°u `followUpId`, follow-up chuyá»ƒn `booked` kĂ¨m `appointmentId`. Äáº·t láº§n ná»¯a tráº£ 409.
-- Lá»‹ch bá»‹ há»§y hoáº·c tá»« chá»‘i: follow-up vá» `suggested`; lá»‹ch hoĂ n táº¥t: follow-up `completed`.
-- `followUpId` náº±m trong dáº¥u vĂ¢n tay Idempotency-Key.
+- Follow-up phải có thật, đúng `patientId`, cùng tài khoản (nếu có `accountId`) và còn `suggested` hoặc `scheduled` (dữ liệu cũ); có `serviceId` thì lịch phải gồm dịch vụ đó.
+- Cùng transaction giữ chỗ: lịch lưu `followUpId`, follow-up chuyển `booked` kèm `appointmentId`. Đặt lần nữa trả 409.
+- Lịch bị hủy hoặc từ chối: follow-up về `suggested`; lịch hoàn tất: follow-up `completed`.
+- `followUpId` nằm trong dấu vân tay Idempotency-Key.
 
-### Nháº¯c lá»‹ch tá»± Ä‘á»™ng (`src/jobs/reminders.js`, A03)
+### Nhắc lịch tự động (`src/jobs/reminders.js`, A03)
 
-- Server cháº¡y job khi khá»Ÿi Ä‘á»™ng vĂ  má»—i 10 phĂºt (test khĂ´ng náº¡p `server.js` nĂªn khĂ´ng cháº¡y). Staff cháº¡y ngay báº±ng `POST /api/notifications/run-reminders`.
+- Server chạy job khi khởi động và mỗi 10 phút (test không nạp `server.js` nên không chạy). Staff chạy ngay bằng `POST /api/notifications/run-reminders`.
 - `appointment_reminder`: appointment `confirmed` trong cửa sổ 24 giờ; ID `{appointmentId}_{YYYY-MM-DD}_{HH:mm}`. Giữ transaction/chống trùng AUD-05 và inbox visibility AUD-08; không thêm mốc 1 giờ/2 giờ trong thay đổi này.
-- `follow_up_reminder`: **AUD-07 DEFERRED (out of demo scope), chưa triển khai**; owners Nhi/Phương/Ngân. Một test acceptance giữ callback/assertions dưới TODO, không tính PASS. Mở lại sau khi owners duyệt timing/eligibility và triển khai riêng; bỏ TODO sau khi kiểm chứng. Không nhầm với event thông báo follow-up đã có.
-- Má»—i nháº¯c táº¡o trong transaction Ä‘á»c láº¡i tráº¡ng thĂ¡i, giá», `notificationsEnabled` cá»§a tĂ i khoáº£n; Ä‘Ă£ cĂ³ thĂ¬ bá» qua. Há»§y hoáº·c tá»« chá»‘i lá»‹ch xĂ³a nháº¯c Ä‘Ă£ gá»­i. `GET /api/notifications` khĂ´ng táº¡o thĂ´ng bĂ¡o.
+- `follow_up_reminder` (AUD-07, khôi phục 02/11/2026): đề xuất tái khám `suggested` (hoặc `scheduled` dữ liệu cũ) có `scheduledAt` trong 3 ngày tới; ID `furemind_{followUpId}_{YYYY-MM-DD}` (ngày giờ Việt Nam), `refId` là id đề xuất. Thiếu `accountId` thì bỏ qua. Khác với thông báo `follow_up` tạo ngay khi staff đề xuất.
+- Response `run-reminders`: `{ created, followUpReminders }` (số nhắc lịch hẹn, số nhắc tái khám vừa tạo). Chưa có mốc nhắc 2 giờ trước giờ khám.
+- Mỗi nhắc tạo trong transaction đọc lại trạng thái, giờ, `notificationsEnabled` của tài khoản; đã có thì bỏ qua. Hủy hoặc từ chối lịch xóa nhắc đã gửi. `GET /api/notifications` không tạo thông báo.
 
-### Ghi chĂº lá»‹ch háº¹n (`note`)
+### Ghi chú lịch hẹn (`note`)
 
-- Chuá»—i, bá» khoáº£ng tráº¯ng hai Ä‘áº§u, tá»‘i Ä‘a 500 kĂ½ tá»±, cho phĂ©p rá»—ng. KhĂ´ng gá»­i hoáº·c `null` thĂ¬ lÆ°u `""`. Sai kiá»ƒu hoáº·c quĂ¡ dĂ i tráº£ **400**.
-- LÆ°u trong lá»‹ch, tráº£ vá» á»Ÿ `GET /api/appointments`, `GET /:id` vĂ  `GET /staff`.
+- Chuỗi, bỏ khoảng trắng hai đầu, tối đa 500 ký tự, cho phép rỗng. Không gửi hoặc `null` thì lưu `""`. Sai kiểu hoặc quá dài trả **400**.
+- Lưu trong lịch, trả về ở `GET /api/appointments`, `GET /:id` và `GET /staff`.
 
-### Chá»‘ng táº¡o trĂ¹ng (`Idempotency-Key`)
+### Chống tạo trùng (`Idempotency-Key`)
 
-- App sinh má»™t UUID cho má»—i láº§n xĂ¡c nháº­n Ä‘áº·t lá»‹ch, gá»­i qua header `Idempotency-Key`; báº¥m láº¡i hoáº·c gá»­i láº¡i do lá»—i máº¡ng dĂ¹ng Ä‘Ăºng key Ä‘Ă³, sá»­a lá»±a chá»n thĂ¬ Ä‘á»•i key.
-- Key há»£p lá»‡: 8 Ä‘áº¿n 100 kĂ½ tá»± chá»¯, sá»‘, `-`, `_`. Sai tráº£ **400**. KhĂ´ng gá»­i key thĂ¬ cháº¡y nhÆ° cÅ©.
-- Backend lÆ°u `appointment_requests/{uid}_{key}` = `{ accountId, key, appointmentId, fingerprint, createdAt }` trong **cĂ¹ng transaction** táº¡o lá»‹ch. `fingerprint` lĂ  SHA-256 cá»§a ngÆ°á»i khĂ¡m, ngĂ y, giá», bĂ¡c sÄ©, dá»‹ch vá»¥, combo, voucher, ghi chĂº.
-- Gá»­i láº¡i cĂ¹ng key, cĂ¹ng ná»™i dung: tráº£ **201** Ä‘Ăºng lá»‹ch Ä‘Ă£ táº¡o (cĂ¹ng `id`), khĂ´ng táº¡o thĂªm lá»‹ch, thĂ´ng bĂ¡o, lÆ°á»£t voucher. Kiá»ƒm tra cáº£ trÆ°á»›c transaction (vĂ¬ slot Ä‘ang bá»‹ chĂ­nh lá»‹ch Ä‘Ă³ giá»¯) vĂ  Ä‘áº§u transaction (hai láº§n gá»­i Ä‘á»“ng thá»i thĂ¬ láº§n thua Ä‘Æ°á»£c cháº¡y láº¡i vĂ  nháº­n lá»‹ch cá»§a láº§n tháº¯ng).
-- CĂ¹ng key, khĂ¡c ná»™i dung: **409** "MĂ£ yĂªu cáº§u Ä‘Ă£ dĂ¹ng cho má»™t lá»‹ch khĂ¡c".
-- Táº¡o lá»‹ch tháº¥t báº¡i thĂ¬ khĂ´ng ghi `appointment_requests`; gá»­i láº¡i cĂ¹ng key sau khi sá»­a Ä‘Æ°á»£c lá»—i váº«n táº¡o Ä‘Æ°á»£c.
-- App: gá»­i bá»‹ máº¥t káº¿t ná»‘i/háº¿t thá»i gian chá» thĂ¬ khĂ³a má»i lá»±a chá»n, chá»‰ cho "Thá»­ láº¡i" (key cÅ©) hoáº·c "Chá»n láº¡i" (táº£i láº¡i lá»‹ch; Ä‘Ă£ cĂ³ lá»‹ch cĂ¹ng ngÆ°á»i khĂ¡m, ngĂ y, giá» thĂ¬ bĂ¡o thĂ nh cĂ´ng vĂ  má»Ÿ lá»‹ch Ä‘Ă³; chÆ°a cĂ³ thĂ¬ má»Ÿ khĂ³a, láº§n gá»­i sau dĂ¹ng key má»›i).
+- App sinh một UUID cho mỗi lần xác nhận đặt lịch, gửi qua header `Idempotency-Key`; bấm lại hoặc gửi lại do lỗi mạng dùng đúng key đó, sửa lựa chọn thì đổi key.
+- Key hợp lệ: 8 đến 100 ký tự chữ, số, `-`, `_`. Sai trả **400**. Không gửi key thì chạy như cũ.
+- Backend lưu `appointment_requests/{uid}_{key}` = `{ accountId, key, appointmentId, fingerprint, createdAt }` trong **cùng transaction** tạo lịch. `fingerprint` là SHA-256 của người khám, ngày, giờ, bác sĩ, dịch vụ, combo, voucher, ghi chú.
+- Gửi lại cùng key, cùng nội dung: trả **201** đúng lịch đã tạo (cùng `id`), không tạo thêm lịch, thông báo, lượt voucher. Kiểm tra cả trước transaction (vì slot đang bị chính lịch đó giữ) và đầu transaction (hai lần gửi đồng thời thì lần thua được chạy lại và nhận lịch của lần thắng).
+- Cùng key, khác nội dung: **409** "Mã yêu cầu đã dùng cho một lịch khác".
+- Tạo lịch thất bại thì không ghi `appointment_requests`; gửi lại cùng key sau khi sửa được lỗi vẫn tạo được.
+- App: gửi bị mất kết nối/hết thời gian chờ thì khóa mọi lựa chọn, chỉ cho "Thử lại" (key cũ) hoặc "Chọn lại" (tải lại lịch; đã có lịch cùng người khám, ngày, giờ thì báo thành công và mở lịch đó; chưa có thì mở khóa, lần gửi sau dùng key mới).
 
-### Quyá»n nhĂ¢n viĂªn (staff)
+### Quyền nhân viên (staff)
 
-- DĂ¹ng Firebase custom claims `{ role: "staff" }`. Middleware `src/middleware/requireStaff.js` (Ä‘áº·t sau `auth`) tráº£ **403** náº¿u khĂ´ng pháº£i staff.
-- GĂ¡n: `node scripts/set-staff.js staff@nhakhoa.com`. Gá»¡: thĂªm `--remove`. NgÆ°á»i Ä‘Æ°á»£c gĂ¡n/gá»¡ pháº£i **Ä‘Äƒng nháº­p láº¡i** Ä‘á»ƒ token cĂ³ quyá»n má»›i.
+- Dùng Firebase custom claims. Một chính sách chung ở `src/utils/staff.js` (`isStaff`, AUD-14): là staff khi `role` là `"staff"` hoặc `"admin"`, hoặc `staff: true` / `admin: true`. Middleware `src/middleware/requireStaff.js` (đặt sau `auth`) trả **403** nếu không phải staff; các route cho phép "chủ tài khoản hoặc staff" cũng dùng `isStaff`.
+- Gán: `node scripts/set-staff.js staff@nhakhoa.com`. Gỡ: thêm `--remove`. Người được gán/gỡ phải **đăng nhập lại** để token có quyền mới.
 
-### Lá»‹ch lĂ m viá»‡c bĂ¡c sÄ©
+### Lịch làm việc bác sĩ
 
-- `node scripts/seed-schedules.js` cháº¡y thá»­ (in ra), thĂªm `--apply` Ä‘á»ƒ ghi. Táº¡o ca cho má»i bĂ¡c sÄ© Ä‘ang hoáº¡t Ä‘á»™ng, tá»« hĂ´m nay tá»›i 30 ngĂ y sau, thá»© 2 Ä‘áº¿n thá»© 7: ca sĂ¡ng 08:00 Ä‘áº¿n 12:00, ca chiá»u 13:30 Ä‘áº¿n 17:30, slot 30 phĂºt. Id `${doctorId}_${YYYY-MM-DD}_am` / `_pm`.
-- KhĂ´ng xĂ³a, khĂ´ng ghi Ä‘Ă¨: id Ä‘Ă£ cĂ³ thĂ¬ bá» qua; bĂ¡c sÄ© Ä‘Ă£ cĂ³ ca báº¥t ká»³ trong ngĂ y thĂ¬ bá» qua ngĂ y Ä‘Ă³. **Cháº¡y láº¡i trÆ°á»›c hĂ´m demo** Ä‘á»ƒ cĂ³ lá»‹ch cho cĂ¡c ngĂ y má»›i.
-- `loadSchedulingData(date)` chá»‰ Ä‘á»c ca cĂ³ `startAt` trong ngĂ y Ä‘ang há»i (giá» Viá»‡t Nam) vĂ  lá»‹ch háº¹n, slot cĂ³ `date` báº±ng ngĂ y Ä‘Ă³. Ca lá»—i Ä‘á»‹nh dáº¡ng bá»‹ bá» qua kĂ¨m `console.warn`, khĂ´ng lĂ m há»ng viá»‡c Ä‘áº·t lá»‹ch.
+- `node scripts/seed-schedules.js` chạy thử: **có đọc Firestore** (bác sĩ và ca đã có) để in số ca sẽ tạo, số ca bỏ qua và vài id mẫu, **không ghi gì**. Thêm `--apply` để ghi.
+- Tạo ca cho mọi bác sĩ đang hoạt động, từ hôm nay tới 30 ngày sau, thứ 2 đến thứ 7: ca sáng 08:00 đến 12:00, ca chiều 13:30 đến 17:30, slot 30 phút. Id `${doctorId}_${YYYY-MM-DD}_am` / `_pm`.
+- "Hôm nay", ngày trong id và giờ ca đều tính **theo giờ Việt Nam (UTC+7)**, không phụ thuộc múi giờ của máy chạy (bản cũ dùng `toISOString()` nên id bị lùi 1 ngày). Chạy lúc 06:00 sáng giờ Việt Nam vẫn bắt đầu từ đúng ngày hôm đó (có test `test/seed-schedules.test.cjs`).
+- Không xóa, không ghi đè: id đã có thì bỏ qua; **bác sĩ đã có ca bất kỳ trong ngày (theo giờ Việt Nam) thì bỏ qua cả ngày đó**; ghi bằng `create` nên không bao giờ đè ca có sẵn. Chạy lại nhiều lần không tạo trùng. **Chạy lại sáng hôm demo** để có lịch cho các ngày mới.
+- `loadSchedulingData(date)` chỉ đọc ca có `startAt` trong ngày đang hỏi (giờ Việt Nam) và lịch hẹn, slot có `date` bằng ngày đó. Ca lỗi định dạng bị bỏ qua kèm `console.warn`, không làm hỏng việc đặt lịch.
 
-### Quy Æ°á»›c Module 2
+### Quy ước Module 2
 
-- BĂ¡o giĂ¡ luĂ´n Ä‘á»c `price`, `durationMinutes` tá»« `services`/`combos`; khĂ´ng tin giĂ¡ do client gá»­i. Khi chá»n combo kĂ¨m cĂ¡c dá»‹ch vá»¥ Ä‘Ă£ náº±m trong combo, cĂ¡c dá»‹ch vá»¥ Ä‘Ă³ khĂ´ng bá»‹ tĂ­nh phĂ­/thá»i lÆ°á»£ng láº§n hai. `totalPrice` lĂ  sá»‘ tiá»n sau giáº£m giĂ¡, `subtotal` lĂ  trÆ°á»›c giáº£m giĂ¡, `discount` lĂ  sá»‘ tiá»n Ä‘Æ°á»£c giáº£m.
-- `doctor_schedules` dĂ¹ng `doctorId`, `startAt`, `endAt`, `slotMinutes`, `isAvailable`. `startAt`/`endAt` lĂ  thá»i Ä‘iá»ƒm Firestore; há»‡ thá»‘ng diá»…n giáº£i theo mĂºi giá» Viá»‡t Nam (`Asia/Ho_Chi_Minh`). Má»—i document lĂ  má»™t ca/ngĂ y cá»¥ thá»ƒ, khĂ´ng tá»± láº·p theo tuáº§n.
-- Lá»‹ch háº¹n lÆ°u `accountId`, `patientId`, `doctorId`, `serviceIds`, `comboId`, `date` (`YYYY-MM-DD`), `startTime`/`endTime` (`HH:mm`), `totalPrice`, `discount`, `voucherCode`, `status: "booked"`, `createdAt` (Timestamp). Lá»‹ch cho ngÆ°á»i thĂ¢n pháº£i tham chiáº¿u má»™t document trong `users/{accountId}/family_members` chÆ°a bá»‹ xĂ³a (`isArchived`); bÆ°á»›c kiá»ƒm tra ngÆ°á»i khĂ¡m cháº¡y trÆ°á»›c má»i bÆ°á»›c kiá»ƒm tra dá»‹ch vá»¥, lá»‹ch lĂ m viá»‡c, khung giá».
-- Test tá»± Ä‘á»™ng: `node --test test/module2/*.test.cjs` (Firestore giáº£ dĂ¹ng chung á»Ÿ `test/module2/support/fakeFirestore.cjs`, cĂ³ mĂ´ phá»ng xung Ä‘á»™t transaction).
-- Viá»‡c táº¡o lá»‹ch dĂ¹ng Firestore Transaction vĂ  collection ná»™i bá»™ `appointment_slots` Ä‘á»ƒ giá»¯ tá»«ng Ä‘oáº¡n thá»i gian 15 phĂºt; lá»‹ch Ä‘Ă£ há»§y sáº½ giáº£i phĂ³ng slot. Khi dĂ¹ng voucher, `usedCount` Ä‘Æ°á»£c tÄƒng trong cĂ¹ng transaction vá»›i Ä‘áº·t lá»‹ch.
-- Notification má»›i cĂ³ cĂ¡c trÆ°á»ng `userId`, `title`, `body`, `type`, `refId`, `isRead`, `createdAt` theo quy Æ°á»›c á»Ÿ README gá»‘c.
-- Request test náº±m á»Ÿ má»¥c **MODULE 2** trong `backend/api-test.http`; token vĂ  id lá»‹ch láº¥y tá»± Ä‘á»™ng tá»« response, chá»‰ cáº§n chá»‰nh ngĂ y (`@a01Date`, `@a11Date`) vĂ o ngĂ y Ä‘Ă£ cĂ³ lá»‹ch lĂ m viá»‡c.
+- Báo giá luôn đọc `price`, `durationMinutes` từ `services`/`combos`; không tin giá do client gửi. Khi chọn combo kèm các dịch vụ đã nằm trong combo, các dịch vụ đó không bị tính phí/thời lượng lần hai. `totalPrice` là số tiền sau giảm giá, `subtotal` là trước giảm giá, `discount` là số tiền được giảm.
+- `doctor_schedules` dùng `doctorId`, `startAt`, `endAt`, `slotMinutes`, `isAvailable`. `startAt`/`endAt` là thời điểm Firestore; hệ thống diễn giải theo múi giờ Việt Nam (`Asia/Ho_Chi_Minh`). Mỗi document là một ca/ngày cụ thể, không tự lặp theo tuần.
+- Lịch hẹn lưu `accountId`, `patientId`, `doctorId`, `serviceIds`, `comboId`, `date` (`YYYY-MM-DD`), `startTime`/`endTime` (`HH:mm`), `totalPrice`, `discount`, `voucherCode`, `status: "booked"`, `createdAt` (Timestamp). Lịch cho người thân phải tham chiếu một document trong `users/{accountId}/family_members` chưa bị xóa (`isArchived`); bước kiểm tra người khám chạy trước mọi bước kiểm tra dịch vụ, lịch làm việc, khung giờ.
+- Test tự động: chạy bằng `npm test` (xem mục "Chạy test backend"). Firestore giả dùng chung ở `test/module2/support/fakeFirestore.cjs`, có mô phỏng xung đột transaction.
+- Việc tạo lịch dùng Firestore Transaction và collection nội bộ `appointment_slots` để giữ từng đoạn thời gian 15 phút; lịch đã hủy sẽ giải phóng slot. Khi dùng voucher, `usedCount` được tăng trong cùng transaction với đặt lịch.
+- Notification mới có các trường `userId`, `title`, `body`, `type`, `refId`, `isRead`, `createdAt` theo quy ước ở README gốc.
+- Request test nằm ở mục **MODULE 2** trong `backend/api-test.http`; token và id lịch lấy tự động từ response, chỉ cần chỉnh ngày (`@a01Date`, `@a11Date`) vào ngày đã có lịch làm việc.
 
-### Script dá»n dá»¯ liá»‡u vĂ  seed demo (Giai Ä‘oáº¡n 5)
+## Script (`backend/scripts/`)
 
-Máº·c Ä‘á»‹nh cĂ¡c script chá»‰ preview, khĂ´ng khá»Ÿi táº¡o Firebase vĂ  khĂ´ng ghi dá»¯ liá»‡u:
+| Script | Việc | Ghi Firestore? |
+|---|---|---|
+| `preflight-demo.js` | Kiểm tra trước demo: `.env`, khóa Firebase, quyền staff, ca bác sĩ 7 ngày tới, dịch vụ và combo có bác sĩ làm được, thời lượng combo, voucher dùng được. In bảng OK / CẢNH BÁO / LỖI, có LỖI thì mã thoát 1 | **Không**, chỉ đọc |
+| `e2e-smoke.js` | Chạy thật toàn luồng qua API `localhost:3000` bằng test123 và staff, in PASS / FAIL / BỎ QUA từng bước, cuối script tự xóa đúng các id đã tạo | Có, rồi tự dọn |
+| `seed-schedules.js [--apply]` | Tạo ca làm việc bác sĩ (xem mục "Lịch làm việc bác sĩ") | Chỉ khi `--apply` |
+| `cleanup-test-data.js <email> [--apply] [--keep-profile]` | Xóa dữ liệu nghiệp vụ của một tài khoản test | Chỉ khi `--apply` |
+| `seed-demo.js <email> [--apply]` | Tạo dữ liệu demo cho một tài khoản (không xóa dữ liệu có sẵn, dùng `writeCompletion` để tạo hai hồ sơ khám) | Chỉ khi `--apply` |
+| `set-staff.js <email> [--remove]` | Gán hoặc gỡ quyền staff | Ghi ngay (custom claims) |
 
 ```bash
-node scripts/cleanup-test-data.js <email> [--keep-profile]
-node scripts/seed-demo.js <email>
-node scripts/seed-schedules.js
+cd backend
+node scripts/preflight-demo.js
+node scripts/e2e-smoke.js            # backend phải đang chạy (npm start)
 ```
 
-Chá»‰ thĂªm `--apply` sau khi xĂ¡c nháº­n Ä‘Ăºng project vĂ  tĂ i khoáº£n. Cleanup chá»‰ xá»­ lĂ½
-dá»¯ liá»‡u nghiá»‡p vá»¥ cá»§a email, khĂ´ng xĂ³a `services`, `combos`, `doctors`, `articles`,
-`vouchers` hoáº·c `doctor_schedules`; `--keep-profile` giá»¯ há»“ sÆ¡ vĂ  ngÆ°á»i thĂ¢n.
-Seed demo khĂ´ng xĂ³a dá»¯ liá»‡u cĂ³ sáºµn vĂ  dĂ¹ng `writeCompletion` Ä‘á»ƒ táº¡o hai há»“ sÆ¡ khĂ¡m.
+- `preflight-demo.js`: chạy sáng hôm demo sau `seed-schedules.js --apply`, và sau mỗi lần sửa danh mục, bác sĩ, voucher.
+- `e2e-smoke.js`: chạy tối trước hoặc sáng hôm demo, **không chạy trong lúc demo**. Mật khẩu đọc từ `backend/.env` (`TEST_PASSWORD`, `STAFF_PASSWORD`), không in ra. Không dùng voucher, không gửi `Idempotency-Key`. Bước nhắc lịch cần giờ trống trong 24 giờ tới, không có thì BỎ QUA. Dọn dẹp chạy cả khi có bước FAIL, chỉ xóa document do script tạo và thuộc test123; dọn lỗi thì in danh sách id để xóa tay. Lần chạy ngày 02/11/2026: 14 PASS, 0 FAIL, 0 BỎ QUA, xóa 20 bản ghi, không còn sót.
+- Cleanup chỉ xử lý dữ liệu nghiệp vụ của email, không xóa `services`, `combos`, `doctors`, `articles`, `vouchers` hoặc `doctor_schedules`; `--keep-profile` giữ hồ sơ và người thân. Chỉ thêm `--apply` sau khi xác nhận đúng project và tài khoản.
 
-Cháº¡y test backend báº±ng `npm test`. Frontend dĂ¹ng `flutter test`,
-`flutter test --dart-define=DATA_SOURCE=api` vĂ  `flutter analyze`.
+## Chạy test backend
 
+- Cần **Node.js 24** (`node --version` phải là `v24.x`). Phiên bản khác: trình chạy test dừng ngay với lỗi `AUD-12: fake test launcher requires Node 24.x.`
+- Lệnh:
+
+```bash
+cd backend
+npm test
+```
+
+- `npm test` chạy `test/support/run-fake-tests.cjs`: tự tìm mọi file `*.test.js` / `*.test.cjs` trong `test/` (trừ thư mục `support`), nạp trước `test/support/fake-isolation.cjs` để **chặn** Firebase Admin thật, `serviceAccountKey.json`, `.env`, `server.js` và mạng ngoài localhost. Test chỉ dùng Firestore giả, không cần khóa Firebase. Kết quả ngày 02/11/2026: 670 đạt, 0 lỗi.
+- Thêm file test mới thì cập nhật danh sách trong `test/discovery.test.cjs`.
+
+Frontend dùng `flutter analyze`, `flutter test` và `flutter test --dart-define=DATA_SOURCE=api` (xem README gốc).

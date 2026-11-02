@@ -1,3 +1,5 @@
+> Tài liệu lịch sử ngày 31/10/2026, không phải hướng dẫn hiện hành, xem [README.md](../../../README.md).
+
 # Audit toàn bộ quy trình đặt lịch — MediCare Dental
 
 Ngày audit: 31/10/2026 (Asia/Ho_Chi_Minh). Nguồn: code thực tế trong workspace tại thời điểm đọc.

@@ -1,3 +1,5 @@
+> Tài liệu lịch sử ngày 01/11/2026, không phải hướng dẫn hiện hành, xem [README.md](../../../README.md).
+
 # Full application audit — MediCare Dental
 
 Ngày: **01/11/2026**, Asia/Ho_Chi_Minh. Nguồn sự thật: mã trong workspace tại thời điểm audit. Không dùng Git để xác định revision. Báo cáo chỉ phản ánh snapshot này, bao gồm hai bản sửa lifecycle/serialization và test đã tồn tại từ các lượt trước yêu cầu audit.

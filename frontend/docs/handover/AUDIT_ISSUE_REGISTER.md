@@ -6,6 +6,45 @@ Ngày audit: 01/11/2026, Asia/Ho_Chi_Minh. Snapshot: source trong workspace hi�
 
 VERIFIED = đọc source hoặc tái hiện bằng mock/fake, được ghi riêng ở mỗi mục. PARTIALLY VERIFIED = code có vấn đề nhưng chưa chứng minh đầy đủ tác động runtime/concurrency thật. NOT VERIFIED = chưa kiểm chứng. BLOCKED = không thể xác minh trong phạm vi được phép. NOT IMPLEMENTED = không có implementation trong đường chạy đã khảo sát.
 
+## Trạng thái hiện hành sau đợt sửa 02/11/2026
+
+Cập nhật 02/11/2026 sau giai đoạn 1 (commit `37eb445`) và giai đoạn 2 (commit `e7939ab`) của đợt sửa audit, cùng bản sửa `bb35da2`. **Bảng này là trạng thái hiện hành.** Phần chi tiết từng mục bên dưới giữ nguyên văn audit 01/11/2026 để tra cứu; dòng "Trạng thái" trong phần đó là trạng thái tại ngày audit.
+
+Bằng chứng chung ngày 02/11/2026: `npm test` 670 đạt / 0 lỗi; Flutter mặc định 403 đạt / 0 lỗi / 132 bỏ qua; Flutter `DATA_SOURCE=api` 521 đạt / 0 lỗi / 14 bỏ qua; `flutter analyze` không có lỗi; `backend/scripts/e2e-smoke.js` chạy thật qua API localhost và Firestore `yoursmile-49379`: **14 PASS / 0 FAIL / 0 BỎ QUA**, tự dọn 20 bản ghi. E2E chỉ đi luồng chuẩn (happy path); các ca biên vẫn chỉ được kiểm bằng Firestore giả.
+
+"Fake" = kiểm bằng Firestore giả hoặc MockClient. "E2E" = có bước tương ứng PASS trong `e2e-smoke.js` ngày 02/11/2026.
+
+| Mục | Nội dung | Trạng thái 02/11/2026 | Bằng chứng |
+|---|---|---|---|
+| AUD-01 | Hoàn tất khám tạo đơn thuốc, hóa đơn | **FIXED** (fake + E2E) | `utils/clinical.js` ghi visit, rx, invoice trong cùng transaction; E2E bước 5, 6 |
+| AUD-02 | Không ghi đè chứng từ khám đã có | **FIXED** (fake) | `utils/clinical.js`: chứng từ đã tồn tại trả 409 |
+| AUD-03 | Kiểm tra người khám và nguồn khi tạo tái khám | **FIXED** (fake + E2E luồng chuẩn) | `routes/followUps.js` kiểm người thân (kể cả đã xóa), visit, treatment, service, doctor; E2E bước 8 |
+| AUD-04 | Hủy lịch cũ không mở lại tái khám gắn lịch khác | **FIXED** (fake + E2E luồng chuẩn) | `utils/followUps.js` `readLinkedFollowUp` kiểm liên kết hai chiều; E2E bước 10, 11 |
+| AUD-05 | Nhắc lịch ghi trong transaction, đọc lại nguồn | **FIXED** (fake + E2E) | `jobs/reminders.js`; E2E bước 4 |
+| AUD-06 | Xem lịch sử người thân đã xóa | **FIXED** (fake) | Backend `assertHistoryPatientAccess` cho đọc lịch sử, vẫn chặn tạo mới; app hiện "Đã lưu trữ · Chỉ xem lịch sử". Chưa kiểm trên Firebase |
+| AUD-07 | Nhắc tái khám | **FIXED** nhắc tái khám 3 ngày (giai đoạn 1, fake + E2E bước 9). Mốc nhắc 2 giờ trước giờ khám: **chưa làm**, ngoài phạm vi demo | `jobs/reminders.js` `runFollowUpReminders`, ID `furemind_{id}_{ngày}`; hết TODO trong test |
+| AUD-08 | Nhắc cũ không còn hiện sau hoàn tất, tắt nhận thông báo | **FIXED** (fake) | `utils/notificationVisibility.js` |
+| AUD-09 | Parse ngày chặt | **FIXED** (fake) | `utils/clinical.js` `optionalDate` chỉ nhận `YYYY-MM-DD` hoặc ISO có timezone |
+| AUD-10 | Kiểm tra payload hoàn tất | **FIXED** (fake) | `parseCompletionBody` kiểm visit, từng thuốc, invoice trước khi đổi trạng thái |
+| AUD-11 | N+1 và phân trang hồ sơ | **PARTIALLY FIXED**: AUD-11A xong (fake). Phân trang, N+1: **OPEN**, ghi là chức năng chưa có trong README | Không đổi trước demo |
+| AUD-12 | Lệnh test backend, cô lập Firebase | **FIXED** | `npm test` chạy `test/support/run-fake-tests.cjs` (Node 24), chặn Firebase thật; giai đoạn 1 sửa phát hiện test trên Windows |
+| AUD-13 | Suite media lỗi khi nạp | **FIXED** (fake + E2E) | `utils/media.js` xuất `MAX_IMAGE_BYTES`; suite media chạy trong 670 test; E2E bước 12, 13 |
+| AUD-14 | Chính sách staff/admin thống nhất | **FIXED** (giai đoạn 1, fake) | `src/utils/staff.js` `isStaff` dùng chung cho mọi endpoint; E2E dùng `staff@nhakhoa.com` (role staff) |
+| AUD-15 | Giới hạn JSON 1 MiB, ảnh 716.800 bytes | **FIXED** (fake) | Như mục chi tiết |
+| AUD-16 | Tài liệu lỗi thời | **FIXED** (giai đoạn 3, 02/11/2026) | README gốc và `backend/README.md` viết lại theo code; sửa lỗi hiển thị tiếng Việt của `backend/README.md`; 16 file handover cũ có dòng "Tài liệu lịch sử" ở đầu |
+| AUD-17 | Test UI nhãn avatar | **FIXED** | `me_test.dart` đạt cả 2 chế độ; giai đoạn 2 sửa thêm kiểm tra "Nhận thông báo" ở chế độ API |
+| AUD-18 | Chưa có rate limit | **OPEN, chấp nhận cho demo**: chỉ ghi chú, không thêm thư viện | README gốc mục 6: backend chỉ chạy trên máy cá nhân trong mạng nội bộ, không mở cổng ra Internet, chưa có rate limit |
+
+Sửa thêm ngoài danh sách AUD (đợt 02/11/2026):
+
+- Combo có thời lượng khác tổng dịch vụ không còn trả lỗi 500 khi đặt lịch, dùng thời lượng combo và chỉ cảnh báo (giai đoạn 1, `test/module2/combo-duration.test.cjs`).
+- `scripts/seed-schedules.js` tính ngày và id ca theo giờ Việt Nam, cài đúng quy tắc bỏ qua ngày bác sĩ đã có ca (giai đoạn 2, `test/seed-schedules.test.cjs`).
+- Script mới: `scripts/preflight-demo.js` (chỉ đọc), `scripts/e2e-smoke.js` (chạy thật, tự dọn).
+
+Còn mở: AUD-11 (phân trang, N+1), AUD-18 (rate limit), mốc nhắc 2 giờ của AUD-07; ngoài AUD: thông báo đẩy FCM, màn hình staff trong app, tự làm mới token khi 401.
+
+## Chi tiết audit ngày 01/11/2026 (lịch sử)
+
 ## AUD-01 — P1 — Hoàn tất khám không tạo đơn thuốc/hóa đơn
 
 - Module/chủ sở hữu: M3 Ngân, phối hợp M2 Phương.

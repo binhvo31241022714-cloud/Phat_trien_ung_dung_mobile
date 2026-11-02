@@ -1,3 +1,5 @@
+> Tài liệu lịch sử ngày 21/10/2026, không phải hướng dẫn hiện hành, xem [README.md](../../../README.md).
+
 # Kế hoạch staging hiện tại — Android-only, Prompt 12.7
 
 Trạng thái: **PRE-COMMIT**. Phạm vi được Nhi duyệt: Flutter source/config/

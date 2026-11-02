@@ -1,3 +1,5 @@
+> Tài liệu lịch sử ngày 21/10/2026, không phải hướng dẫn hiện hành, xem [README.md](../../../README.md).
+
 # Backend pending review — không thuộc triển khai frontend Prompt 11
 
 Hai file đã được agent sửa/tạo trong Prompt 10 cũ trước khi Nhi thu hẹp phạm vi.

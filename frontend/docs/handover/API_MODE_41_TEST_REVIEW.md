@@ -1,3 +1,5 @@
+> Tài liệu lịch sử ngày 31/10/2026, không phải hướng dẫn hiện hành, xem [README.md](../../../README.md).
+
 # Phân loại và xử lý 41 test API-mode — 31/10/2026
 
 ## Kết quả

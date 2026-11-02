@@ -1,3 +1,5 @@
+> Tài liệu lịch sử ngày 31/10/2026, không phải hướng dẫn hiện hành, xem [README.md](../../../README.md).
+
 > Kết quả tiếp theo ngày 31/10/2026: đã xử lý 41 test lỗi; xem [bảng phân loại và kết quả hiện hành](API_MODE_41_TEST_REVIEW.md). Số 301/41 ở dưới là snapshot trước đợt tiếp theo, không phải trạng thái mới nhất.
 
 # Báo cáo tích hợp sau audit 962a981 — 31/10/2026

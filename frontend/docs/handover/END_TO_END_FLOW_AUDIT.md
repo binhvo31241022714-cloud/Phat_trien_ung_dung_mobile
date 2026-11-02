@@ -1,3 +1,5 @@
+> Tài liệu lịch sử ngày 01/11/2026, không phải hướng dẫn hiện hành, xem [README.md](../../../README.md).
+
 # End-to-end flow audit — MediCare Dental
 
 Ngày 01/11/2026. **Không có Firebase E2E PASS.** Source tracing + fake backend + Flutter MockClient chỉ chứng minh từng phần; hai bộ fake không cùng chạy một database/backend thực nối với Flutter. Không tự sửa contract hay tạo clinical data thật trong audit.
