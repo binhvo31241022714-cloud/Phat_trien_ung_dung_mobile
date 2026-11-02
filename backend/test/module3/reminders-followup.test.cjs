@@ -8,7 +8,7 @@ const { createFakeDb, installFakeFirebase } = require('../module2/support/fakeFi
 const fake = createFakeDb();
 installFakeFirebase(fake);
 const { toVietnamDateKey } = require('../../src/utils/booking');
-const { runReminders, appointmentReminderId } = require('../../src/jobs/reminders');
+const { runReminders, runFollowUpReminders, appointmentReminderId, followUpReminderId } = require('../../src/jobs/reminders');
 const { readFollowUpId } = require('../../src/utils/followUps');
 
 const HOUR = 60 * 60 * 1000;
@@ -106,24 +106,96 @@ test('nhắc lịch confirmed trong 24 giờ tới; bỏ qua lịch chưa xác n
   assert.equal(notices().filter(n => n.userId === 'B').length, 0);
 });
 
-// AUD-07 is deferred, not implemented. Keep the callback/assertions executable.
-// Owners: Nhi (M4), Phương (M2), Ngân (M3); excluded from the demo by agreement.
-// Reopen after owners approve reminder timing/eligibility and a separate implementation;
-// validate the fixed clock/acceptance criteria and remove TODO before claiming coverage.
-test('nhắc tái khám "suggested"/"scheduled" trong 3 ngày; bỏ qua đã đặt, quá 3 ngày, tài khoản tắt thông báo', {
-  todo: 'AUD-07 DEFERRED (out of demo scope); owners Nhi/Phương/Ngân; reopen after timing/eligibility approval and implementation',
-}, async () => {
-  const result = await runReminders({ now: NOW });
+// AUD-07: nhắc tái khám (khôi phục từ 947db6e theo kiểu transaction hiện tại).
+// Đề xuất thiếu accountId (dữ liệu cũ) không được suy đoán chủ sở hữu nên không nhắc.
+test('AUD-07: nhắc tái khám "suggested"/"scheduled" trong 3 ngày; bỏ qua thiếu accountId, đã đặt, quá 3 ngày, tài khoản tắt thông báo', async t => {
+  t.mock.timers.enable({ apis: ['Date'], now: NOW });
+  const result = await runFollowUpReminders();
   const reminders = notices('follow_up_reminder');
-  assert.deepEqual(reminders.map((n) => n.refId).sort(), ['f_2d', 'f_kid', 'f_legacy']);
+  assert.deepEqual(reminders.map((n) => n.refId).sort(), ['f_2d', 'f_kid']);
   const f = reminders.find((n) => n.refId === 'f_2d');
   assert.equal(f.id, 'furemind_f_2d_2099-01-07');
+  assert.equal(f.id, followUpReminderId('f_2d', '2099-01-07'));
+  assert.deepEqual([f.userId, f.title, f.isRead, f.patientId], ['A', 'Nhắc lịch tái khám', false, 'A']);
   assert.match(f.body, /07\/01\/2099. Lý do: Kiểm tra trám/);
-  assert.equal(reminders.find((n) => n.refId === 'f_legacy').userId, 'A');
   assert.match(reminders.find((n) => n.refId === 'f_kid').body, /cho Bé Na/);
-  assert.equal(result.followUpReminders, 3);
+  assert.deepEqual(result, { followUpReminders: 2 });
   // Tài khoản B tắt "Nhận thông báo": không có nhắc nào.
   assert.equal(notices().filter((n) => n.userId === 'B').length, 0);
+  // runReminders (nhắc lịch hẹn) không tạo nhắc tái khám: hợp đồng AUD-05 giữ nguyên.
+  for (const p of fake.paths('notifications/')) delete fake.store[p];
+  await runReminders();
+  assert.equal(notices('follow_up_reminder').length, 0);
+});
+
+test('AUD-07: chạy lại không tạo trùng, không ghi đè thông báo đã có (kể cả đã đọc)', async t => {
+  t.mock.timers.enable({ apis: ['Date'], now: NOW });
+  fake.store['notifications/furemind_f_2d_2099-01-07'] = {
+    userId: 'A', type: 'follow_up_reminder', refId: 'f_2d', title: 'cũ', isRead: true, createdAt: new Date(0),
+  };
+  const before = structuredClone(fake.store['notifications/furemind_f_2d_2099-01-07']);
+  assert.deepEqual(await runFollowUpReminders(), { followUpReminders: 1 }); // chỉ f_kid
+  assert.deepEqual(fake.store['notifications/furemind_f_2d_2099-01-07'], before);
+  assert.deepEqual(await runFollowUpReminders(), { followUpReminders: 0 });
+  assert.equal(notices('follow_up_reminder').length, 2);
+});
+
+test('AUD-07: đề xuất được đặt lịch đúng lúc job đang ghi: transaction đọc lại và không nhắc', async t => {
+  t.mock.timers.enable({ apis: ['Date'], now: NOW });
+  let once = false;
+  fake.state.beforeCommit = async () => {
+    if (once) return;
+    once = true;
+    const batch = fake.db.batch();
+    batch.update(fake.db.collection('follow_ups').doc('f_2d'), { status: 'booked' });
+    await batch.commit();
+  };
+  const result = await runFollowUpReminders();
+  assert.equal(fake.store['notifications/furemind_f_2d_2099-01-07'], undefined);
+  assert.equal(result.followUpReminders, 1); // chỉ f_kid
+  assert.ok(fake.state.conflicts > 0);
+});
+
+test('AUD-07: hộp thư chỉ hiện nhắc tái khám khi đề xuất còn mở, đúng chủ, tài khoản còn bật thông báo', async t => {
+  t.mock.timers.enable({ apis: ['Date'], now: NOW });
+  await runFollowUpReminders();
+  t.mock.timers.reset();
+  const listed = async () => (await call('GET', '/notifications')).body
+    .filter((n) => n.type === 'follow_up_reminder').map((n) => n.refId).sort();
+  assert.deepEqual(await listed(), ['f_2d', 'f_kid']);
+  assert.equal((await call('GET', '/notifications/unread-count')).body.count, 2);
+  // Đề xuất đã đặt lịch: nhắc bị ẩn ở danh sách và số chưa đọc.
+  fake.store['follow_ups/f_2d'].status = 'booked';
+  assert.deepEqual(await listed(), ['f_kid']);
+  assert.equal((await call('GET', '/notifications/unread-count')).body.count, 1);
+  // Đổi ngày hẹn: nhắc theo ngày cũ không còn đúng nên bị ẩn.
+  fake.store['follow_ups/f_kid'].scheduledAt = new Date(NOW.getTime() + 200 * HOUR);
+  assert.deepEqual(await listed(), []);
+  fake.store['follow_ups/f_kid'].scheduledAt = new Date(NOW.getTime() + 60 * HOUR);
+  // Đọc tất cả: chỉ đánh dấu nhắc còn hiện, nhắc bị ẩn giữ nguyên chưa đọc.
+  const readAll = await call('PATCH', '/notifications/read-all');
+  assert.equal(readAll.body.updatedCount, 1);
+  assert.equal(fake.store['notifications/furemind_f_kid_2099-01-07'].isRead, true);
+  assert.equal(fake.store['notifications/furemind_f_2d_2099-01-07'].isRead, false);
+  // Tắt nhận thông báo: mọi nhắc bị ẩn.
+  fake.store['follow_ups/f_2d'].status = 'suggested';
+  fake.store['users/A'].notificationsEnabled = false;
+  assert.deepEqual(await listed(), []);
+  assert.equal((await call('GET', '/notifications/unread-count')).body.count, 0);
+});
+
+test('AUD-07: nhắc tái khám của tài khoản khác hoặc sai mẫu id không hiện', async () => {
+  fake.store['notifications/furemind_fu_B_2099-01-07'] = {
+    userId: 'A', type: 'follow_up_reminder', refId: 'f_off', isRead: false, createdAt: NOW,
+  };
+  fake.store['notifications/furemind_f_2d_2099-01-07'] = {
+    userId: 'A', type: 'follow_up_reminder', refId: 'f_off', isRead: false, createdAt: NOW,
+  };
+  fake.store['notifications/x_wrong'] = {
+    userId: 'A', type: 'follow_up_reminder', refId: 'f_2d', isRead: false, createdAt: NOW,
+  };
+  const listed = (await call('GET', '/notifications')).body.filter((n) => n.type === 'follow_up_reminder');
+  assert.deepEqual(listed, []);
 });
 
 test('chạy lại không tạo trùng; lịch đổi giờ thì có nhắc mới theo giờ mới', async t => {
@@ -184,7 +256,8 @@ test('GET danh sách thông báo không tạo nhắc; POST run-reminders chỉ c
   assert.equal((await call('POST', '/notifications/run-reminders')).status, 403);
   const r = await call('POST', '/notifications/run-reminders', { token: 'staff' });
   assert.equal(r.status, 200);
-  assert.deepEqual(r.body, { created: 0 });
+  // Route chạy cả nhắc lịch hẹn và nhắc tái khám (AUD-07).
+  assert.deepEqual(r.body, { created: 0, followUpReminders: 0 });
 });
 
 // ---------------- Công tắc nhận thông báo

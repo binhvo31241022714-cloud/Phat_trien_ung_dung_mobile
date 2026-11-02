@@ -14,10 +14,12 @@ const existing=[
   ...['clinical-history','clinical-records','link-visit','media','reminders-followup'].map(n=>`module3/${n}.test.cjs`),
   'module4/routes.test.cjs',
 ];
+// Thêm sau audit (02/11): AUD-14 chính sách nhân viên, combo lệch thời lượng.
+const added=['module2/combo-duration.test.cjs','module3/staff-policy.test.cjs'];
 test('discovery: includes all 14 original files plus harness tests, sorted without duplicates',()=>{
   const files=discoverTests(__dirname).map(f=>path.relative(__dirname,f).split(path.sep).join('/'));
-  for(const file of existing) assert.ok(files.includes(file),file);
-  assert.equal(files.length,existing.length+2);
+  for(const file of [...existing,...added]) assert.ok(files.includes(file),file);
+  assert.equal(files.length,existing.length+added.length+2);
   assert.deepEqual(files,[...new Set(files)].sort());
   assert.ok(files.every(f=>!f.split('/').includes('support')));
 });
@@ -29,7 +31,8 @@ test('discovery: recursive names only; helpers, support, symlinks and near match
     for(const file of ['z.test.js','nested/deep/a.test.cjs','helper.cjs','almost.test.cjs.txt','support/not-an-entry.test.cjs'])
       fs.writeFileSync(path.join(dir,file),"throw new Error('must not execute during discovery');");
     fs.symlinkSync(path.join(dir,'z.test.js'),path.join(dir,'alias.test.js'));
-    assert.deepEqual(discoverTests(dir).map(f=>path.relative(dir,f)),['nested/deep/a.test.cjs','z.test.js']);
+    // So sánh theo dấu '/' để chạy được cả trên Windows (path.relative trả '\').
+    assert.deepEqual(discoverTests(dir).map(f=>path.relative(dir,f).split(path.sep).join('/')),['nested/deep/a.test.cjs','z.test.js']);
   } finally {fs.rmSync(dir,{recursive:true,force:true});}
 });
 test('discovery: launcher list-only matches recursive discovery and never loads unsafe entries',()=>{

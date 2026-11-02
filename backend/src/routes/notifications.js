@@ -2,8 +2,8 @@ const router = require('express').Router();
 const { db } = require('../config/firebase');
 const auth = require('../middleware/auth');
 const requireStaff = require('../middleware/requireStaff');
-const { runReminders } = require('../jobs/reminders');
-const { visibleNotificationDocs, readValidReminders } = require('../utils/notificationVisibility');
+const { runAllReminders } = require('../jobs/reminders');
+const { visibleNotificationDocs, readValidReminders, isReminderType } = require('../utils/notificationVisibility');
 
 router.use(auth);
 const owned = uid => db.collection('notifications').where('userId', '==', uid);
@@ -35,8 +35,8 @@ router.get('/unread-count', async (req, res) => {
 router.patch('/read-all', async (req, res) => {
   const snap = await owned(req.user.uid).get();
   const unread = snap.docs.filter(doc => doc.data().userId === req.user.uid && doc.data().isRead === false);
-  const events = unread.filter(doc => doc.data().type !== 'appointment_reminder');
-  const reminders = unread.filter(doc => doc.data().type === 'appointment_reminder');
+  const events = unread.filter(doc => !isReminderType(doc.data().type));
+  const reminders = unread.filter(doc => isReminderType(doc.data().type));
   let updatedCount = 0;
   // Preserve event batches. Reminder validity is rechecked inside small transactions.
   for (let offset = 0; offset < events.length; offset += 450) {
@@ -54,7 +54,8 @@ router.patch('/read-all', async (req, res) => {
 // Bình thường server tự chạy mỗi 10 phút (src/jobs/reminders.js).
 router.post('/run-reminders', requireStaff, async (req, res, next) => {
   try {
-    res.json(await runReminders());
+    // { created: nhắc lịch hẹn, followUpReminders: nhắc tái khám }
+    res.json(await runAllReminders());
   } catch (error) {
     next(error);
   }

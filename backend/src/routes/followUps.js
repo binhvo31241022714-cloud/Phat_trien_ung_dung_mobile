@@ -4,10 +4,11 @@ const requireStaff = require('../middleware/requireStaff');
 const { db } = require('../config/firebase');
 const { document, asyncHandler, historyOwnershipMatches } = require('../utils/records');
 const { optionalDate } = require('../utils/clinical');
+const { isStaff } = require('../utils/staff');
 router.get('/:id', auth, asyncHandler(async (req, res) => {
   const snap = await db.collection('follow_ups').doc(req.params.id).get();
   if (!snap.exists) return res.status(404).json({ message: 'Không tìm thấy đề xuất tái khám' });
-  const staff = req.user.staff === true || req.user.role === 'staff' || req.user.admin === true;
+  const staff = isStaff(req.user);
   if (!staff && (snap.data().accountId !== req.user.uid || !historyOwnershipMatches(req.user.uid, snap.data()))) return res.status(403).json({ message: 'Bạn không có quyền xem đề xuất này' });
   res.json(document(snap));
 }));

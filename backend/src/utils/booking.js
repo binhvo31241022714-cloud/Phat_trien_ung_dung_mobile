@@ -250,8 +250,10 @@ async function buildBookingQuote(input, transaction = null) {
     const comboDuration = getFieldNumber(combo, 'durationMinutes', `Combo ${comboId}`);
     const includedDuration = comboServiceIds.reduce((total, id) =>
       total + getFieldNumber(serviceDocs.get(id), 'durationMinutes', `Dịch vụ ${id}`), 0);
+    // Thời lượng chuẩn là durationMinutes của combo; lệch tổng dịch vụ chỉ cảnh báo
+    // để người quản trị sửa dữ liệu, không chặn đặt lịch bằng lỗi 500.
     if (comboDuration !== includedDuration) {
-      throw new ApiError(500, `Combo ${comboId} có durationMinutes không khớp tổng thời lượng dịch vụ`);
+      console.warn(`[booking] Combo ${comboId}: durationMinutes ${comboDuration} khác tổng thời lượng dịch vụ ${includedDuration}; dùng thời lượng của combo.`);
     }
     durationMinutes += comboDuration;
   }

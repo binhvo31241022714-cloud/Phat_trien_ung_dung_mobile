@@ -1,4 +1,5 @@
 const router = require('express').Router();
+const { isStaff: isStaffClaims } = require('../utils/staff');
 const auth = require('../middleware/auth');
 const requireStaff = require('../middleware/requireStaff');
 const {
@@ -275,7 +276,8 @@ router.post('/:id/sessions/link-visit', auth, asyncHandler(async (req, res) => {
 
 const MAX_PHOTOS_PER_TREATMENT = 30;
 const PHOTO_PHASES = ['before', 'after'];
-const isStaff = (req) => req.user.role === 'staff';
+// AUD-14: cùng chính sách với requireStaff (utils/staff.js).
+const isStaff = (req) => isStaffClaims(req.user);
 
 // Ảnh có trong media mới xóa được; người tải lên hoặc staff mới được xóa.
 function photoView(doc, req) {

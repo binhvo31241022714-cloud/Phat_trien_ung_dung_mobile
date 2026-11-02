@@ -133,6 +133,7 @@ Content-Type: application/json
 ### D7. Chạy nhắc lịch ngay (server cũng tự chạy mỗi 10 phút)
 # Nhắc lịch hẹn: lịch "Đã xác nhận" bắt đầu trong 24 giờ tới (lịch đã hoàn tất ở D4 thì không nhắc).
 # Nhắc tái khám: đề xuất còn mở có ngày trong 3 ngày tới (D6b). Tài khoản tắt "Nhận thông báo" thì không có.
+# Response: { "created": số nhắc lịch hẹn, "followUpReminders": số nhắc tái khám }.
 POST {{baseUrl}}/api/notifications/run-reminders
 Authorization: Bearer {{staffToken}}
 
