@@ -5,7 +5,6 @@ import 'dart:async';
 
 import '../data/api_client.dart';
 import '../data/models/user_model.dart';
-import '../data/mock_data.dart';
 import '../data/services/auth_service.dart';
 import '../data/services/settings_store.dart';
 import '../data/services/user_service.dart';
@@ -32,13 +31,14 @@ class UserProvider extends ChangeNotifier {
     if (auth is AuthIdentitySource) {
       final identity = auth as AuthIdentitySource;
       _identitySubscription = identity.uidChanges.listen((uid) {
-        if (_disposed) return;
+        if (_disposed || _authOperation && uid != null) return;
         _setIdentity(uid, identity.currentEmail ?? '');
       }, onError: (_) {
         if (!_disposed) _setIdentity(null, '');
       });
     }
   }
+  bool _authOperation = false;
   StreamSubscription<String?>? _identitySubscription;
   String? _uid;
   int _sessionGeneration = 0;
@@ -65,10 +65,9 @@ class UserProvider extends ChangeNotifier {
   // The existing demo login uses one patient account. No password is retained.
   UserModel _account = UserModel(
     id: 1,
-    name: MockData.patients.firstWhere((p) => p.isPrimary).fullName,
+    name: '',
     email: '',
-    phone: MockData.patients.firstWhere((p) => p.isPrimary).phone,
-    dateOfBirth: MockData.patients.firstWhere((p) => p.isPrimary).dateOfBirth,
+    phone: '',
     createdAt: DateTime.now(),
   );
   bool _authenticated = false;
@@ -89,6 +88,7 @@ class UserProvider extends ChangeNotifier {
     _setIdentity(null, '');
     await _auth.signOut();
   }
+
   // ===== Tùy chọn lưu trên máy =====
   static const _keyNotifications = 'settings.receiveNotifications';
   static const _keyLanguage = 'settings.languageCode';
@@ -132,9 +132,8 @@ class UserProvider extends ChangeNotifier {
     // Demo fixtures retain their existing presentation; real identity is always UID.
     if (_hasIdentitySource) {
       _setIdentity(identity, (source as AuthIdentitySource).currentEmail ?? '');
-    } else if (_uid != identity) {
-      _uid = identity;
-      _sessionGeneration++;
+    } else {
+      _setIdentity(identity, email.trim());
     }
     _account = UserModel(
         id: _account.id,
@@ -164,10 +163,15 @@ class UserProvider extends ChangeNotifier {
   // Các hàm trả về null nếu thành công, ngược lại trả về thông báo lỗi.
 
   Future<String?> login(String email, String password) async {
+    if (_authOperation) return 'Đang xử lý đăng nhập.';
+    _authOperation = true;
+    _setIdentity(null, '');
     try {
       await _auth.signIn(email, password);
     } on AuthException catch (e) {
       return e.message;
+    } finally {
+      _authOperation = false;
     }
     signInDemo(email);
     _emailVerified = _auth.isEmailVerified;
@@ -177,10 +181,17 @@ class UserProvider extends ChangeNotifier {
 
   Future<String?> register(
       String fullName, String email, String password) async {
+    if (_authOperation) return 'Đang xử lý đăng ký.';
+    _authOperation = true;
+    _setIdentity(null, '');
     try {
+      // Firebase emits identity before updateDisplayName completes. Publish the
+      // session only after registration has finished, so /sync sees the name.
       await _auth.register(fullName, email, password);
     } on AuthException catch (e) {
       return e.message;
+    } finally {
+      _authOperation = false;
     }
     signInDemo(email);
     _emailVerified = _auth.isEmailVerified;

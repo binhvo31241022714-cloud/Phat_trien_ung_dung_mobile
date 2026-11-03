@@ -1,3 +1,6 @@
+import '../../core/widgets/primary_button.dart';
+import 'auth_brand.dart';
+import '../../core/widgets/page_background.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -103,9 +106,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
       appBar: AppBar(
         title: const Text('Tạo tài khoản'),
       ),
-      body: SafeArea(
+      body: PageBackground(
+          child: SafeArea(
         child: Center(
           child: SingleChildScrollView(
+            keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
             padding: const EdgeInsets.all(24),
             child: ConstrainedBox(
               constraints: const BoxConstraints(
@@ -116,29 +121,16 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
-                      'Đăng ký MediCare Dental',
-                      style: TextStyle(
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    const Text(
-                      'Tạo tài khoản bệnh nhân để '
-                      'đặt lịch và quản lý hồ sơ nha khoa.',
-                      style: TextStyle(
-                        color: Color(0xFF666666),
-                      ),
-                    ),
-                    const SizedBox(height: 28),
+                    const AuthBrand(
+                        title: 'Tạo tài khoản',
+                        subtitle:
+                            'Tạo tài khoản bệnh nhân để đặt lịch và quản lý hồ sơ nha khoa.'),
                     TextFormField(
                       controller: _nameController,
                       textCapitalization: TextCapitalization.words,
                       decoration: const InputDecoration(
                         labelText: 'Họ và tên',
                         prefixIcon: Icon(Icons.person_outline),
-                        border: OutlineInputBorder(),
                       ),
                       validator: (value) {
                         if (value == null || value.trim().isEmpty) {
@@ -159,7 +151,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       decoration: const InputDecoration(
                         labelText: 'Email',
                         prefixIcon: Icon(Icons.email_outlined),
-                        border: OutlineInputBorder(),
                       ),
                       validator: _validateEmail,
                     ),
@@ -170,7 +161,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       decoration: InputDecoration(
                         labelText: 'Mật khẩu',
                         prefixIcon: const Icon(Icons.lock_outline),
-                        border: const OutlineInputBorder(),
                         helperText: 'Ít nhất 6 ký tự',
                         suffixIcon: IconButton(
                           onPressed: () {
@@ -205,7 +195,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       decoration: InputDecoration(
                         labelText: 'Xác nhận mật khẩu',
                         prefixIcon: const Icon(Icons.lock_outline),
-                        border: const OutlineInputBorder(),
                         suffixIcon: IconButton(
                           onPressed: () {
                             setState(() {
@@ -234,29 +223,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       },
                     ),
                     const SizedBox(height: 28),
-                    SizedBox(
-                      width: double.infinity,
-                      height: 52,
-                      child: FilledButton(
-                        onPressed: _isLoading ? null : _register,
-                        child: _isLoading
-                            ? const SizedBox(
-                                height: 22,
-                                width: 22,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                  color: Colors.white,
-                                ),
-                              )
-                            : const Text(
-                                'Tạo tài khoản',
-                                style: TextStyle(fontSize: 16),
-                              ),
-                      ),
-                    ),
+                    PrimaryButton(
+                        label: 'Tạo tài khoản',
+                        isLoading: _isLoading,
+                        onPressed: _register),
                     const SizedBox(height: 20),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
+                    Wrap(
+                      alignment: WrapAlignment.center,
+                      crossAxisAlignment: WrapCrossAlignment.center,
                       children: [
                         const Text('Đã có tài khoản?'),
                         TextButton(
@@ -276,7 +250,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
             ),
           ),
         ),
-      ),
+      )),
     );
   }
 }

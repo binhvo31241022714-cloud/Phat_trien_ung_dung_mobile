@@ -1,3 +1,4 @@
+import '../../core/constants/app_colors.dart';
 import 'package:flutter/material.dart';
 import '../../core/widgets/app_text_field.dart';
 import '../../data/models/health_info.dart';
@@ -80,7 +81,7 @@ class HealthInfoSection extends StatelessWidget {
       const SizedBox(height: 4),
       const Text(
           'Thông tin này giúp bác sĩ chuẩn bị an toàn trước khi điều trị.',
-          style: TextStyle(color: Color(0xFF666666), fontSize: 13)),
+          style: TextStyle(color: AppColors.textSecondary, fontSize: 13)),
       const SizedBox(height: 12),
       AppTextField(
           label: 'Dị ứng thuốc',
@@ -88,7 +89,7 @@ class HealthInfoSection extends StatelessWidget {
           controller: c.allergies,
           validator: _maxLength),
       const SizedBox(height: 12),
-      const Text('Bệnh nền', style: TextStyle(color: Color(0xFF666666))),
+      const Text('Bệnh nền', style: TextStyle(color: AppColors.textSecondary)),
       const SizedBox(height: 8),
       // Cùng kiểu chip đen trắng ở màn hình Thông báo, Đã lưu.
       Wrap(spacing: 8, runSpacing: 4, children: [
@@ -97,11 +98,11 @@ class HealthInfoSection extends StatelessWidget {
               label: Text(entry.value),
               selected: c.conditions.contains(entry.key),
               showCheckmark: false,
-              selectedColor: Colors.black,
+              selectedColor: AppColors.primary,
               labelStyle: TextStyle(
                   color: c.conditions.contains(entry.key)
                       ? Colors.white
-                      : Colors.grey),
+                      : AppColors.textSecondary),
               onSelected: (selected) {
                 selected
                     ? c.conditions.add(entry.key)
@@ -118,7 +119,7 @@ class HealthInfoSection extends StatelessWidget {
       if (c.gender == 'female')
         SwitchListTile(
             contentPadding: EdgeInsets.zero,
-            activeTrackColor: Colors.black,
+            activeTrackColor: AppColors.primary,
             title: const Text('Đang mang thai'),
             value: c.isPregnant,
             onChanged: (v) {

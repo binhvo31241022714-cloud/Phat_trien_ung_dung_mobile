@@ -679,8 +679,7 @@ class _BookingScreenState extends State<BookingScreen> {
                                           selectedItemBuilder: (_) => [
                                             for (final label in patientLabels)
                                               Align(
-                                                alignment:
-                                                    Alignment.centerLeft,
+                                                alignment: Alignment.centerLeft,
                                                 child: Text(
                                                   label,
                                                   overflow:

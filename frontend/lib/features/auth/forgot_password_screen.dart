@@ -1,3 +1,5 @@
+import '../../core/constants/app_colors.dart';
+import '../../core/widgets/page_background.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -55,9 +57,11 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
       appBar: AppBar(
         title: const Text('Quên mật khẩu'),
       ),
-      body: SafeArea(
+      body: PageBackground(
+          child: SafeArea(
         child: Center(
           child: SingleChildScrollView(
+            keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
             padding: const EdgeInsets.all(24),
             child: ConstrainedBox(
               constraints: const BoxConstraints(
@@ -67,7 +71,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
             ),
           ),
         ),
-      ),
+      )),
     );
   }
 
@@ -80,11 +84,11 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
           const Center(
             child: CircleAvatar(
               radius: 42,
-              backgroundColor: Color(0xFFE8F3FF),
+              backgroundColor: AppColors.accent,
               child: Icon(
                 Icons.lock_reset_rounded,
                 size: 45,
-                color: Color(0xFF1677DA),
+                color: AppColors.primary,
               ),
             ),
           ),
@@ -101,7 +105,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
             'Nhập email đã đăng ký. Chúng tôi sẽ '
             'hướng dẫn bạn khôi phục mật khẩu.',
             style: TextStyle(
-              color: Color(0xFF666666),
+              color: AppColors.textSecondary,
               height: 1.5,
             ),
           ),
@@ -113,7 +117,6 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
               labelText: 'Email',
               hintText: 'example@gmail.com',
               prefixIcon: Icon(Icons.email_outlined),
-              border: OutlineInputBorder(),
             ),
             validator: (value) {
               final email = value?.trim() ?? '';
@@ -134,7 +137,6 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
           const SizedBox(height: 24),
           SizedBox(
             width: double.infinity,
-            height: 52,
             child: FilledButton(
               onPressed: _isLoading ? null : _submit,
               child: _isLoading
@@ -174,7 +176,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
         const Icon(
           Icons.mark_email_read_outlined,
           size: 85,
-          color: Color(0xFF1677DA),
+          color: AppColors.primary,
         ),
         const SizedBox(height: 24),
         const Text(
@@ -199,7 +201,6 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
         const SizedBox(height: 28),
         SizedBox(
           width: double.infinity,
-          height: 52,
           child: FilledButton(
             onPressed: () {
               Navigator.pop(context);

@@ -20,24 +20,22 @@ class PrimaryButton extends StatelessWidget {
   Widget build(BuildContext context) {
     final button = FilledButton(
       onPressed: isLoading ? null : onPressed,
-      child: isLoading
-          ? const SizedBox.square(
-              dimension: 20,
-              child: CircularProgressIndicator(
-                strokeWidth: 2,
-                color: Colors.white,
-              ),
-            )
-          : icon == null
-              ? Text(label)
-              : Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
+      child: Stack(alignment: Alignment.center, children: [
+        Opacity(
+            opacity: isLoading ? 0 : 1,
+            child: icon == null
+                ? Text(label, textAlign: TextAlign.center)
+                : Row(mainAxisSize: MainAxisSize.min, children: [
                     Icon(icon),
                     const SizedBox(width: 8),
-                    Text(label),
-                  ],
-                ),
+                    Flexible(child: Text(label, textAlign: TextAlign.center))
+                  ])),
+        if (isLoading)
+          const SizedBox.square(
+              dimension: 20,
+              child: CircularProgressIndicator(
+                  strokeWidth: 2, color: Colors.white)),
+      ]),
     );
     return isExpanded
         ? SizedBox(width: double.infinity, child: button)

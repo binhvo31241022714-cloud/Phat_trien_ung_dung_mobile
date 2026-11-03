@@ -1,4 +1,5 @@
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart';
 
 import '../core/network/api_client.dart';
 
@@ -20,7 +21,16 @@ export '../core/network/api_client.dart'
 /// await api.post('/api/favorites', {'type': 'service', 'itemId': 'svc_01'});
 /// ```
 final api = ApiClient(
-  tokenProvider: () async => FirebaseAuth.instance.currentUser?.getIdToken(),
+  tokenProvider: () async {
+    final user = FirebaseAuth.instance.currentUser;
+    final result = await user?.getIdTokenResult();
+    assert(() {
+      debugPrint('[auth] authenticatedUid=${user?.uid} '
+          'tokenOwner=${result?.claims?["sub"]} (token omitted)');
+      return true;
+    }());
+    return result?.token;
+  },
   refreshTokenProvider: () async =>
       FirebaseAuth.instance.currentUser?.getIdToken(true),
 );

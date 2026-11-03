@@ -7,7 +7,10 @@ class HorizontalCardCarousel extends StatefulWidget {
   final int itemCount;
   final IndexedWidgetBuilder itemBuilder;
   final double itemWidth;
-  final double itemHeight;
+
+  /// Omit to size a short carousel to its tallest card, including text scaling.
+  /// This mode eagerly lays out all cards; use itemHeight for long lists.
+  final double? itemHeight;
   final double navigationCenterY;
   final bool showNavigation;
 
@@ -16,7 +19,7 @@ class HorizontalCardCarousel extends StatefulWidget {
     required this.itemCount,
     required this.itemBuilder,
     required this.itemWidth,
-    required this.itemHeight,
+    this.itemHeight,
     this.navigationCenterY = 0,
     this.showNavigation = false,
     super.key,
@@ -48,6 +51,43 @@ class _HorizontalCardCarouselState extends State<HorizontalCardCarousel> {
 
   @override
   Widget build(BuildContext context) {
+    if (widget.itemHeight == null) {
+      return Stack(children: [
+        SingleChildScrollView(
+          controller: _controller,
+          scrollDirection: Axis.horizontal,
+          padding: const EdgeInsets.all(4),
+          child: IntrinsicHeight(
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                for (var index = 0; index < widget.itemCount; index++) ...[
+                  if (index > 0) const SizedBox(width: 12),
+                  SizedBox(
+                    width: widget.itemWidth,
+                    child: widget.itemBuilder(context, index),
+                  ),
+                ],
+              ],
+            ),
+          ),
+        ),
+        if (widget.showNavigation && widget.itemCount > 1) ...[
+          Positioned(
+              left: 0,
+              top: widget.navigationCenterY,
+              child: _CarouselButton(
+                  icon: Icons.chevron_left_rounded,
+                  onPressed: () => _move(-1))),
+          Positioned(
+              right: 0,
+              top: widget.navigationCenterY,
+              child: _CarouselButton(
+                  icon: Icons.chevron_right_rounded,
+                  onPressed: () => _move(1))),
+        ],
+      ]);
+    }
     return SizedBox(
       height: widget.itemHeight,
       child: Stack(

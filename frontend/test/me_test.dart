@@ -1,3 +1,4 @@
+import 'package:frontend/core/widgets/app_card.dart';
 import 'support/data_source_scope.dart';
 import 'package:frontend/core/config/app_config.dart';
 import 'package:flutter/material.dart';
@@ -397,7 +398,8 @@ void main() {
     expect(find.text('Người thân mới'), findsOneWidget);
 
     final card = find
-        .ancestor(of: find.text('Người thân mới'), matching: find.byType(Card))
+        .ancestor(
+            of: find.text('Người thân mới'), matching: find.byType(AppCard))
         .first;
     await tester.tap(find.descendant(of: card, matching: find.text('Sửa')));
     await tester.pumpAndSettle();
@@ -412,7 +414,7 @@ void main() {
     final editedCard = find
         .ancestor(
           of: find.text('Người thân đã sửa'),
-          matching: find.byType(Card),
+          matching: find.byType(AppCard),
         )
         .first;
     await tester.tap(

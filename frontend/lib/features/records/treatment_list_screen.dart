@@ -11,24 +11,27 @@ class TreatmentListScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final plans = context.watch<PatientDataProvider>().treatmentsFor(patientId);
-    return RecordsPage(title: 'Liệu trình điều trị', children: [
-      if (plans.isEmpty) const RecordEmpty('Chưa có liệu trình điều trị.'),
-      if (plans.length == 1) TreatmentPlanCard(plan: plans.single),
-      if (plans.length > 1)
-        for (final p in plans)
-          RecordCard(
-              onTap: () =>
-                  RecordsRoutes.open(context, RecordsRoutes.treatment, p),
-              children: [
-                Row(children: [
-                  Expanded(child: RecordHeading(p.title)),
-                  const Icon(Icons.chevron_right)
-                ]),
-                recordStatusBadge(treatmentStatusLabel(p)),
-                Text('${p.completedVisits}/${p.totalVisits} buổi'),
-                const SizedBox(height: 8),
-                LinearProgressIndicator(value: p.progress),
-              ]),
-    ]);
+    return RecordsPage(
+        title: 'Liệu trình điều trị',
+        patientId: patientId,
+        children: [
+          if (plans.isEmpty) const RecordEmpty('Chưa có liệu trình điều trị.'),
+          if (plans.length == 1) TreatmentPlanCard(plan: plans.single),
+          if (plans.length > 1)
+            for (final p in plans)
+              RecordCard(
+                  onTap: () =>
+                      RecordsRoutes.open(context, RecordsRoutes.treatment, p),
+                  children: [
+                    Row(children: [
+                      Expanded(child: RecordHeading(p.title)),
+                      const Icon(Icons.chevron_right)
+                    ]),
+                    recordStatusBadge(treatmentStatusLabel(p)),
+                    Text('${p.completedVisits}/${p.totalVisits} buổi'),
+                    const SizedBox(height: 8),
+                    LinearProgressIndicator(value: p.progress),
+                  ]),
+        ]);
   }
 }

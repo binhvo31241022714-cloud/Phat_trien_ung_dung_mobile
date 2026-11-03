@@ -1,3 +1,4 @@
+import '../../core/theme/app_tokens.dart';
 import 'package:flutter/material.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/media/photo_picker.dart';
@@ -34,26 +35,19 @@ class MePage extends StatelessWidget {
   final List<Widget> children;
   @override
   Widget build(BuildContext context) => Scaffold(
-      extendBodyBehindAppBar: true,
       appBar: meAppBar(title),
       body: DecoratedBox(
           decoration: const BoxDecoration(gradient: AppColors.pageGradient),
-          child: ListView(
-              padding: const EdgeInsets.fromLTRB(16, 56, 16, 96),
-              keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
-              children: children)));
+          child: SafeArea(
+              top: false,
+              child: ListView(
+                  padding: AppTokens.scrollInsets,
+                  keyboardDismissBehavior:
+                      ScrollViewKeyboardDismissBehavior.onDrag,
+                  children: children))));
 }
 
-AppBar meAppBar(String title) => AppBar(
-    title: Text(title),
-    centerTitle: false,
-    toolbarHeight: 48,
-    backgroundColor: Colors.transparent,
-    surfaceTintColor: Colors.transparent,
-    titleTextStyle: const TextStyle(
-        color: AppColors.primaryDark,
-        fontSize: 17,
-        fontWeight: FontWeight.w700));
+AppBar meAppBar(String title) => AppBar(title: Text(title));
 
 class MeCard extends StatelessWidget {
   const MeCard({required this.child, this.onTap, super.key});
@@ -83,10 +77,9 @@ class MeMenuTile extends StatelessWidget {
       trailing: Row(mainAxisSize: MainAxisSize.min, children: [
         if (value != null)
           Text(value!,
-              style: const TextStyle(
-                  color: AppColors.primaryDark, fontSize: 12)),
-        const Icon(Icons.chevron_right,
-            size: 18, color: AppColors.primaryDark)
+              style:
+                  const TextStyle(color: AppColors.primaryDark, fontSize: 12)),
+        const Icon(Icons.chevron_right, size: 18, color: AppColors.primaryDark)
       ]),
       onTap: onTap);
 }
@@ -102,7 +95,7 @@ class MeAvatar extends StatelessWidget {
     final fallback = Icon(Icons.person_outline, color: meBlue, size: radius);
     return CircleAvatar(
         radius: radius,
-        backgroundColor: const Color(0xFFDFE8F6),
+        backgroundColor: AppColors.accent,
         child: mediaId == null
             ? fallback
             : ClipOval(

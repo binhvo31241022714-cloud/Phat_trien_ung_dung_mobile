@@ -34,11 +34,12 @@ Future<void> startApp(AuthService auth,
   assert(() {
     debugPrint('DATA_SOURCE=${AppConfig.current.dataSource.name}; '
         'API_BASE_URL=${AppConfig.current.apiBaseUrl}; '
-        'authentication uses Firebase, patient flows remain demo.');
+        'authentication uses Firebase; API patients use the current UID.');
     return true;
   }());
   final users = UserProvider(auth: auth, settings: SharedPrefsSettingsStore());
   api.onUnauthorized = users.handleSessionExpired;
+  api.sessionVersionProvider = () => users.sessionGeneration;
   // Đọc tùy chọn đã lưu trên máy (ngôn ngữ, nhận thông báo).
   await users.loadSettings();
   // Còn phiên đăng nhập cũ thì vào thẳng trang chính.
@@ -51,7 +52,6 @@ Future<void> startApp(AuthService auth,
   final catalog = CatalogProvider(service: catalogService);
   final appointments = AppointmentsProvider(service: bookingService);
   final content = ContentProvider();
-  content.bindUser(users, catalog);
   final privateSession = PrivateSession(
       users: users,
       apiMode: AppConfig.current.dataSource == DataSource.api,

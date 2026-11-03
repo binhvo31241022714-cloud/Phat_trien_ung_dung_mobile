@@ -1,3 +1,6 @@
+import '../../core/theme/app_gradients.dart';
+import '../../core/theme/app_tokens.dart';
+import '../../core/widgets/app_card.dart';
 import '../../core/widgets/horizontal_card_carousel.dart';
 import '../../data/models/home_appointment.dart';
 import '../../core/config/app_config.dart';
@@ -65,8 +68,6 @@ class _HomeOverview extends StatelessWidget {
     final articles = content == null
         ? data.articles
         : (content.home?.articles ?? <Article>[]);
-    final scale = MediaQuery.textScalerOf(context).scale(14) / 14;
-    final extraScale = scale > 1 ? scale - 1 : 0.0;
     final now = DateTime.now();
     final upcomingAppointments = content != null
         ? <Appointment>[
@@ -93,7 +94,7 @@ class _HomeOverview extends StatelessWidget {
 
     return Scaffold(
       body: DecoratedBox(
-        decoration: const BoxDecoration(gradient: AppColors.pageGradient),
+        decoration: const BoxDecoration(color: AppColors.background),
         child: SafeArea(
           child: Center(
             child: ConstrainedBox(
@@ -103,23 +104,25 @@ class _HomeOverview extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    SizedBox(
-                      height: 42,
+                    ConstrainedBox(
+                      constraints: const BoxConstraints(minHeight: 48),
                       child: Row(
                         children: [
-                          const Text(
-                            'YourSmile',
+                          const Expanded(
+                              child: Text(
+                            'YourSmile Dental',
                             style: TextStyle(
                               fontSize: 19,
                               fontWeight: FontWeight.w800,
                               letterSpacing: -0.3,
                               color: AppColors.primaryDark,
                             ),
-                          ),
-                          const Spacer(),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          )),
                           Container(
-                            width: 42,
-                            height: 42,
+                            width: 48,
+                            height: 48,
                             decoration: BoxDecoration(
                               color: Colors.white.withValues(alpha: 0.78),
                               border: Border.all(
@@ -163,15 +166,15 @@ class _HomeOverview extends StatelessWidget {
                               const Text(
                                 'Xin chào,',
                                 style: TextStyle(
-                                  fontSize: 10,
+                                  fontSize: 12,
                                   color: AppColors.textSecondary,
                                 ),
                               ),
                               Text(
                                 displayName,
                                 style: const TextStyle(
-                                  fontSize: 15,
-                                  fontWeight: FontWeight.w700,
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.w600,
                                   color: AppColors.textPrimary,
                                 ),
                                 maxLines: 1,
@@ -196,9 +199,9 @@ class _HomeOverview extends StatelessWidget {
                         _buildAppointmentCard(context, upcomingAppointments),
                     const SizedBox(height: 24),
                     _buildSectionHeader(
-                      icon: Icons.folder_rounded,
+                      icon: Icons.medical_services_outlined,
                       title: 'Dịch vụ nổi bật',
-                      color: const Color(0xFFD8CCFF),
+                      color: AppColors.accent,
                       actionText: 'Xem tất cả',
                       onAction: () => CatalogNavigation.open(context,
                           'Dịch vụ nha khoa', const ServiceListScreen()),
@@ -214,7 +217,6 @@ class _HomeOverview extends StatelessWidget {
                                 label: 'Dịch vụ nha khoa',
                                 navigationCenterY: 37,
                                 itemWidth: 176,
-                                itemHeight: 148 + 140 * extraScale,
                                 itemCount: featuredServices.length,
                                 showNavigation: true,
                                 itemBuilder: (context, index) {
@@ -230,9 +232,9 @@ class _HomeOverview extends StatelessWidget {
                               )),
                     const SizedBox(height: 24),
                     _buildSectionHeader(
-                      icon: Icons.folder_rounded,
+                      icon: Icons.people_outline_rounded,
                       title: 'Đội ngũ bác sĩ',
-                      color: const Color(0xFFD8CCFF),
+                      color: AppColors.accent,
                       actionText: 'Xem tất cả',
                       onAction: () => CatalogNavigation.open(
                           context, 'Đội ngũ bác sĩ', const DoctorListScreen()),
@@ -247,7 +249,6 @@ class _HomeOverview extends StatelessWidget {
                                 label: 'Bác sĩ',
                                 navigationCenterY: 37,
                                 itemWidth: 120,
-                                itemHeight: 118 + 90 * extraScale,
                                 itemCount: doctors.length,
                                 itemBuilder: (context, index) {
                                   final doctor = doctors[index];
@@ -262,9 +263,9 @@ class _HomeOverview extends StatelessWidget {
                               )),
                     const SizedBox(height: 24),
                     _buildSectionHeader(
-                      icon: Icons.folder_rounded,
+                      icon: Icons.menu_book_outlined,
                       title: 'Kiến thức nha khoa',
-                      color: const Color(0xFFD8CCFF),
+                      color: AppColors.accent,
                       actionText: 'Xem tất cả',
                       onAction: () => CatalogNavigation.open(context,
                           'Kiến thức nha khoa', const ArticleListScreen()),
@@ -278,7 +279,6 @@ class _HomeOverview extends StatelessWidget {
                                 label: 'Kiến thức nha khoa',
                                 navigationCenterY: 46,
                                 itemWidth: 180,
-                                itemHeight: 170 + 160 * extraScale,
                                 itemCount: articles.length,
                                 itemBuilder: (context, index) {
                                   final article = articles[index];
@@ -333,7 +333,7 @@ class _HomeOverview extends StatelessWidget {
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.75),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.white),
+        border: Border.all(color: AppColors.divider),
       ),
       child: Row(
         children: [
@@ -343,11 +343,11 @@ class _HomeOverview extends StatelessWidget {
             child: Text(
               title,
               style: const TextStyle(
-                fontSize: 13,
+                fontSize: 16,
                 fontWeight: FontWeight.w700,
                 color: AppColors.textPrimary,
               ),
-              maxLines: 1,
+              maxLines: 2,
               overflow: TextOverflow.ellipsis,
             ),
           ),
@@ -355,14 +355,14 @@ class _HomeOverview extends StatelessWidget {
             borderRadius: BorderRadius.circular(12),
             onTap: onAction,
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+              padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 10),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(
                     actionText,
                     style: const TextStyle(
-                      fontSize: 11,
+                      fontSize: 12,
                       fontWeight: FontWeight.w600,
                       color: AppColors.primary,
                     ),
@@ -389,31 +389,14 @@ class _HomeOverview extends StatelessWidget {
     final nextAppointment =
         upcomingAppointments.isNotEmpty ? upcomingAppointments.first : null;
 
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [AppColors.primaryDark, AppColors.primary],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(18),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x26000675),
-            blurRadius: 16,
-            offset: Offset(0, 8),
-          ),
-        ],
-      ),
+    return _HomeHero(
       child: nextAppointment == null
           ? Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const Row(
                   children: [
-                    Icon(Icons.calendar_today_rounded,
-                        color: AppColors.primary),
+                    Icon(Icons.calendar_today_rounded, color: Colors.white),
                     SizedBox(width: 10),
                     Expanded(
                         child: Text(
@@ -431,7 +414,7 @@ class _HomeOverview extends StatelessWidget {
                   'Bạn chưa có lịch hẹn nào trong thời gian tới.',
                   style: TextStyle(
                     fontSize: 15,
-                    color: AppColors.textSecondary,
+                    color: Color(0xE6FFFFFF),
                   ),
                 ),
                 const SizedBox(height: 16),
@@ -440,8 +423,8 @@ class _HomeOverview extends StatelessWidget {
                   child: ElevatedButton(
                     onPressed: () => PatientNavigation.selectTab(context, 1),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.black,
-                      foregroundColor: Colors.white,
+                      backgroundColor: Colors.white,
+                      foregroundColor: AppColors.primaryDark,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(24),
                       ),
@@ -482,7 +465,7 @@ class _HomeOverview extends StatelessWidget {
                       child: const Text(
                         'Sắp diễn ra',
                         style: TextStyle(
-                          fontSize: 11,
+                          fontSize: 12,
                           fontWeight: FontWeight.w600,
                           color: Colors.white,
                         ),
@@ -509,7 +492,7 @@ class _HomeOverview extends StatelessWidget {
                                 nextAppointment.displayScheduledAt.weekday),
                             style: const TextStyle(
                               fontSize: 12,
-                              color: Color(0xB3FFFFFF),
+                              color: Color(0xE6FFFFFF),
                             ),
                           ),
                           const SizedBox(height: 4),
@@ -524,8 +507,8 @@ class _HomeOverview extends StatelessWidget {
                           Text(
                             '${_monthText(nextAppointment.displayScheduledAt.month)} ${nextAppointment.displayScheduledAt.year}',
                             style: const TextStyle(
-                              fontSize: 9,
-                              color: Color(0xB3FFFFFF),
+                              fontSize: 12,
+                              color: Color(0xE6FFFFFF),
                             ),
                           ),
                         ],
@@ -542,21 +525,18 @@ class _HomeOverview extends StatelessWidget {
                               const Icon(
                                 Icons.access_time_rounded,
                                 size: 18,
-                                color: AppColors.primary,
+                                color: Colors.white,
                               ),
                               const SizedBox(width: 8),
                               Flexible(
-                                  child: FittedBox(
-                                      fit: BoxFit.scaleDown,
-                                      alignment: Alignment.centerLeft,
-                                      child: Text(
-                                        _appointmentTime(nextAppointment),
-                                        style: const TextStyle(
-                                          fontSize: 13,
-                                          fontWeight: FontWeight.w600,
-                                          color: Colors.white,
-                                        ),
-                                      ))),
+                                  child: Text(
+                                _appointmentTime(nextAppointment),
+                                style: const TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.white,
+                                ),
+                              )),
                             ],
                           ),
                           const SizedBox(height: 8),
@@ -577,8 +557,8 @@ class _HomeOverview extends StatelessWidget {
                           Text(
                             _doctorName(nextAppointment, context),
                             style: const TextStyle(
-                              fontSize: 11,
-                              color: Color(0xB3FFFFFF),
+                              fontSize: 12,
+                              color: Color(0xE6FFFFFF),
                             ),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
@@ -604,20 +584,20 @@ class _HomeOverview extends StatelessWidget {
                                 ),
                                 padding: const EdgeInsets.symmetric(
                                     horizontal: 10, vertical: 6),
-                                minimumSize: Size.zero,
-                                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                minimumSize: const Size(0, 48),
                               ),
-                              child: const Row(
-                                mainAxisSize: MainAxisSize.min,
+                              child: const Wrap(
+                                alignment: WrapAlignment.center,
+                                crossAxisAlignment: WrapCrossAlignment.center,
+                                spacing: 4,
                                 children: [
                                   Text(
                                     'Xem chi tiết',
                                     style: TextStyle(
-                                      fontSize: 11,
+                                      fontSize: 12,
                                       fontWeight: FontWeight.w600,
                                     ),
                                   ),
-                                  SizedBox(width: 4),
                                   Icon(
                                     Icons.arrow_forward_rounded,
                                     size: 14,
@@ -723,6 +703,24 @@ class _HomeOverview extends StatelessWidget {
   }
 }
 
+class _HomeHero extends StatelessWidget {
+  const _HomeHero({required this.child});
+  final Widget child;
+  @override
+  Widget build(BuildContext context) => DecoratedBox(
+      key: const ValueKey('home-hero'),
+      decoration: BoxDecoration(
+          gradient: AppGradients.hero,
+          borderRadius: BorderRadius.circular(AppTokens.cardRadius),
+          boxShadow: const [AppTokens.cardShadow]),
+      child: DecoratedBox(
+          decoration: BoxDecoration(
+              // Preserve white text contrast at the bright end of the gradient.
+              color: AppColors.primaryDark.withValues(alpha: .68),
+              borderRadius: BorderRadius.circular(AppTokens.cardRadius)),
+          child: Padding(padding: AppTokens.pageInsets, child: child)));
+}
+
 class _ServiceTile extends StatelessWidget {
   final DentalService service;
   final VoidCallback onTap;
@@ -734,23 +732,11 @@ class _ServiceTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        width: 176,
+    return SizedBox(
+      width: 176,
+      child: AppCard(
+        onTap: onTap,
         padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          color: Colors.white.withValues(alpha: 0.75),
-          border: Border.all(color: const Color(0xFFE5EBF3)),
-          borderRadius: BorderRadius.circular(18),
-          boxShadow: const [
-            BoxShadow(
-              color: Color(0x18000675),
-              blurRadius: 12,
-              offset: Offset(0, 5),
-            ),
-          ],
-        ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -759,7 +745,7 @@ class _ServiceTile extends StatelessWidget {
               width: double.infinity,
               clipBehavior: Clip.antiAlias,
               decoration: BoxDecoration(
-                color: const Color(0xFFEAF1F8),
+                color: AppColors.accent,
                 borderRadius: BorderRadius.circular(14),
               ),
               child: NetworkImageOrIcon(
@@ -775,14 +761,15 @@ class _ServiceTile extends StatelessWidget {
             Text(
               service.name,
               style: const TextStyle(
-                fontSize: 11,
+                fontSize: 14,
                 fontWeight: FontWeight.w600,
                 color: AppColors.textPrimary,
               ),
-              maxLines: 1,
+              maxLines: 2,
               overflow: TextOverflow.ellipsis,
             ),
             const SizedBox(height: 6),
+            const Spacer(),
             Row(
               children: [
                 Expanded(
@@ -791,7 +778,7 @@ class _ServiceTile extends StatelessWidget {
                     style: const TextStyle(
                       color: AppColors.primary,
                       fontWeight: FontWeight.w700,
-                      fontSize: 12,
+                      fontSize: 14,
                     ),
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -821,23 +808,11 @@ class _DoctorTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        width: 120,
-        padding: const EdgeInsets.all(10),
-        decoration: BoxDecoration(
-          color: Colors.white.withValues(alpha: 0.75),
-          border: Border.all(color: const Color(0xFFE5EBF3)),
-          borderRadius: BorderRadius.circular(18),
-          boxShadow: const [
-            BoxShadow(
-              color: Color(0x18000675),
-              blurRadius: 12,
-              offset: Offset(0, 5),
-            ),
-          ],
-        ),
+    return SizedBox(
+      width: 120,
+      child: AppCard(
+        onTap: onTap,
+        padding: const EdgeInsets.all(12),
         child: Column(
           children: [
             Container(
@@ -845,11 +820,12 @@ class _DoctorTile extends StatelessWidget {
               height: 62,
               clipBehavior: Clip.antiAlias,
               decoration: BoxDecoration(
-                color: const Color(0xFFDAEBFF),
+                color: AppColors.accent,
                 borderRadius: BorderRadius.circular(14),
               ),
               child: NetworkImageOrIcon(
                 url: doctor.avatarUrl,
+                alignment: Alignment.topCenter,
                 icon: Icons.person_rounded,
                 iconSize: 40,
                 color: AppColors.primary,
@@ -862,7 +838,7 @@ class _DoctorTile extends StatelessWidget {
               doctor.fullName.replaceFirst('BS. ', ''),
               textAlign: TextAlign.center,
               style: const TextStyle(
-                fontSize: 12,
+                fontSize: 14,
                 fontWeight: FontWeight.w700,
                 color: AppColors.textPrimary,
               ),
@@ -874,7 +850,7 @@ class _DoctorTile extends StatelessWidget {
               doctor.specialty,
               textAlign: TextAlign.center,
               style: const TextStyle(
-                fontSize: 10,
+                fontSize: 12,
                 color: AppColors.textSecondary,
               ),
               maxLines: 1,
@@ -898,23 +874,11 @@ class _ArticleTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        width: 180,
-        padding: const EdgeInsets.all(10),
-        decoration: BoxDecoration(
-          color: Colors.white.withValues(alpha: 0.75),
-          border: Border.all(color: const Color(0xFFE5EBF3)),
-          borderRadius: BorderRadius.circular(18),
-          boxShadow: const [
-            BoxShadow(
-              color: Color(0x18000675),
-              blurRadius: 12,
-              offset: Offset(0, 5),
-            ),
-          ],
-        ),
+    return SizedBox(
+      width: 180,
+      child: AppCard(
+        onTap: onTap,
+        padding: const EdgeInsets.all(12),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -922,7 +886,7 @@ class _ArticleTile extends StatelessWidget {
               height: 62,
               width: double.infinity,
               decoration: BoxDecoration(
-                color: const Color(0xFFEAF1F8),
+                color: AppColors.accent,
                 borderRadius: BorderRadius.circular(14),
               ),
               child: ClipRRect(
@@ -954,8 +918,10 @@ class _ArticleTile extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                 child: Text(
                   article.category,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
-                    fontSize: 10,
+                    fontSize: 12,
                     fontWeight: FontWeight.w600,
                     color: AppColors.primary,
                   ),
@@ -966,7 +932,7 @@ class _ArticleTile extends StatelessWidget {
             Text(
               article.title,
               style: const TextStyle(
-                fontSize: 11,
+                fontSize: 14,
                 fontWeight: FontWeight.w700,
                 color: AppColors.textPrimary,
               ),
@@ -974,6 +940,7 @@ class _ArticleTile extends StatelessWidget {
               overflow: TextOverflow.ellipsis,
             ),
             const SizedBox(height: 6),
+            const Spacer(),
             Row(
               children: [
                 Expanded(
@@ -981,8 +948,10 @@ class _ArticleTile extends StatelessWidget {
                     article.hasPublishedDate
                         ? formatVietnameseDate(article.publishedAt)
                         : 'Đọc ngay',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                     style: const TextStyle(
-                      fontSize: 10,
+                      fontSize: 12,
                       color: AppColors.textSecondary,
                     ),
                   ),

@@ -102,7 +102,7 @@ class SelectDatetimeStep extends StatelessWidget {
                 padding: EdgeInsets.symmetric(vertical: 12),
                 child: Text(
                   'Vui lòng chọn ít nhất một dịch vụ hoặc combo trước.',
-                  style: TextStyle(color: Color(0xFF666666)),
+                  style: TextStyle(color: AppColors.textSecondary),
                 ),
               )
             else if (selectedDate == null)
@@ -110,7 +110,7 @@ class SelectDatetimeStep extends StatelessWidget {
                 padding: EdgeInsets.symmetric(vertical: 12),
                 child: Text(
                   'Chọn ngày khám để xem những khung giờ còn trống.',
-                  style: TextStyle(color: Color(0xFF666666)),
+                  style: TextStyle(color: AppColors.textSecondary),
                 ),
               )
             else if (controller.availabilityLoading)
@@ -160,13 +160,13 @@ class SelectDatetimeStep extends StatelessWidget {
                 child: Text(
                   'Ngày này chưa có khung giờ phù hợp. '
                   'Bạn hãy thử chọn ngày khác.',
-                  style: TextStyle(color: Color(0xFF666666)),
+                  style: TextStyle(color: AppColors.textSecondary),
                 ),
               )
             else ...[
               const Text(
                 'Chọn một khung giờ phù hợp với bạn.',
-                style: TextStyle(color: Color(0xFF666666)),
+                style: TextStyle(color: AppColors.textSecondary),
               ),
               const SizedBox(height: 12),
               Wrap(
@@ -188,7 +188,7 @@ class SelectDatetimeStep extends StatelessWidget {
                 width: double.infinity,
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFEAF2FF),
+                  color: AppColors.accent,
                   borderRadius: BorderRadius.circular(12),
                   boxShadow: const [
                     BoxShadow(
@@ -202,7 +202,7 @@ class SelectDatetimeStep extends StatelessWidget {
                   'Đã chọn: $selectedTime'
                   '${controller.doctorId != null ? '\nBác sĩ: ${_doctorNameForSelection(slots)}' : ''}',
                   style: const TextStyle(
-                    color: Color(0xFF245DA8),
+                    color: AppColors.primaryDark,
                     fontWeight: FontWeight.w600,
                   ),
                 ),

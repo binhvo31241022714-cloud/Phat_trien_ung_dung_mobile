@@ -1,3 +1,5 @@
+import 'notification_widgets.dart';
+import '../../core/constants/app_colors.dart';
 import '../../core/config/app_config.dart';
 import 'api_notifications_view.dart';
 import 'package:flutter/material.dart';
@@ -49,15 +51,9 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
             for (final entry in categories.entries)
               Padding(
                   padding: const EdgeInsets.only(right: 8, bottom: 12),
-                  child: ChoiceChip(
-                      label: Text(entry.value),
+                  child: NotificationFilterChip(
+                      label: entry.value,
                       selected: _filter == entry.key,
-                      showCheckmark: false,
-                      selectedColor: Colors.black,
-                      labelStyle: TextStyle(
-                          color: _filter == entry.key
-                              ? Colors.white
-                              : Colors.grey),
                       onSelected: (_) => setState(() => _filter = entry.key)))
           ])),
       if (!receive)
@@ -65,7 +61,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
             padding: EdgeInsets.only(bottom: 12),
             child: Text(
                 'Bạn đã tắt "Nhận thông báo". Đây chỉ là tùy chọn lưu trên máy này; ứng dụng chưa gửi thông báo đẩy và cài đặt này không thay đổi quyền thông báo của hệ điều hành.',
-                style: TextStyle(color: Color(0xFF666666)))),
+                style: TextStyle(color: AppColors.textSecondary))),
       if (notifications.isEmpty)
         const MeCard(
             child:
@@ -79,7 +75,9 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                   .where((s) => a.serviceIds.contains(s.id))
                   .map((s) => s.name)
                   .join(', ');
-          return MeCard(
+          return NotificationCard(
+              isRead: n.isRead,
+              key: ValueKey('notification-${n.id}'),
               onTap: () {
                 data.markNotificationRead(n.id);
                 if (a != null) {
@@ -99,7 +97,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                             NotificationCategory.system =>
                               Icons.notifications_none
                           },
-                          color: meBlue,
+                          color: AppColors.info,
                           size: 20),
                       const SizedBox(width: 8),
                       Expanded(
@@ -108,7 +106,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                               style: const TextStyle(
                                   fontWeight: FontWeight.w600))),
                       if (!n.isRead)
-                        const Icon(Icons.circle, size: 8, color: meBlue)
+                        const Icon(Icons.circle, size: 8, color: AppColors.info)
                     ]),
                     const SizedBox(height: 10),
                     Text(
@@ -119,15 +117,15 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                                     ? 'Chưa có nội dung thông báo.'
                                     : n.message))
                             : 'Lịch $names ngày ${formatVietnameseDate(a.displayScheduledAt)} lúc ${formatVietnameseTime(a.displayScheduledAt)} · ${a.status.label}.',
-                        style: const TextStyle(color: Color(0xFF666666))),
+                        style: const TextStyle(color: AppColors.textSecondary)),
                     const SizedBox(height: 6),
                     Text(n.isRead ? 'Đã đọc' : 'Chưa đọc',
                         style: const TextStyle(
-                            color: Color(0xFF666666), fontSize: 11)),
+                            color: AppColors.textSecondary, fontSize: 12)),
                   ]));
         }),
       const Text('Thông báo mẫu trong phiên demo.',
-          style: TextStyle(color: Color(0xFF666666), fontSize: 12)),
+          style: TextStyle(color: AppColors.textSecondary, fontSize: 12)),
     ]);
   }
 }

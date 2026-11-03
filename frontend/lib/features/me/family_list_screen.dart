@@ -1,3 +1,4 @@
+import '../../core/constants/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../core/utils/formatters.dart';
@@ -115,7 +116,7 @@ class _FamilyListScreenState extends State<FamilyListScreen> {
                 Text(name, style: const TextStyle(fontWeight: FontWeight.w600)),
                 const SizedBox(height: 4),
                 Text(subtitle,
-                    style: const TextStyle(color: Color(0xFF666666))),
+                    style: const TextStyle(color: AppColors.textSecondary)),
                 if (healthWarning) ...[
                   const SizedBox(height: 6),
                   const HealthWarningBadge(),

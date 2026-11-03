@@ -5,8 +5,8 @@ class BookingStepper extends StatelessWidget {
   const BookingStepper({required this.step, super.key});
   final int step;
   @override
-  Widget build(BuildContext context) => SizedBox(
-        height: 58,
+  Widget build(BuildContext context) => Padding(
+        padding: const EdgeInsets.only(bottom: 8),
         child: Stack(
           children: [
             Positioned(
@@ -39,8 +39,9 @@ class BookingStepper extends StatelessWidget {
                         const SizedBox(height: 4),
                         Text(
                           ['Dịch vụ', 'Bác sĩ', 'Ngày giờ', 'Xác nhận'][i],
+                          textAlign: TextAlign.center,
                           style: TextStyle(
-                            fontSize: 10,
+                            fontSize: 12,
                             color: i == step
                                 ? AppColors.primary
                                 : AppColors.textSecondary,

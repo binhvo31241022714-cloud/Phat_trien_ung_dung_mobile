@@ -39,6 +39,7 @@ class ApiClient {
   final FutureOr<String?> Function()? tokenProvider;
   final FutureOr<String?> Function()? refreshTokenProvider;
   FutureOr<void> Function()? onUnauthorized;
+  int Function()? sessionVersionProvider;
   Future<void>? _refreshInFlight;
 
   ApiClient(
@@ -47,7 +48,8 @@ class ApiClient {
       this.timeout = ApiConstants.timeout,
       this.tokenProvider,
       this.refreshTokenProvider,
-      this.onUnauthorized})
+      this.onUnauthorized,
+      this.sessionVersionProvider})
       : _client = client ?? http.Client(),
         _ownsClient = client == null,
         baseUrl =
@@ -56,7 +58,9 @@ class ApiClient {
   Uri _uri(String path) =>
       Uri.parse('$baseUrl/${path.replaceFirst(RegExp(r'^/+'), '')}');
   Future<Map<String, String>> _headers() async {
+    final version = sessionVersionProvider?.call();
     final token = await tokenProvider?.call();
+    _checkSession(version);
     return {
       'Accept': 'application/json',
       'Content-Type': 'application/json',
@@ -66,12 +70,12 @@ class ApiClient {
 
   Future<dynamic> get(String path) =>
       _send(() async => _client.get(_uri(path), headers: await _headers()));
+
   /// [headers] thêm header riêng cho request, ví dụ Idempotency-Key.
   Future<dynamic> post(String path, Map<String, dynamic> body,
           {Map<String, String>? headers}) =>
       _send(() async => _client.post(_uri(path),
-          headers: {...await _headers(), ...?headers},
-          body: jsonEncode(body)));
+          headers: {...await _headers(), ...?headers}, body: jsonEncode(body)));
   Future<dynamic> put(String path, Map<String, dynamic> body) =>
       _send(() async => _client.put(_uri(path),
           headers: await _headers(), body: jsonEncode(body)));
@@ -87,7 +91,11 @@ class ApiClient {
       raw: true) as Uint8List;
 
   Future<dynamic> _send(Future<http.Response> Function() request,
-      {bool raw = false, bool hasRetriedUnauthorized = false}) async {
+      {bool raw = false,
+      bool hasRetriedUnauthorized = false,
+      int? sessionVersion}) async {
+    final version = sessionVersion ?? sessionVersionProvider?.call();
+    _checkSession(version);
     late final http.Response response;
     try {
       response = await request().timeout(timeout);
@@ -98,6 +106,7 @@ class ApiClient {
       throw const ApiException('Không kết nối được tới máy chủ.',
           kind: ApiErrorKind.connection);
     }
+    _checkSession(version);
     final status = response.statusCode;
     if (raw && status >= 200 && status < 300) return response.bodyBytes;
     dynamic decoded;
@@ -129,14 +138,17 @@ class ApiClient {
           refreshTokenProvider != null) {
         try {
           await _refreshToken();
+          _checkSession(version);
         } on Exception {
+          _checkSession(version);
           await onUnauthorized?.call();
           throw error;
         }
         return _send(request,
-            raw: raw, hasRetriedUnauthorized: true);
+            raw: raw, hasRetriedUnauthorized: true, sessionVersion: version);
       }
-      if (kind == ApiErrorKind.unauthorized && hasRetriedUnauthorized) {
+      if (kind == ApiErrorKind.unauthorized &&
+          (hasRetriedUnauthorized || refreshTokenProvider == null)) {
         await onUnauthorized?.call();
       }
       throw error;
@@ -154,6 +166,13 @@ class ApiClient {
       return decoded['data'];
     }
     return decoded;
+  }
+
+  void _checkSession(int? version) {
+    if (version != sessionVersionProvider?.call()) {
+      throw const ApiException('Phiên đăng nhập đã thay đổi.',
+          kind: ApiErrorKind.unauthorized);
+    }
   }
 
   Future<void> _refreshToken() {

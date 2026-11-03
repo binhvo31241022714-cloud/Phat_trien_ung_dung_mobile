@@ -1,3 +1,4 @@
+import '../../core/constants/app_colors.dart';
 import 'record_catalog_names.dart';
 import 'package:flutter/material.dart';
 import '../../data/models/patient_records.dart';
@@ -21,7 +22,7 @@ class ExamResultScreen extends StatelessWidget {
                   names.apiMode && !visit.isDemo
                       ? 'Thông tin hồ sơ · Chỉ đọc'
                       : 'Thông tin minh họa · Chỉ đọc',
-                  style: const TextStyle(color: Color(0xFF666666))),
+                  style: const TextStyle(color: AppColors.textSecondary)),
             ])
           ]));
 }

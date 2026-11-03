@@ -1,3 +1,4 @@
+import '../../core/constants/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'me_widgets.dart';
 
@@ -24,7 +25,7 @@ class HelpScreen extends StatelessWidget {
                         fontWeight: FontWeight.w600, fontSize: 16)),
                 const SizedBox(height: 10),
                 Text(entry.value,
-                    style: const TextStyle(color: Color(0xFF666666)))
+                    style: const TextStyle(color: AppColors.textSecondary))
               ])),
       ]);
 }

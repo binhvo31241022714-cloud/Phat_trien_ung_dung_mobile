@@ -58,7 +58,10 @@ BookingController draft(Backend b) {
   final data = PatientDataProvider(seedDemo: false)
     ..syncPatients(
         const UserProfile(id: 'A', email: '', fullName: 'A', phone: ''), []);
-  final c = BookingController(data, bookingService: b.service);
+  // This transport test explicitly selects its fixture patient. API mode no
+  // longer infers a patient from the local records store without a profile.
+  final c =
+      BookingController(data, bookingService: b.service, initialPatientId: 'A');
   c.serviceIds.add('svc_01');
   c.doctorId = 'doc_01';
   c.doctorChosen = true;

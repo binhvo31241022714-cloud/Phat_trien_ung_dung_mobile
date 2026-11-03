@@ -1,3 +1,4 @@
+import '../../core/constants/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../core/utils/formatters.dart';
@@ -55,7 +56,7 @@ class PaymentReceiptScreen extends StatelessWidget {
           RecordLine('Trạng thái', paymentStatusText(receipt.paymentStatus)),
         if (data.recordsAreDemoAndReadOnly)
           const Text('Phiếu minh họa · Chỉ xem thông tin đã ghi nhận',
-              style: TextStyle(color: Color(0xFF666666))),
+              style: TextStyle(color: AppColors.textSecondary)),
       ])
     ]);
   }

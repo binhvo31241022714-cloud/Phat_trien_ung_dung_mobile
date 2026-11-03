@@ -1,3 +1,4 @@
+import '../../core/widgets/page_background.dart';
 import 'package:flutter/material.dart';
 
 import '../../routes/app_routes.dart';
@@ -12,7 +13,8 @@ class WelcomeScreen extends StatelessWidget {
 
     return Scaffold(
       backgroundColor: AppColors.background,
-      body: SafeArea(
+      body: PageBackground(
+          child: SafeArea(
         child: LayoutBuilder(
             builder: (context, constraints) => SingleChildScrollView(
                 child: ConstrainedBox(
@@ -28,7 +30,7 @@ class WelcomeScreen extends StatelessWidget {
                             width: 120,
                             height: 120,
                             decoration: BoxDecoration(
-                              color: const Color(0xFFE8F3FF),
+                              color: AppColors.accent,
                               borderRadius: BorderRadius.circular(32),
                             ),
                             child: const Icon(
@@ -39,7 +41,7 @@ class WelcomeScreen extends StatelessWidget {
                           ),
                           const SizedBox(height: 32),
                           Text(
-                            'MediCare Dental',
+                            'YourSmile Dental',
                             style: theme.textTheme.headlineMedium?.copyWith(
                               fontWeight: FontWeight.bold,
                               color: AppColors.primary,
@@ -68,7 +70,6 @@ class WelcomeScreen extends StatelessWidget {
                           const Spacer(),
                           SizedBox(
                             width: double.infinity,
-                            height: 52,
                             child: FilledButton(
                               onPressed: () {
                                 Navigator.pushNamed(
@@ -82,7 +83,6 @@ class WelcomeScreen extends StatelessWidget {
                           const SizedBox(height: 12),
                           SizedBox(
                             width: double.infinity,
-                            height: 52,
                             child: OutlinedButton(
                               onPressed: () {
                                 Navigator.pushNamed(
@@ -97,7 +97,7 @@ class WelcomeScreen extends StatelessWidget {
                         ],
                       ),
                     ))))),
-      ),
+      )),
     );
   }
 }

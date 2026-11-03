@@ -1,3 +1,4 @@
+import '../../../core/constants/app_colors.dart';
 import '../booking_doctor_name.dart';
 import 'package:flutter/material.dart';
 
@@ -91,7 +92,7 @@ class ConfirmBookingStep extends StatelessWidget {
                 margin: const EdgeInsets.only(bottom: 12),
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFEAF2FF),
+                  color: AppColors.accent,
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: const Text(
@@ -103,7 +104,7 @@ class ConfirmBookingStep extends StatelessWidget {
                 const Text(
                   'Người khám',
                   style: TextStyle(
-                    color: Color(0xFF666666),
+                    color: AppColors.textSecondary,
                   ),
                 ),
                 const SizedBox(width: 12),
@@ -135,7 +136,7 @@ class ConfirmBookingStep extends StatelessWidget {
                 child: Text(
                   'Chưa có dịch vụ được chọn.',
                   style: TextStyle(
-                    color: Color(0xFF666666),
+                    color: AppColors.textSecondary,
                   ),
                 ),
               )
@@ -175,7 +176,7 @@ class ConfirmBookingStep extends StatelessWidget {
               'Mã ưu đãi',
               style: TextStyle(
                 fontWeight: FontWeight.w600,
-                color: Color(0xFF666666),
+                color: AppColors.textSecondary,
               ),
             ),
             const SizedBox(height: 8),
@@ -195,14 +196,13 @@ class ConfirmBookingStep extends StatelessWidget {
                     enabled: !c.voucherLoading && !c.locked,
                     decoration: const InputDecoration(
                       hintText: 'Nhập mã, ví dụ: DENTAL10',
-                      border: OutlineInputBorder(),
                       contentPadding: EdgeInsets.symmetric(
                         horizontal: 12,
                         vertical: 8,
                       ),
-                      hintStyle: TextStyle(fontSize: 12),
+                      hintStyle: TextStyle(fontSize: 14),
                     ),
-                    style: const TextStyle(fontSize: 12),
+                    style: const TextStyle(fontSize: 14),
                   ),
                 ),
                 const SizedBox(width: 8),
@@ -237,7 +237,7 @@ class ConfirmBookingStep extends StatelessWidget {
                   c.voucherError!,
                   style: const TextStyle(
                     color: Colors.red,
-                    fontSize: 11,
+                    fontSize: 12,
                   ),
                 ),
               )
@@ -257,7 +257,7 @@ class ConfirmBookingStep extends StatelessWidget {
                         'Đã áp dụng mã ${c.appliedVoucher}',
                         style: const TextStyle(
                           color: Colors.green,
-                          fontSize: 11,
+                          fontSize: 12,
                         ),
                       ),
                     ),
@@ -275,7 +275,7 @@ class ConfirmBookingStep extends StatelessWidget {
             const Text(
               'Ghi chú cho phòng khám',
               style: TextStyle(
-                color: Color(0xFF666666),
+                color: AppColors.textSecondary,
               ),
             ),
             const SizedBox(height: 8),
@@ -292,12 +292,11 @@ class ConfirmBookingStep extends StatelessWidget {
               enabled: !c.locked,
               decoration: const InputDecoration(
                 hintText: 'Ví dụ: Tôi thường bị ê buốt răng...',
-                border: OutlineInputBorder(),
-                hintStyle: TextStyle(fontSize: 12),
+                hintStyle: TextStyle(fontSize: 14),
                 contentPadding:
                     EdgeInsets.symmetric(horizontal: 12, vertical: 8),
               ),
-              style: const TextStyle(fontSize: 12),
+              style: const TextStyle(fontSize: 14),
             ),
 
             const Divider(height: 32),
@@ -340,22 +339,19 @@ class ConfirmBookingStep extends StatelessWidget {
 
             const SizedBox(height: 12),
 
-            // Tổng tiền sau giảm giá
-            Row(
+            // Keep the amount readable when either label grows with text scale.
+            Wrap(
+              alignment: WrapAlignment.spaceBetween,
+              spacing: 12,
+              runSpacing: 8,
               children: [
-                const Expanded(
-                  child: Text(
-                    'Tổng cộng',
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
+                const Text('Tổng cộng',
+                    style: TextStyle(fontWeight: FontWeight.bold)),
                 Text(
                   c.quoteReady ? formatVnd(c.total) : 'Chưa có giá',
                   style: const TextStyle(
                     fontWeight: FontWeight.bold,
-                    color: Color(0xFF247BF3),
+                    color: AppColors.primary,
                     fontSize: 18,
                   ),
                 ),

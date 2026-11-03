@@ -22,6 +22,7 @@ import 'package:frontend/providers/content_provider.dart';
 import 'package:frontend/providers/profile_provider.dart';
 import 'package:frontend/providers/user_provider.dart';
 import 'fake_auth_service.dart';
+import 'package:frontend/data/services/auth_service.dart';
 
 /// HTTP-only fixture: production providers/services and PrivateSession, no
 /// provider subclasses or direct store assignments. No Firebase/network access.
@@ -76,9 +77,11 @@ class ApiAppFixture {
   final followups = <Map<String, dynamic>>[];
   final notices = <Map<String, dynamic>>[];
   int? articleFailure;
+  bool profileMissing = false;
   late final client = ApiClient(
       baseUrl: 'http://fixture.invalid:3000', client: MockClient(_request));
-  late final users = UserProvider(auth: FakeAuthService());
+  final AuthService? authOverride;
+  late final users = UserProvider(auth: authOverride ?? FakeAuthService());
   late final records = PatientDataProvider(
       seedDemo: false, recordsService: RecordsService(client: client));
   late final profiles =
@@ -96,7 +99,7 @@ class ApiAppFixture {
       content: content,
       apiMode: true);
 
-  ApiAppFixture({bool signedIn = true}) {
+  ApiAppFixture({bool signedIn = true, this.authOverride}) {
     if (signedIn) users.signInDemo(email);
     session; // Wire exactly the same session graph as main.dart before mounting.
     appointmentRows.add(appointment('appointment-api'));
@@ -204,6 +207,9 @@ class ApiAppFixture {
         ? <String, dynamic>{}
         : jsonDecode(request.body) as Map<String, dynamic>;
     if (path == '/api/users/me') {
+      if (profileMissing) {
+        return _json({'message': 'Chưa có hồ sơ người khám'}, 404);
+      }
       if (request.method == 'PATCH') me.addAll(body);
       return _json(me);
     }

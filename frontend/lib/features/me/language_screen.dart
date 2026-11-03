@@ -1,3 +1,4 @@
+import '../../core/constants/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/user_provider.dart';
@@ -24,7 +25,7 @@ class LanguageScreen extends StatelessWidget {
               onTap: () => users.setLanguage(entry.key)),
       ])),
       const Text('Sắp có thêm ngôn ngữ.',
-          style: TextStyle(color: Color(0xFF666666))),
+          style: TextStyle(color: AppColors.textSecondary)),
     ]);
   }
 }

@@ -1,3 +1,4 @@
+import '../../core/constants/app_colors.dart';
 import 'record_catalog_names.dart';
 import 'record_status.dart';
 import 'package:flutter/material.dart';
@@ -16,38 +17,42 @@ class FollowupScreen extends StatelessWidget {
       final data = context.watch<PatientDataProvider>();
       final followups = data.followupsFor(patientId);
       final generation = data.sessionGeneration;
-      return RecordsPage(title: 'Lịch tái khám', children: [
-        if (names.status != null) names.status!,
-        if (followups.isEmpty)
-          const RecordEmpty('Chưa có lịch tái khám được đề xuất.'),
-        for (final f in followups)
-          RecordCard(children: [
-            if (followupStatusLabel(f) case final status?)
-              recordStatusBadge(status),
-            RecordBadge(
-                f.scheduledAt == null
-                    ? 'Chưa có ngày đề xuất'
-                    : (f.scheduledAt?.isAfter(DateTime.now()) ?? false)
-                        ? 'Sắp tới'
-                        : 'Ngày đề xuất đã qua',
-                color: Colors.deepOrange),
-            RecordHeading(f.note.isEmpty ? 'Lịch tái khám' : f.note),
-            Text(recordDateTime(f.scheduledAt)),
-            const SizedBox(height: 8),
-            Text(names.doctor(f.doctorId, name: f.doctorName)),
-            if (f.isOpen && data.canWritePatient(patientId)) ...[
-              _bookingAction(context, names, data, f, generation),
-              if (!(f.scheduledAt?.isAfter(DateTime.now()) ?? false))
-                const Text('Vui lòng chọn ngày khám mới trong bước đặt lịch.',
-                    style: TextStyle(color: Color(0xFF666666))),
-            ] else if (f.appointmentId != null)
-              // A08: đã đặt lịch từ đề xuất này, mở chi tiết lịch.
-              RecordButton(
-                  'Xem lịch đã đặt',
-                  () => RecordsRoutes.open(
-                      context, RecordsRoutes.appointment, f.appointmentId!)),
-          ]),
-      ]);
+      return RecordsPage(
+          title: 'Lịch tái khám',
+          patientId: patientId,
+          children: [
+            if (names.status != null) names.status!,
+            if (followups.isEmpty)
+              const RecordEmpty('Chưa có lịch tái khám được đề xuất.'),
+            for (final f in followups)
+              RecordCard(children: [
+                if (followupStatusLabel(f) case final status?)
+                  recordStatusBadge(status),
+                RecordBadge(
+                    f.scheduledAt == null
+                        ? 'Chưa có ngày đề xuất'
+                        : (f.scheduledAt?.isAfter(DateTime.now()) ?? false)
+                            ? 'Sắp tới'
+                            : 'Ngày đề xuất đã qua',
+                    color: Colors.deepOrange),
+                RecordHeading(f.note.isEmpty ? 'Lịch tái khám' : f.note),
+                Text(recordDateTime(f.scheduledAt)),
+                const SizedBox(height: 8),
+                Text(names.doctor(f.doctorId, name: f.doctorName)),
+                if (f.isOpen && data.canWritePatient(patientId)) ...[
+                  _bookingAction(context, names, data, f, generation),
+                  if (!(f.scheduledAt?.isAfter(DateTime.now()) ?? false))
+                    const Text(
+                        'Vui lòng chọn ngày khám mới trong bước đặt lịch.',
+                        style: TextStyle(color: AppColors.textSecondary)),
+                ] else if (f.appointmentId != null)
+                  // A08: đã đặt lịch từ đề xuất này, mở chi tiết lịch.
+                  RecordButton(
+                      'Xem lịch đã đặt',
+                      () => RecordsRoutes.open(context,
+                          RecordsRoutes.appointment, f.appointmentId!)),
+              ]),
+          ]);
     });
   }
 

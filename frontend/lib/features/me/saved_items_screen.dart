@@ -1,3 +1,4 @@
+import '../../core/constants/app_colors.dart';
 import '../../core/config/app_config.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -131,9 +132,11 @@ class _SavedItemsScreenState extends State<SavedItemsScreen> {
                       label: Text(entry.value),
                       selected: tab == entry.key,
                       showCheckmark: false,
-                      selectedColor: Colors.black,
+                      selectedColor: AppColors.primary,
                       labelStyle: TextStyle(
-                          color: tab == entry.key ? Colors.white : Colors.grey),
+                          color: tab == entry.key
+                              ? Colors.white
+                              : AppColors.textSecondary),
                       onSelected: (_) => setState(() => _tab = entry.key)))
           ])),
       if (_error != null)
@@ -150,10 +153,11 @@ class _SavedItemsScreenState extends State<SavedItemsScreen> {
                 padding: const EdgeInsets.symmetric(vertical: 8),
                 child: Center(
                     child: Column(children: [
-                  const Icon(Icons.bookmark_border, color: Colors.grey),
+                  const Icon(Icons.bookmark_border,
+                      color: AppColors.textSecondary),
                   const SizedBox(height: 10),
                   Text(emptyText,
-                      style: const TextStyle(color: Color(0xFF666666)))
+                      style: const TextStyle(color: AppColors.textSecondary))
                 ])))),
       if (show(_SavedTab.articles))
         for (final a in articles)
@@ -193,7 +197,7 @@ class _SavedTile extends StatelessWidget {
             child:
                 Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           Text(title, style: const TextStyle(fontWeight: FontWeight.w600)),
-          Text(category, style: const TextStyle(color: Color(0xFF666666)))
+          Text(category, style: const TextStyle(color: AppColors.textSecondary))
         ])),
         IconButton(
             tooltip: 'Bỏ lưu $title',

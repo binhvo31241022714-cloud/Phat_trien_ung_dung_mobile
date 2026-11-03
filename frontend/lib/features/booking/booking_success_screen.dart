@@ -1,3 +1,4 @@
+import '../../core/constants/app_colors.dart';
 import 'booking_doctor_name.dart';
 
 import 'package:flutter/material.dart';
@@ -90,7 +91,7 @@ class BookingSuccessScreen extends StatelessWidget {
                 'Vui lòng chờ phòng khám xác nhận.',
                 textAlign: TextAlign.center,
                 style: TextStyle(
-                  color: Color(0xFF666666),
+                  color: AppColors.textSecondary,
                 ),
               ),
               const SizedBox(height: 12),
@@ -127,7 +128,7 @@ class BookingSuccessScreen extends StatelessWidget {
                           Text(
                             formatVnd(appointment.totalPrice),
                             style: const TextStyle(
-                              color: Color(0xFF247BF3),
+                              color: AppColors.primary,
                               fontSize: 18,
                               fontWeight: FontWeight.w600,
                             ),

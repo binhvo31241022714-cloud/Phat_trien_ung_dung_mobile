@@ -1,3 +1,4 @@
+import '../../core/constants/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../core/config/app_config.dart';
@@ -31,13 +32,14 @@ class SettingsScreen extends StatelessWidget {
         CheckboxListTile(
             contentPadding: EdgeInsets.zero,
             controlAffinity: ListTileControlAffinity.leading,
-            activeColor: Colors.black,
+            activeColor: AppColors.primary,
             title: const Text('Nhận thông báo'),
             subtitle: Text(
                 api
                     ? notificationsSettingDescription
                     : 'Chỉ là tùy chọn lưu trên máy này. Ứng dụng chưa gửi thông báo đẩy.',
-                style: const TextStyle(color: Color(0xFF666666), fontSize: 12)),
+                style: const TextStyle(
+                    color: AppColors.textSecondary, fontSize: 12)),
             value: api
                 ? profile!.profile?.notificationsEnabled ?? true
                 : users.receiveNotifications,
@@ -57,11 +59,6 @@ class SettingsScreen extends StatelessWidget {
       MeCard(
           child: MeMenuTile('Quyền riêng tư', Icons.verified_user_outlined,
               () => MeRoutes.open(context, MeRoutes.privacy))),
-      Text(
-          api
-              ? 'Ngôn ngữ là tùy chọn lưu trên máy này. Tài khoản, hồ sơ và tùy chọn nhận thông báo được lưu trên máy chủ.'
-              : 'Ngôn ngữ và nhận thông báo là tùy chọn lưu trên máy này. Tài khoản và hồ sơ của bạn được lưu trên máy chủ.',
-          style: const TextStyle(color: Color(0xFF666666), fontSize: 12)),
     ]);
   }
 }

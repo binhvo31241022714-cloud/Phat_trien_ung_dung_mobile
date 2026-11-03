@@ -1,3 +1,6 @@
+import '../../core/widgets/primary_button.dart';
+import 'auth_brand.dart';
+import '../../core/widgets/page_background.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/user_provider.dart';
@@ -121,9 +124,11 @@ class _LoginScreenState extends State<LoginScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(),
-      body: SafeArea(
+      body: PageBackground(
+          child: SafeArea(
         child: Center(
           child: SingleChildScrollView(
+            keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
             padding: const EdgeInsets.all(24),
             child: ConstrainedBox(
               constraints: const BoxConstraints(
@@ -134,39 +139,10 @@ class _LoginScreenState extends State<LoginScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Center(
-                      child: CircleAvatar(
-                        radius: 42,
-                        backgroundColor: Color(0xFFE8F3FF),
-                        child: Icon(
-                          Icons.medical_services_rounded,
-                          size: 42,
-                          color: Color(0xFF1677DA),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 24),
-                    const Center(
-                      child: Text(
-                        'Chào mừng trở lại!',
-                        style: TextStyle(
-                          fontSize: 25,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    const Center(
-                      child: Text(
-                        'Đăng nhập để tiếp tục chăm sóc '
-                        'nụ cười của bạn',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          color: Color(0xFF666666),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 32),
+                    const AuthBrand(
+                        title: 'Chào mừng trở lại!',
+                        subtitle:
+                            'Đăng nhập để tiếp tục chăm sóc nụ cười của bạn'),
                     const Text(
                       'Email',
                       style: TextStyle(
@@ -186,7 +162,6 @@ class _LoginScreenState extends State<LoginScreen> {
                         prefixIcon: Icon(
                           Icons.email_outlined,
                         ),
-                        border: OutlineInputBorder(),
                       ),
                       validator: _validateEmail,
                     ),
@@ -211,7 +186,6 @@ class _LoginScreenState extends State<LoginScreen> {
                         prefixIcon: const Icon(
                           Icons.lock_outline,
                         ),
-                        border: const OutlineInputBorder(),
                         suffixIcon: IconButton(
                           onPressed: () {
                             setState(() {
@@ -242,26 +216,10 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                     ),
                     const SizedBox(height: 12),
-                    SizedBox(
-                      width: double.infinity,
-                      height: 52,
-                      child: FilledButton(
-                        onPressed: _isLoading ? null : _login,
-                        child: _isLoading
-                            ? const SizedBox(
-                                height: 22,
-                                width: 22,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                  color: Colors.white,
-                                ),
-                              )
-                            : const Text(
-                                'Đăng nhập',
-                                style: TextStyle(fontSize: 16),
-                              ),
-                      ),
-                    ),
+                    PrimaryButton(
+                        label: 'Đăng nhập',
+                        isLoading: _isLoading,
+                        onPressed: _login),
                     const SizedBox(height: 24),
                     Wrap(
                       alignment: WrapAlignment.center,
@@ -287,7 +245,7 @@ class _LoginScreenState extends State<LoginScreen> {
             ),
           ),
         ),
-      ),
+      )),
     );
   }
 }

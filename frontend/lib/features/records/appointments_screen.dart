@@ -1,3 +1,4 @@
+import '../../core/constants/app_colors.dart';
 import '../../providers/appointments_provider.dart';
 import 'appointment_api_status.dart';
 import '../../core/config/app_config.dart';
@@ -95,14 +96,14 @@ class _AppointmentsScreenState extends State<AppointmentsScreen> {
     final patients =
         data.recordsPatients.where((p) => p.id == widget.patientId);
     if (patients.isEmpty) {
-      return const RecordsPage(
+      return RecordsPage(
           title: 'Lịch hẹn',
+          patientId: widget.patientId,
           useRecordsState: false,
-          children: [
+          children: const [
             RecordEmpty('Hồ sơ này không còn trong danh sách người thân.')
           ]);
     }
-    final patient = patients.first;
     final appointments = data.appointmentsFor(widget.patientId);
     final visible = appointments.where((a) =>
         a.status == _tabs[_tab] ||
@@ -114,12 +115,12 @@ class _AppointmentsScreenState extends State<AppointmentsScreen> {
         title: 'Lịch hẹn',
         useRecordsState: false,
         onRefresh: isApi ? () => reloadAppointments(context) : null,
+        patientId: widget.patientId,
         children: [
           if (isApi) const AppointmentApiStatus(),
           if (catalog != null &&
               (catalog.loading || !catalog.loaded || catalog.error != null))
             _catalogStatus(catalog),
-          RecordHeading('Lịch hẹn của ${patient.fullName}'),
           DefaultTabController(
             length: _tabs.length,
             initialIndex: _tab,
@@ -174,7 +175,7 @@ class _AppointmentsScreenState extends State<AppointmentsScreen> {
                 const Icon(Icons.chevron_right, size: 20)
               ]),
               Text(appointmentDateText(a),
-                  style: const TextStyle(color: Color(0xFF666666))),
+                  style: const TextStyle(color: AppColors.textSecondary)),
               const SizedBox(height: 8),
               Text(_doctor(a, data, catalog)),
               if (a.totalPrice > 0)

@@ -1,3 +1,6 @@
+import '../../core/theme/app_tokens.dart';
+import '../../core/widgets/glass_selection_card.dart';
+import '../../core/constants/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../core/widgets/network_image_or_icon.dart';
@@ -25,7 +28,7 @@ class DoctorDetailScreen extends StatelessWidget {
         if (catalog.serviceById(id) case final s?) s
     ];
     return SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
+        padding: AppTokens.pageInsets,
         child: Card(
             child: Padding(
                 padding: const EdgeInsets.all(12),
@@ -37,23 +40,24 @@ class DoctorDetailScreen extends StatelessWidget {
                           width: double.infinity,
                           clipBehavior: Clip.antiAlias,
                           decoration: BoxDecoration(
-                              color: const Color(0xFFDFE8F6),
+                              color: AppColors.accent,
                               borderRadius: BorderRadius.circular(14)),
                           child: NetworkImageOrIcon(
                               url: doctor.avatarUrl,
+                              alignment: Alignment.topCenter,
                               icon: Icons.person_outline,
                               iconSize: 36,
-                              color: const Color(0xFF247BF3),
+                              color: AppColors.primary,
                               width: double.infinity,
                               height: 150)),
-                      const SizedBox(height: 16),
+                      const SizedBox(height: 10),
                       Text(doctor.fullName,
                           style: const TextStyle(
-                              fontSize: 22, fontWeight: FontWeight.bold)),
-                      const SizedBox(height: 12),
+                              fontSize: 20, fontWeight: FontWeight.bold)),
+                      const SizedBox(height: 10),
                       Text(doctor.specialty,
                           style: const TextStyle(
-                              color: Color(0xFF666666), fontSize: 18)),
+                              color: AppColors.textSecondary, fontSize: 16)),
                       Wrap(spacing: 8, children: [
                         if (doctor.hasRating)
                           Chip(label: Text('☆ ${doctor.rating}')),
@@ -64,19 +68,20 @@ class DoctorDetailScreen extends StatelessWidget {
                       if (doctor.introduction.isNotEmpty) ...[
                         const Text('Giới thiệu',
                             style: TextStyle(
-                                fontSize: 18, fontWeight: FontWeight.w600)),
-                        const SizedBox(height: 12),
+                                fontSize: 16, fontWeight: FontWeight.w600)),
+                        const SizedBox(height: 10),
                         Text(doctor.introduction),
-                        const SizedBox(height: 16),
+                        const SizedBox(height: 10),
                       ],
                       if (showRelated && services.isNotEmpty) ...[
-                        const SizedBox(height: 12),
+                        const SizedBox(height: 10),
                         const Text('Dịch vụ thực hiện',
                             style: TextStyle(
-                                fontSize: 18, fontWeight: FontWeight.w600)),
+                                fontSize: 16, fontWeight: FontWeight.w600)),
                         const SizedBox(height: 8),
                         // Bấm vào dịch vụ để mở chi tiết.
-                        Wrap(spacing: 8, runSpacing: 4, children: [
+                        GlassSelectionCard(
+                            child: Wrap(spacing: 8, runSpacing: 4, children: [
                           for (final s in services)
                             ActionChip(
                                 avatar:
@@ -89,8 +94,8 @@ class DoctorDetailScreen extends StatelessWidget {
                                         service: s,
                                         showRelated: false,
                                         doctorId: doctor.id))),
-                        ]),
-                        const SizedBox(height: 12),
+                        ])),
+                        const SizedBox(height: 10),
                       ],
                       // Dữ liệu mock trong đặt lịch không có trên máy chủ nên
                       // không lưu được.

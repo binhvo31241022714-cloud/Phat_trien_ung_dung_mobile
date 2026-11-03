@@ -112,35 +112,14 @@ class _RecordsHomeScreenState extends State<RecordsHomeScreen> {
   @override
   Widget build(BuildContext context) {
     final active = MainShellScope.maybeOf(context)?.selectedIndex == 2;
-    return Theme(
-        data: Theme.of(context).copyWith(
-          textTheme: Theme.of(context).textTheme,
-          colorScheme: Theme.of(context)
-              .colorScheme
-              .copyWith(primary: AppColors.primary, secondary: AppColors.sky),
-          cardTheme: CardThemeData(
-              color: Colors.white,
-              elevation: 2,
-              shadowColor: const Color(0x14000675),
-              margin: EdgeInsets.zero,
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(18),
-                  side: BorderSide.none)),
-          outlinedButtonTheme: OutlinedButtonThemeData(
-              style: OutlinedButton.styleFrom(
-                  foregroundColor: AppColors.primary,
-                  minimumSize: const Size(0, 36),
-                  side: const BorderSide(color: AppColors.divider),
-                  shape: const StadiumBorder())),
-        ),
-        child: NavigatorPopHandler<Object?>(
-            enabled: active,
-            onPopWithResult: (_) {
-              if (active && (_navigator.currentState?.canPop() ?? false)) {
-                _navigator.currentState!.pop();
-              }
-            },
-            child: Navigator(key: _navigator, onGenerateRoute: _route)));
+    return NavigatorPopHandler<Object?>(
+        enabled: active,
+        onPopWithResult: (_) {
+          if (active && (_navigator.currentState?.canPop() ?? false)) {
+            _navigator.currentState!.pop();
+          }
+        },
+        child: Navigator(key: _navigator, onGenerateRoute: _route));
   }
 }
 
@@ -168,8 +147,7 @@ class _RecordsOverview extends StatelessWidget {
       RecordsRoutes.treatments
     ];
     return RecordsPage(title: 'Hồ sơ nha khoa', children: [
-      if (profiles.historyFamilyLoading)
-        const LinearProgressIndicator(),
+      if (profiles.historyFamilyLoading) const LinearProgressIndicator(),
       if (profiles.historyFamilyError != null)
         Column(children: [
           Text(
@@ -307,7 +285,8 @@ class _RecordsOverview extends StatelessWidget {
                   const SizedBox(height: 4),
                   Center(
                       child: Text(labels[i],
-                          style: const TextStyle(color: Color(0xFF666666))))
+                          style:
+                              const TextStyle(color: AppColors.textSecondary)))
                 ],
               ),
             ),
@@ -336,7 +315,7 @@ class _RecordsOverview extends StatelessWidget {
           () => RecordsRoutes.open(context, RecordsRoutes.followups, p.id)),
       if (data.recordsAreDemoAndReadOnly)
         const Text('DỮ LIỆU DEMO · CHỈ ĐỌC',
-            style: TextStyle(color: Color(0xFF666666), fontSize: 11)),
+            style: TextStyle(color: AppColors.textSecondary, fontSize: 11)),
     ]);
   }
 }
@@ -353,7 +332,7 @@ class _MenuCard extends StatelessWidget {
           Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                  color: const Color(0xFFDFE8F6),
+                  color: AppColors.accent,
                   borderRadius: BorderRadius.circular(12)),
               child: Icon(icon, color: recordsBlue, size: 20)),
           const SizedBox(width: 12),
@@ -368,8 +347,8 @@ class _MenuCard extends StatelessWidget {
                 Text(subtitle,
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
-                    style:
-                        const TextStyle(color: Color(0xFF666666), fontSize: 11))
+                    style: const TextStyle(
+                        color: AppColors.textSecondary, fontSize: 11))
               ])),
           const SizedBox(height: 10),
           const Align(

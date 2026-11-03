@@ -19,7 +19,7 @@ class SelectDoctorStep extends StatelessWidget {
   Widget indicator(bool selected) {
     return Icon(
       selected ? Icons.check_circle : Icons.radio_button_unchecked,
-      color: selected ? const Color(0xFF247BF3) : Colors.grey,
+      color: selected ? AppColors.primary : Colors.grey,
     );
   }
 
@@ -154,7 +154,6 @@ class SelectDoctorStep extends StatelessWidget {
             label: 'Bác sĩ',
             itemCount: doctors.length,
             itemWidth: 156,
-            itemHeight: 196,
             navigationCenterY: 70,
             showNavigation: doctors.length > 1,
             itemBuilder: (context, index) {
@@ -172,7 +171,7 @@ class SelectDoctorStep extends StatelessWidget {
                       colors: selected
                           ? [
                               AppColors.glassPurpleStrong,
-                              const Color(0xFFD8CCFF)
+                              AppColors.glassPurpleStrong
                             ]
                           : [const Color(0xDFFFFFFF), AppColors.glassPurple],
                       begin: Alignment.topLeft,
@@ -219,7 +218,7 @@ class SelectDoctorStep extends StatelessWidget {
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: const TextStyle(
-                              fontSize: 12,
+                              fontSize: 14,
                               fontWeight: FontWeight.w700,
                               color: AppColors.textPrimary)),
                       const SizedBox(height: 2),
@@ -227,29 +226,23 @@ class SelectDoctorStep extends StatelessWidget {
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: const TextStyle(
-                              fontSize: 10.5, color: AppColors.textSecondary)),
+                              fontSize: 12, color: AppColors.textSecondary)),
                       const Spacer(),
-                      Row(children: [
-                        Expanded(
-                          child: Text(
-                            '${doctor.experienceYears} năm kinh nghiệm',
-                            style: const TextStyle(
-                                fontSize: 9.5, color: AppColors.textSecondary),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                        TextButton(
-                          onPressed: () => onDetail(doctor),
-                          style: TextButton.styleFrom(
-                              padding: EdgeInsets.zero,
-                              minimumSize: Size.zero,
-                              tapTargetSize: MaterialTapTargetSize.shrinkWrap),
-                          child: const Text('Chi tiết',
-                              style: TextStyle(
-                                  fontSize: 9.5, color: AppColors.primary)),
-                        ),
-                      ]),
+                      Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text('${doctor.experienceYears} năm kinh nghiệm',
+                                style: const TextStyle(
+                                    fontSize: 12,
+                                    color: AppColors.textSecondary),
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis),
+                            Align(
+                                alignment: Alignment.centerRight,
+                                child: TextButton(
+                                    onPressed: () => onDetail(doctor),
+                                    child: const Text('Chi tiết'))),
+                          ]),
                     ],
                   ),
                 ),

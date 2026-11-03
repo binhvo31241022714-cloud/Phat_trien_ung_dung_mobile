@@ -45,6 +45,17 @@ class IdentityAuth extends FakeAuthService implements AuthIdentitySource {
   }
 }
 
+class EarlyRegisterAuth extends IdentityAuth {
+  final registered = Completer<void>();
+  final finishName = Completer<void>();
+  @override
+  Future<void> register(String fullName, String email, String password) async {
+    emit('new-uid');
+    registered.complete();
+    await finishName.future;
+  }
+}
+
 UserProfile profile(String id) =>
     UserProfile(id: id, email: 'test@example.test', fullName: id, phone: '');
 Appointment appointment(String owner, [String id = 'appointment']) =>
@@ -129,6 +140,21 @@ class DeferredFavorites extends CatalogService {
 }
 
 void main() {
+  test('registration publishes UID only after display name is ready', () async {
+    final auth = EarlyRegisterAuth();
+    final users = UserProvider(auth: auth);
+    final operation =
+        users.register('New account', 'new@example.com', 'secret123');
+    await auth.registered.future;
+    expect(users.isAuthenticated, isFalse);
+    expect(users.uid, isNull);
+    auth.finishName.complete();
+    expect(await operation, isNull);
+    expect(users.uid, 'new-uid');
+    expect(users.isAuthenticated, isTrue);
+    users.dispose();
+    await auth.events.close();
+  });
   test(
       'UID events clear every private store immediately; public catalog survives',
       () async {

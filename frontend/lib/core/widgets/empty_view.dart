@@ -22,12 +22,13 @@ class EmptyState extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Center(
-      child: Padding(
+      child: SingleChildScrollView(
+          child: Padding(
         padding: const EdgeInsets.all(24),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, size: 48, color: AppColors.primary),
+            Icon(icon, size: 36, color: AppColors.primary),
             const SizedBox(height: 16),
             Text(title,
                 style: AppTextStyles.title, textAlign: TextAlign.center),
@@ -45,7 +46,7 @@ class EmptyState extends StatelessWidget {
             ],
           ],
         ),
-      ),
+      )),
     );
   }
 }

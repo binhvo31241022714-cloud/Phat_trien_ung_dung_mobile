@@ -27,7 +27,7 @@ class SelectServicesStep extends StatelessWidget {
       children: [
         const Text(
           'Chọn một hoặc nhiều dịch vụ. Combo nằm chung trong danh sách.',
-          style: TextStyle(color: Color(0xFF666666)),
+          style: TextStyle(color: AppColors.textSecondary),
         ),
         const SizedBox(height: 12),
 
@@ -158,15 +158,16 @@ class SelectServicesStep extends StatelessWidget {
                         ],
                       ),
                       const SizedBox(height: 2),
-                      Row(
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 4,
                         children: [
                           Text(
                             '${service.isCombo ? 'Combo' : service.category}'
                             ' · ${service.durationMinutes} phút',
                             style: const TextStyle(
-                                fontSize: 11.5, color: Color(0xFF666666)),
+                                fontSize: 11.5, color: AppColors.textSecondary),
                           ),
-                          const Spacer(),
                           Text(
                             formatVnd(service.price),
                             style: const TextStyle(

@@ -1,3 +1,6 @@
+import '../../core/theme/app_tokens.dart';
+import '../../core/widgets/glass_selection_card.dart';
+import '../../core/constants/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../core/utils/formatters.dart';
@@ -38,7 +41,7 @@ class ServiceDetailScreen extends StatelessWidget {
     // không có bác sĩ thì ẩn.
     final showDoctors = related && (service.isCombo || doctors.isNotEmpty);
     return SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
+        padding: AppTokens.pageInsets,
         child: Card(
             child: Padding(
                 padding: const EdgeInsets.all(12),
@@ -50,23 +53,23 @@ class ServiceDetailScreen extends StatelessWidget {
                           width: double.infinity,
                           clipBehavior: Clip.antiAlias,
                           decoration: BoxDecoration(
-                              color: const Color(0xFFDFE8F6),
+                              color: AppColors.accent,
                               borderRadius: BorderRadius.circular(14)),
                           child: NetworkImageOrIcon(
                               url: service.imageUrl,
                               icon: service.icon,
                               iconSize: 36,
-                              color: const Color(0xFF247BF3),
+                              color: AppColors.primary,
                               width: double.infinity,
                               height: 150)),
-                      const SizedBox(height: 16),
+                      const SizedBox(height: 10),
                       Text(service.name,
                           style: const TextStyle(
-                              fontSize: 22, fontWeight: FontWeight.bold)),
-                      const SizedBox(height: 12),
+                              fontSize: 20, fontWeight: FontWeight.bold)),
+                      const SizedBox(height: 10),
                       Text(formatVnd(service.price),
                           style: const TextStyle(
-                              fontSize: 20, color: Color(0xFF247BF3))),
+                              fontSize: 16, color: AppColors.primary)),
                       Wrap(spacing: 8, children: [
                         Chip(
                             label: Text(
@@ -78,59 +81,61 @@ class ServiceDetailScreen extends StatelessWidget {
                       if (included.isNotEmpty) ...[
                         const Text('Gồm các dịch vụ',
                             style: TextStyle(
-                                fontSize: 18, fontWeight: FontWeight.w600)),
+                                fontSize: 16, fontWeight: FontWeight.w600)),
                         const SizedBox(height: 8),
                         for (final name in included)
                           Padding(
                               padding: const EdgeInsets.only(bottom: 4),
                               child: Text('• $name')),
-                        const SizedBox(height: 12),
+                        const SizedBox(height: 10),
                       ],
                       const Text('Mô tả dịch vụ',
                           style: TextStyle(
-                              fontSize: 18, fontWeight: FontWeight.w600)),
-                      const SizedBox(height: 12),
+                              fontSize: 16, fontWeight: FontWeight.w600)),
+                      const SizedBox(height: 10),
                       Text(service.description.isEmpty
                           ? 'Chưa có mô tả.'
                           : service.description),
                       if (showDoctors) ...[
-                        const SizedBox(height: 16),
+                        const SizedBox(height: 10),
                         const Text('Bác sĩ thực hiện',
                             style: TextStyle(
-                                fontSize: 18, fontWeight: FontWeight.w600)),
+                                fontSize: 16, fontWeight: FontWeight.w600)),
                         const SizedBox(height: 8),
                         if (doctors.isEmpty)
                           const Text(
                               'Phòng khám sẽ sắp xếp bác sĩ phù hợp cho combo này.',
-                              style: TextStyle(color: Color(0xFF666666))),
+                              style: TextStyle(color: AppColors.textSecondary)),
                         for (final d in doctors)
-                          ListTile(
-                              contentPadding: EdgeInsets.zero,
-                              leading: CircleAvatar(
-                                  backgroundColor: const Color(0xFFDFE8F6),
-                                  child: ClipOval(
-                                      child: NetworkImageOrIcon(
-                                          url: d.avatarUrl,
-                                          icon: Icons.person_outline,
-                                          color: const Color(0xFF247BF3),
-                                          width: 40,
-                                          height: 40))),
-                              title: Text(d.fullName),
-                              subtitle: Text(d.specialty),
-                              trailing: const Icon(Icons.chevron_right),
-                              onTap: () => CatalogNavigation.open(
-                                  context,
-                                  'Chi tiết bác sĩ',
-                                  DoctorDetailScreen(
-                                      doctor: d, showRelated: false))),
+                          GlassSelectionCard(
+                              child: ListTile(
+                                  contentPadding: EdgeInsets.zero,
+                                  leading: CircleAvatar(
+                                      backgroundColor: AppColors.accent,
+                                      child: ClipOval(
+                                          child: NetworkImageOrIcon(
+                                              url: d.avatarUrl,
+                                              icon: Icons.person_outline,
+                                              color: AppColors.primary,
+                                              width: 40,
+                                              height: 40))),
+                                  title: Text(d.fullName),
+                                  subtitle: Text(d.specialty),
+                                  trailing: const Icon(Icons.chevron_right),
+                                  onTap: () => CatalogNavigation.open(
+                                      context,
+                                      'Chi tiết bác sĩ',
+                                      DoctorDetailScreen(
+                                          doctor: d, showRelated: false)))),
                       ],
-                      const SizedBox(height: 16),
+                      const SizedBox(height: 10),
                       Text(
                           service.fromApi
                               ? 'Bác sĩ sẽ xác nhận phương án và chi phí thực tế khi thăm khám.'
                               : 'Giá và thời gian chỉ là dữ liệu minh họa; bác sĩ sẽ xác nhận phương án thực tế.',
-                          style: const TextStyle(color: Color(0xFF666666))),
-                      const SizedBox(height: 12),
+                          style:
+                              const TextStyle(color: AppColors.textSecondary)),
+                      const SizedBox(height: 10),
                       // Dữ liệu mock trong đặt lịch không có trên máy chủ nên
                       // không lưu được.
                       if (service.fromApi) ...[

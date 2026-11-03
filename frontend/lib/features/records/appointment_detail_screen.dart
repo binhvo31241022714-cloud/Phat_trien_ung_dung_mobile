@@ -1,3 +1,4 @@
+import '../../core/constants/app_colors.dart';
 import 'appointment_api_status.dart';
 import '../../data/api_client.dart' show ApiException;
 import '../../providers/appointments_provider.dart';
@@ -274,7 +275,7 @@ class _AppointmentDetailScreenState extends State<AppointmentDetailScreen>
             if (!isApi)
               const Text(
                   'Lịch hẹn demo. Thao tác hủy chỉ cập nhật dữ liệu trong ứng dụng.',
-                  style: TextStyle(color: Color(0xFF666666))),
+                  style: TextStyle(color: AppColors.textSecondary)),
             if (isApi && _checking) _refreshing(),
             if (isApi && _cancelError != null) ...[
               Text(_cancelError!, style: const TextStyle(color: Colors.red)),

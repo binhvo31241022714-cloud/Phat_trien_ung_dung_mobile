@@ -31,8 +31,16 @@ class BookingController extends ChangeNotifier {
   })  : now = clock ?? DateTime.now,
         bookingService = bookingService ?? BookingService(),
         availabilityService = availabilityService ?? AvailabilityService(),
-        patientId =
-            initialPatientId ?? profile?.profile?.id ?? data.selectedPatientId {
+        patientId = initialPatientId ??
+            profile?.profile?.id ??
+            (AppConfig.current.dataSource == DataSource.api
+                ? ''
+                : data.selectedPatientId) {
+    assert(() {
+      debugPrint('[booking] profileId=${profile?.profile?.id} '
+          'selectedPatientId=$patientId');
+      return true;
+    }());
     _dataSession = data.sessionGeneration;
     data.addListener(_onDataChanged);
     catalog?.addListener(_onCatalogChanged);
@@ -216,6 +224,10 @@ class BookingController extends ChangeNotifier {
     }
 
     final realId = profile?.profile?.id;
+    assert(() {
+      debugPrint('[booking] profileId=$realId selectedPatientId=$patientId');
+      return true;
+    }());
     if (realId == null || realId.isEmpty) return;
 
     final isMockPatient = data.patients.any(

@@ -1,3 +1,4 @@
+import '../../core/constants/app_colors.dart';
 import 'record_catalog_names.dart';
 import 'record_status.dart';
 import 'package:flutter/material.dart';
@@ -59,7 +60,7 @@ class VisitDetailScreen extends StatelessWidget {
         ]),
         if (data.recordsAreDemoAndReadOnly)
           const Text('DỮ LIỆU DEMO · CHỈ ĐỌC',
-              style: TextStyle(color: Color(0xFF666666), fontSize: 12))
+              style: TextStyle(color: AppColors.textSecondary, fontSize: 12))
       ]);
     });
   }
@@ -87,7 +88,7 @@ class VisitDetailScreen extends StatelessWidget {
                 child: Ink(
                   padding: const EdgeInsets.all(14),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFEAF2FF),
+                    color: AppColors.accent,
                     border: Border.all(
                       color: const Color(0xFF9FC3FF),
                     ),

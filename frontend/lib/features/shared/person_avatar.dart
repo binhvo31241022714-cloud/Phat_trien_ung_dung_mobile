@@ -10,8 +10,8 @@ class PersonAvatar extends StatelessWidget {
     required this.mediaId,
     this.radius = 20,
     this.icon = Icons.person_outline,
-    this.iconColor = const Color(0xFF247BF3),
-    this.background = const Color(0xFFDFE8F6),
+    this.iconColor = AppColors.primary,
+    this.background = AppColors.accent,
     super.key,
   });
 
@@ -43,7 +43,8 @@ class PersonAvatar extends StatelessWidget {
 
 /// Một dòng trong ô chọn người khám (Hồ sơ, Đặt lịch): ảnh đại diện và tên.
 class PatientOptionLabel extends StatelessWidget {
-  const PatientOptionLabel(this.label, {required this.avatarMediaId, super.key});
+  const PatientOptionLabel(this.label,
+      {required this.avatarMediaId, super.key});
   final String label;
   final String? avatarMediaId;
 

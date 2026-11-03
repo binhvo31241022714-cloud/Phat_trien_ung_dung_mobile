@@ -91,55 +91,14 @@ class _MeScreenState extends State<MeScreen> {
   @override
   Widget build(BuildContext context) {
     final active = MainShellScope.maybeOf(context)?.selectedIndex == 3;
-    final border = OutlineInputBorder(
-        borderRadius: BorderRadius.circular(30),
-        borderSide: const BorderSide(color: Color(0xFFCCCCCC)));
-    return Theme(
-        data: Theme.of(context).copyWith(
-          textTheme: Theme.of(context).textTheme,
-          colorScheme: Theme.of(context)
-              .colorScheme
-              .copyWith(primary: AppColors.primary, secondary: AppColors.sky),
-          cardTheme: CardThemeData(
-              color: Colors.white,
-              elevation: 2,
-              shadowColor: const Color(0x14000675),
-              margin: EdgeInsets.zero,
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(18),
-                  side: BorderSide.none)),
-          filledButtonTheme: FilledButtonThemeData(
-              style: FilledButton.styleFrom(
-                  backgroundColor: Colors.black,
-                  foregroundColor: Colors.white,
-                  minimumSize: const Size(0, 40),
-                  shape: const StadiumBorder())),
-          outlinedButtonTheme: OutlinedButtonThemeData(
-              style: OutlinedButton.styleFrom(
-                  foregroundColor: AppColors.primary,
-                  minimumSize: const Size(0, 40),
-                  side: const BorderSide(color: AppColors.divider),
-                  shape: const StadiumBorder())),
-          textButtonTheme: TextButtonThemeData(
-              style: TextButton.styleFrom(foregroundColor: AppColors.primary)),
-          inputDecorationTheme: InputDecorationTheme(
-              filled: true,
-              fillColor: const Color(0xFFF7F7F7),
-              contentPadding:
-                  const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              border: border,
-              enabledBorder: border,
-              focusedBorder:
-                  border.copyWith(borderSide: const BorderSide(color: meBlue))),
-        ),
-        child: NavigatorPopHandler<Object?>(
-            enabled: active,
-            onPopWithResult: (_) {
-              if (active && (_navigator.currentState?.canPop() ?? false)) {
-                _navigator.currentState!.pop();
-              }
-            },
-            child: Navigator(key: _navigator, onGenerateRoute: _route)));
+    return NavigatorPopHandler<Object?>(
+        enabled: active,
+        onPopWithResult: (_) {
+          if (active && (_navigator.currentState?.canPop() ?? false)) {
+            _navigator.currentState!.pop();
+          }
+        },
+        child: Navigator(key: _navigator, onGenerateRoute: _route));
   }
 }
 
@@ -159,7 +118,7 @@ class _AccountOverview extends StatelessWidget {
       const SizedBox(height: 3),
       const Text('Tài khoản bệnh nhân',
           textAlign: TextAlign.center,
-          style: TextStyle(fontSize: 12.5, color: Color(0xFF666666))),
+          style: TextStyle(fontSize: 12.5, color: AppColors.textSecondary)),
       if (profile.profile?.health.hasWarning ?? false) ...[
         const SizedBox(height: 8),
         const Center(child: HealthWarningBadge()),
@@ -197,7 +156,8 @@ class _AccountOverview extends StatelessWidget {
                   child: Text(item.$1,
                       style: const TextStyle(
                           fontSize: 14, fontWeight: FontWeight.w600))),
-              const Icon(Icons.chevron_right, color: Color(0xFF999999), size: 18)
+              const Icon(Icons.chevron_right,
+                  color: Color(0xFF999999), size: 18)
             ])),
       const SizedBox(height: 4),
       Theme(
@@ -244,11 +204,9 @@ class _Detail extends StatelessWidget {
   final Widget child;
   @override
   Widget build(BuildContext context) => Scaffold(
-      extendBodyBehindAppBar: true,
       backgroundColor: Colors.transparent,
       appBar: meAppBar(title),
       body: DecoratedBox(
           decoration: const BoxDecoration(gradient: AppColors.pageGradient),
-          child: Padding(
-              padding: const EdgeInsets.only(top: 56), child: child)));
+          child: SafeArea(top: false, child: child)));
 }

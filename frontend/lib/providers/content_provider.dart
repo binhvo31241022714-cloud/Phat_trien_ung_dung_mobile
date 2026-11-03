@@ -58,6 +58,7 @@ class ContentProvider extends SessionNotifier {
 
   Future<void> loadHome() => _request('home', () async {
         if (!signedIn) return;
+        final session = sessionGeneration;
         try {
           if (AppConfig.current.dataSource == DataSource.mock) {
             home = HomeContent.fromParts(
@@ -66,7 +67,7 @@ class ContentProvider extends SessionNotifier {
                 doctors: MockData.doctors);
           } else {
             final result = await _service.home();
-            if (!isSessionCurrent(sessionGeneration)) return;
+            if (!isSessionCurrent(session)) return;
             home = HomeContent.fromParts(
                 articles: result.articles,
                 services: result.services,
@@ -76,23 +77,24 @@ class ContentProvider extends SessionNotifier {
           loaded.add('home');
           errors.remove('home');
         } catch (e) {
-          if (!isSessionCurrent(sessionGeneration)) return;
+          if (!isSessionCurrent(session)) return;
           errors['home'] = _message(e, 'Không thể tải nội dung trang chủ.');
         }
       });
 
   Future<void> loadArticles() => _request('articles', () async {
         if (!signedIn) return;
+        final session = sessionGeneration;
         try {
           final result = AppConfig.current.dataSource == DataSource.mock
               ? MockData.articles
               : await _service.articles();
-          if (!isSessionCurrent(sessionGeneration)) return;
+          if (!isSessionCurrent(session)) return;
           articles = List.unmodifiable(result);
           loaded.add('articles');
           errors.remove('articles');
         } catch (e) {
-          if (!isSessionCurrent(sessionGeneration)) return;
+          if (!isSessionCurrent(session)) return;
           articles = const [];
           errors['articles'] = _message(e, 'Không thể tải bài viết.');
         }
@@ -100,11 +102,12 @@ class ContentProvider extends SessionNotifier {
 
   Future<void> loadArticle(String id) => _request('article:$id', () async {
         if (!signedIn) return;
+        final session = sessionGeneration;
         try {
           final result = AppConfig.current.dataSource == DataSource.mock
               ? MockData.articles.where((a) => a.id == id).firstOrNull
               : await _service.article(id);
-          if (!isSessionCurrent(sessionGeneration)) return;
+          if (!isSessionCurrent(session)) return;
           if (result == null || result.id != id) {
             throw const ApiException('Nội dung bài viết không hợp lệ.');
           }
@@ -112,7 +115,7 @@ class ContentProvider extends SessionNotifier {
           loaded.add('article:$id');
           errors.remove('article:$id');
         } catch (e) {
-          if (!isSessionCurrent(sessionGeneration)) return;
+          if (!isSessionCurrent(session)) return;
           articleDetails.remove(id);
           errors['article:$id'] = _message(e, 'Không thể tải bài viết.');
         }
@@ -204,6 +207,8 @@ class ContentProvider extends SessionNotifier {
   }
 
   void _clearPrivateState() {
+    _inFlight.clear();
+    _loading.clear();
     home = null;
     articles = const [];
     articleDetails.clear();
@@ -220,9 +225,11 @@ class ContentProvider extends SessionNotifier {
     notifyListeners();
     late final Future<void> future;
     future = action().whenComplete(() {
-      _inFlight.remove(key);
-      _loading.remove(key);
-      if (!isDisposed) notifyListeners();
+      if (identical(_inFlight[key], future)) {
+        _inFlight.remove(key);
+        _loading.remove(key);
+        if (!isDisposed) notifyListeners();
+      }
     });
     _inFlight[key] = future;
     return future;

@@ -1,5 +1,3 @@
-import 'dart:ui';
-
 import '../providers/content_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -11,6 +9,7 @@ import '../data/providers/patient_data_provider.dart';
 import '../providers/appointments_provider.dart';
 import '../providers/catalog_provider.dart';
 import '../providers/profile_provider.dart';
+import '../providers/user_provider.dart';
 
 import 'patient_navigation.dart';
 import '../screens/home/home_screen.dart';
@@ -28,6 +27,7 @@ class MainShell extends StatefulWidget {
 
 class _MainShellState extends State<MainShell> with WidgetsBindingObserver {
   int _selectedIndex = 0;
+  String? _accountError;
   UserProfile? _appliedProfile;
   List<FamilyMember>? _appliedFamily;
 
@@ -70,14 +70,24 @@ class _MainShellState extends State<MainShell> with WidgetsBindingObserver {
     final profiles = context.read<ProfileProvider>();
     final records = context.read<PatientDataProvider>();
     final appointments = context.read<AppointmentsProvider>();
+    final content = context.read<ContentProvider>();
     final generation = records.sessionGeneration;
     bool current() => mounted && records.isSessionCurrent(generation);
+    setState(() => _accountError = null);
+    final warning = await context.read<UserProvider>().syncProfile();
+    if (!current()) return;
+    if (warning != null) {
+      setState(() => _accountError = warning);
+      return;
+    }
     await profiles.ensureLoaded();
     if (!current() || profiles.profile == null) return;
     if (!profiles.familyLoaded) await profiles.loadFamily();
     if (!current()) return;
     records.syncPatients(profiles.profile!, profiles.family,
         generation: generation);
+    content.loadHome();
+    content.loadUnread();
     await records.loadRecords();
     if (!current()) return;
     await appointments.ensureLoaded();
@@ -150,10 +160,12 @@ class _MainShellState extends State<MainShell> with WidgetsBindingObserver {
       final profiles = context.watch<ProfileProvider>();
       return Scaffold(
           body: Center(
-              child: profiles.profileError == null
+              child: (_accountError ?? profiles.profileError) == null
                   ? const CircularProgressIndicator()
                   : Column(mainAxisSize: MainAxisSize.min, children: [
-                      Text(profiles.profileError!),
+                      Text(_accountError ??
+                          profiles.profileError ??
+                          'Chưa có hồ sơ người khám'),
                       TextButton(
                           onPressed: _loadAccount, child: const Text('Thử lại'))
                     ])));
@@ -176,17 +188,17 @@ class _MainShellState extends State<MainShell> with WidgetsBindingObserver {
           padding: const EdgeInsets.fromLTRB(12, 0, 12, 8),
           child: ClipRRect(
             borderRadius: BorderRadius.circular(26),
-            child: BackdropFilter(
-              filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
+            child: SafeArea(
+              top: false,
               child: Container(
                 decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.78),
-                  border: Border.all(color: Colors.white),
+                  color: AppColors.surface,
+                  border: Border.all(color: AppColors.divider),
                   borderRadius: BorderRadius.circular(26),
                   boxShadow: const [
                     BoxShadow(
-                      color: Color(0x18000675),
-                      blurRadius: 18,
+                      color: Color(0x0C26354A),
+                      blurRadius: 12,
                       offset: Offset(0, 5),
                     ),
                   ],
@@ -195,15 +207,15 @@ class _MainShellState extends State<MainShell> with WidgetsBindingObserver {
                   data: NavigationBarThemeData(
                       labelTextStyle: WidgetStateProperty.resolveWith(
                           (states) => TextStyle(
-                              fontSize: 11,
+                              fontSize: 12,
                               color: states.contains(WidgetState.selected)
-                                  ? AppColors.primary
+                                  ? AppColors.primaryDark
                                   : AppColors.textSecondary,
                               fontWeight: states.contains(WidgetState.selected)
                                   ? FontWeight.w600
                                   : FontWeight.normal))),
                   child: NavigationBar(
-                    height: 64,
+                    height: 72,
                     backgroundColor: Colors.transparent,
                     surfaceTintColor: Colors.transparent,
                     shadowColor: Colors.transparent,
@@ -215,27 +227,31 @@ class _MainShellState extends State<MainShell> with WidgetsBindingObserver {
                         NavigationDestinationLabelBehavior.alwaysShow,
                     destinations: const [
                       NavigationDestination(
-                        icon: Icon(Icons.home_outlined),
+                        icon: Icon(Icons.home_outlined,
+                            color: AppColors.textSecondary),
                         selectedIcon:
-                            Icon(Icons.home_rounded, color: AppColors.primary),
+                            Icon(Icons.home_rounded, color: AppColors.sky),
                         label: 'Trang chủ',
                       ),
                       NavigationDestination(
-                        icon: Icon(Icons.calendar_month_outlined),
+                        icon: Icon(Icons.calendar_month_outlined,
+                            color: AppColors.textSecondary),
                         selectedIcon: Icon(Icons.calendar_month_rounded,
-                            color: AppColors.primary),
+                            color: AppColors.sky),
                         label: 'Đặt lịch',
                       ),
                       NavigationDestination(
-                        icon: Icon(Icons.folder_outlined),
-                        selectedIcon: Icon(Icons.folder_rounded,
-                            color: AppColors.primary),
+                        icon: Icon(Icons.folder_outlined,
+                            color: AppColors.textSecondary),
+                        selectedIcon:
+                            Icon(Icons.folder_rounded, color: AppColors.sky),
                         label: 'Hồ sơ',
                       ),
                       NavigationDestination(
-                        icon: Icon(Icons.person_outline),
-                        selectedIcon: Icon(Icons.person_rounded,
-                            color: AppColors.primary),
+                        icon: Icon(Icons.person_outline,
+                            color: AppColors.textSecondary),
+                        selectedIcon:
+                            Icon(Icons.person_rounded, color: AppColors.sky),
                         label: 'Tôi',
                       ),
                     ],

@@ -18,7 +18,8 @@ class ErrorState extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Center(
-      child: Padding(
+      child: SingleChildScrollView(
+          child: Padding(
         padding: const EdgeInsets.all(24),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -26,7 +27,7 @@ class ErrorState extends StatelessWidget {
             const Icon(
               Icons.error_outline_rounded,
               color: AppColors.error,
-              size: 48,
+              size: 36,
             ),
             const SizedBox(height: 12),
             Text(message, textAlign: TextAlign.center),
@@ -38,7 +39,7 @@ class ErrorState extends StatelessWidget {
             ),
           ],
         ),
-      ),
+      )),
     );
   }
 }

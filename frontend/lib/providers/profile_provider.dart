@@ -1,3 +1,5 @@
+import 'package:flutter/foundation.dart';
+
 import '../core/state/session_notifier.dart';
 
 import '../data/api_client.dart';
@@ -11,8 +13,8 @@ import '../data/services/profile_service.dart';
 
 /// Hồ sơ tài khoản và người thân lấy từ backend.
 ///
-/// Tách riêng khỏi PatientDataProvider: đặt lịch và hồ sơ khám vẫn dùng dữ
-/// liệu mock cho tới khi các module đó nối API.
+/// PatientDataProvider receives a projection of this profile for records.
+/// Booking reads the same authenticated profile directly.
 class ProfileProvider extends SessionNotifier {
   final ProfileService _service;
   final MediaService _media;
@@ -67,6 +69,13 @@ class ProfileProvider extends SessionNotifier {
     notifyListeners();
   }
 
+  String? _accountId;
+
+  void setAccount(String? uid) {
+    clear();
+    _accountId = uid;
+  }
+
   UserProfile? _profile;
   bool _profileLoading = false;
   String? _profileError;
@@ -110,6 +119,15 @@ class ProfileProvider extends SessionNotifier {
     try {
       final result = await _service.getMe();
       if (!current()) return;
+      if (_accountId != null && result.id != _accountId) {
+        throw const ApiException('Hồ sơ không thuộc tài khoản hiện tại.',
+            kind: ApiErrorKind.forbidden);
+      }
+      assert(() {
+        debugPrint('[profile] authenticatedUid=$_accountId '
+            'GET /api/users/me profileId=${result.id}');
+        return true;
+      }());
       _profile = result;
     } catch (e) {
       if (!current()) return;
@@ -182,7 +200,9 @@ class ProfileProvider extends SessionNotifier {
     } catch (e) {
       if (!isSessionCurrent(session)) return 'Phiên đăng nhập đã thay đổi.';
       _profile = (_profile ?? current).withNotifications(!enabled);
-      return e is ApiException ? e.message : 'Không lưu được cài đặt thông báo.';
+      return e is ApiException
+          ? e.message
+          : 'Không lưu được cài đặt thông báo.';
     } finally {
       if (isSessionCurrent(session)) {
         _savingNotifications = false;
@@ -211,7 +231,8 @@ class ProfileProvider extends SessionNotifier {
   }
 
   /// Thay ảnh đại diện người thân; [image] null là gỡ ảnh. Trả lỗi hoặc null.
-  Future<String?> changeFamilyAvatar(String memberId, PickedImage? image) async {
+  Future<String?> changeFamilyAvatar(
+      String memberId, PickedImage? image) async {
     if (isDisposed) return 'Phiên đăng nhập đã kết thúc.';
     final session = sessionGeneration;
     try {

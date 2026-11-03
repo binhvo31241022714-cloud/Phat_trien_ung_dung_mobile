@@ -9,6 +9,7 @@ class NetworkImageOrIcon extends StatelessWidget {
     this.color,
     this.width,
     this.height,
+    this.alignment = Alignment.center,
     super.key,
   });
 
@@ -18,6 +19,7 @@ class NetworkImageOrIcon extends StatelessWidget {
   final Color? color;
   final double? width;
   final double? height;
+  final AlignmentGeometry alignment;
 
   @override
   Widget build(BuildContext context) {
@@ -28,6 +30,7 @@ class NetworkImageOrIcon extends StatelessWidget {
       width: width,
       height: height,
       fit: BoxFit.cover,
+      alignment: alignment,
       errorBuilder: (_, __, ___) => fallback,
     );
   }

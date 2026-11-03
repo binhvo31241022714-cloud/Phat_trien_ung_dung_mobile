@@ -1,3 +1,4 @@
+import '../../core/widgets/page_background.dart';
 import 'package:flutter/material.dart';
 
 /// Push onto the current tab's navigator, retaining MainShell's bottom bar.
@@ -14,26 +15,7 @@ class CatalogPage extends StatelessWidget {
   final String title;
   final Widget body;
   @override
-  Widget build(BuildContext context) => Theme(
-      data: Theme.of(context).copyWith(
-        textTheme: Theme.of(context)
-            .textTheme
-            .apply(bodyColor: Colors.black, displayColor: Colors.black),
-        cardTheme: CardThemeData(
-            color: const Color(0xFFF7F7F7),
-            elevation: 0,
-            margin: EdgeInsets.zero,
-            shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16),
-                side: const BorderSide(color: Color(0xFFD8D8D8)))),
-      ),
-      child: Scaffold(
-          backgroundColor: const Color(0xFFF1F5FB),
-          appBar: AppBar(
-              title: Text(title),
-              centerTitle: false,
-              toolbarHeight: 48,
-              backgroundColor: const Color(0xFFF1F5FB),
-              surfaceTintColor: Colors.transparent),
-          body: body));
+  Widget build(BuildContext context) => Scaffold(
+      appBar: AppBar(title: Text(title)),
+      body: PageBackground(child: SafeArea(top: false, child: body)));
 }

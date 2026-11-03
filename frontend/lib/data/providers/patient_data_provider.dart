@@ -1,4 +1,5 @@
 import '../../core/state/session_notifier.dart';
+import 'package:flutter/foundation.dart';
 import 'dart:async';
 import 'dart:collection';
 
@@ -333,6 +334,11 @@ class PatientDataProvider extends SessionNotifier {
 
     if (isDisposed || recordsPatients.isEmpty) return;
     final id = patientId ?? _selectedPatientId;
+    assert(() {
+      debugPrint('[records] selectedPatientId=$_selectedPatientId '
+          'requestPatientId=$id endpoint=/api/patients/$id/*');
+      return true;
+    }());
     if (!recordsPatients.any((patient) => patient.id == id) &&
         patientId != null) {
       return;

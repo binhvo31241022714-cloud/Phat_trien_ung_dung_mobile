@@ -1,3 +1,4 @@
+import '../../core/theme/app_tokens.dart';
 import 'package:flutter/material.dart';
 
 import '../../core/constants/app_colors.dart';
@@ -29,10 +30,10 @@ class ArticleCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           ClipRRect(
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
-            child: SizedBox(
-              height: 144,
-              width: double.infinity,
+            borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(AppTokens.cardRadius)),
+            child: AspectRatio(
+              aspectRatio: 16 / 9,
               child: article.imageUrl != null
                   ? Image.network(article.imageUrl!,
                       fit: BoxFit.cover,
@@ -76,14 +77,17 @@ class ArticleCard extends StatelessWidget {
                 const SizedBox(height: 10),
                 Text(
                   article.title,
-                  style: Theme.of(context).textTheme.titleMedium,
+                  style: Theme.of(context).textTheme.titleLarge,
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                 ),
                 const SizedBox(height: 6),
                 Text(
                   article.summary,
-                  style: Theme.of(context).textTheme.bodySmall,
+                  style: Theme.of(context)
+                      .textTheme
+                      .bodyMedium
+                      ?.copyWith(color: AppColors.textSecondary, height: 1.5),
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                 ),

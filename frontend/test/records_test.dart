@@ -167,7 +167,14 @@ void main() {
               .data,
           '0');
       await open(tester, 'Lịch hẹn');
-      expect(find.text('Lịch hẹn của ${d.patients.last.fullName}'),
+      expect(
+          tester
+              .widget<Text>(find.byKey(const ValueKey('records-patient-name')))
+              .data,
+          d.patients.last.fullName);
+      expect(
+          find.descendant(
+              of: find.byType(AppBar), matching: find.text('Lịch hẹn')),
           findsOneWidget);
       expect(find.text(serviceNames(d, d.appointments.first.serviceIds)),
           findsNothing);

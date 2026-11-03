@@ -1,3 +1,5 @@
+import '../../core/theme/app_tokens.dart';
+import '../../core/widgets/empty_view.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../core/config/app_config.dart';
@@ -49,15 +51,20 @@ class _ArticleListScreenState extends State<ArticleListScreen> {
       }
     }
     final articles = isApi ? content!.articles : data!.articles;
-    if (articles.isEmpty) return const Center(child: Text('Chưa có bài viết.'));
+    if (articles.isEmpty) {
+      return const EmptyState(
+          title: 'Chưa có bài viết.',
+          message: 'Các bài viết nha khoa sẽ xuất hiện tại đây.',
+          icon: Icons.menu_book_outlined);
+    }
     if (isApi && catalog!.favoritesError != null) {
       return ErrorState(
           message: catalog.favoritesError!, onRetry: catalog.loadFavorites);
     }
     return ListView.separated(
-        padding: const EdgeInsets.all(16),
+        padding: AppTokens.scrollInsets,
         itemCount: articles.length,
-        separatorBuilder: (_, __) => const SizedBox(height: 12),
+        separatorBuilder: (_, __) => const SizedBox(height: AppTokens.cardGap),
         itemBuilder: (context, index) {
           final a = articles[index];
           return ArticleCard(

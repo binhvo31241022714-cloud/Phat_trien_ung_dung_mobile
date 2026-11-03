@@ -1,3 +1,4 @@
+import '../../core/constants/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../data/providers/patient_data_provider.dart';
@@ -44,7 +45,7 @@ class _MockTreatmentPhotos extends StatelessWidget {
           ),
           if (plan.beforeImage == null && plan.afterImage == null)
             const Text('Ảnh minh họa chưa được tải lên.',
-                style: TextStyle(color: Color(0xFF666666))),
+                style: TextStyle(color: AppColors.textSecondary)),
         ],
       );
 }
@@ -284,7 +285,7 @@ class _ApiTreatmentPhotosState extends State<_ApiTreatmentPhotos> {
           const Padding(
             padding: EdgeInsets.only(bottom: 16),
             child: Text('Chưa có ảnh.',
-                style: TextStyle(color: Color(0xFF666666))),
+                style: TextStyle(color: AppColors.textSecondary)),
           )
         else
           Padding(
@@ -350,7 +351,7 @@ class _ApiTreatmentPhotosState extends State<_ApiTreatmentPhotos> {
               _section('Ảnh khác', byPhase[_Phase.other]!),
           ],
           Text('${_photos.length}/$_maxPhotos ảnh',
-              style: const TextStyle(color: Color(0xFF666666))),
+              style: const TextStyle(color: AppColors.textSecondary)),
           const SizedBox(height: 8),
           SizedBox(
             width: double.infinity,
@@ -387,7 +388,7 @@ class _PhotoImage extends StatelessWidget {
   final BoxFit fit;
 
   static const _placeholder = ColoredBox(
-      color: Color(0xFFDFE8F6),
+      color: AppColors.accent,
       child: Center(
           child: Icon(Icons.image_outlined, color: recordsBlue, size: 28)));
 
@@ -488,7 +489,7 @@ class _Photo extends StatelessWidget {
   final String label;
   final String? path;
   Widget placeholder() => const ColoredBox(
-      color: Color(0xFFDFE8F6),
+      color: AppColors.accent,
       child: Center(
           child: Icon(Icons.image_outlined, color: recordsBlue, size: 28)));
   @override

@@ -7,39 +7,46 @@ class AppTextStyles {
 
   static const headline = TextStyle(
     color: AppColors.textPrimary,
-    fontSize: 20,
+    fontSize: 22,
     fontWeight: FontWeight.w700,
     height: 1.25,
   );
 
+  static const pageTitle = TextStyle(
+    color: AppColors.textPrimary,
+    fontSize: 22,
+    fontWeight: FontWeight.w600,
+    height: 1.2,
+  );
+
   static const title = TextStyle(
     color: AppColors.textPrimary,
-    fontSize: 17,
+    fontSize: 18,
     fontWeight: FontWeight.w600,
     height: 1.3,
   );
 
   static const subtitle = TextStyle(
     color: AppColors.textPrimary,
-    fontSize: 14,
+    fontSize: 16,
     fontWeight: FontWeight.w600,
     height: 1.35,
   );
 
   static const body = TextStyle(
     color: AppColors.textPrimary,
-    fontSize: 12.5,
+    fontSize: 14,
     height: 1.4,
   );
 
   static const caption = TextStyle(
     color: AppColors.textSecondary,
-    fontSize: 10.5,
+    fontSize: 12,
     height: 1.4,
   );
 
   static const button = TextStyle(
-    fontSize: 12,
+    fontSize: 14,
     fontWeight: FontWeight.w600,
   );
 }

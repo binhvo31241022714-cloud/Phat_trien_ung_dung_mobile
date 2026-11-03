@@ -1,3 +1,4 @@
+import '../../core/constants/app_colors.dart';
 import 'record_catalog_names.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -15,8 +16,7 @@ class PrescriptionScreen extends StatelessWidget {
       return RecordsPage(title: 'Đơn thuốc', children: [
         if (names.status != null) names.status!,
         RecordCard(children: [
-          RecordLine(
-              'Ngày kê đơn', recordDate(prescription.issuedAt)),
+          RecordLine('Ngày kê đơn', recordDate(prescription.issuedAt)),
           RecordLine('Bác sĩ kê đơn', names.prescriptionDoctor(prescription)),
           if (prescription.items.isEmpty)
             const RecordEmpty('Không có thuốc được ghi nhận trong đơn này.'),
@@ -31,7 +31,7 @@ class PrescriptionScreen extends StatelessWidget {
           RecordSection('Ghi chú', prescription.instructions),
           if (data.recordsAreDemoAndReadOnly)
             const Text('Đơn thuốc minh họa · Chỉ đọc',
-                style: TextStyle(color: Color(0xFF666666))),
+                style: TextStyle(color: AppColors.textSecondary)),
         ])
       ]);
     });

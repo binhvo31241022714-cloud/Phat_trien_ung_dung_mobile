@@ -1,3 +1,4 @@
+import '../../core/theme/app_tokens.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../core/config/app_config.dart';
@@ -34,8 +35,10 @@ class RecordsPage extends StatelessWidget {
       required this.children,
       this.useRecordsState = true,
       this.onRefresh,
+      this.patientId,
       super.key});
   final String title;
+  final String? patientId;
   final bool useRecordsState;
   final List<Widget> children;
 
@@ -49,6 +52,9 @@ class RecordsPage extends StatelessWidget {
         (useRecordsState && AppConfig.current.dataSource == DataSource.api
             ? () => data.loadRecords()
             : null);
+    final listPadding = patientId == null
+        ? AppTokens.scrollInsets
+        : AppTokens.scrollInsets.copyWith(top: 0);
     final content = useRecordsState && data.recordsLoading
         ? const Center(child: CircularProgressIndicator())
         : useRecordsState && data.recordsError != null
@@ -69,30 +75,53 @@ class RecordsPage extends StatelessWidget {
                 ),
               )
             : refresh == null
-                ? ListView(
-                    padding: const EdgeInsets.fromLTRB(16, 80, 16, 96),
-                    children: children)
+                ? ListView(padding: listPadding, children: children)
                 : RefreshIndicator(
                     onRefresh: refresh,
                     child: ListView(
                         physics: const AlwaysScrollableScrollPhysics(),
-                        padding: const EdgeInsets.fromLTRB(16, 80, 16, 96),
+                        padding: listPadding,
                         children: children));
     return Scaffold(
-      extendBodyBehindAppBar: true,
-      appBar: AppBar(
-          title: Text(title),
-          centerTitle: false,
-          toolbarHeight: 48,
-          backgroundColor: Colors.transparent,
-          surfaceTintColor: Colors.transparent,
-          titleTextStyle: const TextStyle(
-              fontSize: 17,
-              color: AppColors.primaryDark,
-              fontWeight: FontWeight.w700)),
+      appBar: AppBar(title: Text(title)),
       body: DecoratedBox(
         decoration: const BoxDecoration(gradient: AppColors.pageGradient),
-        child: content,
+        child: SafeArea(
+            top: false,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                if (patientId != null) RecordPatientName(patientId: patientId!),
+                Expanded(child: content),
+              ],
+            )),
+      ),
+    );
+  }
+}
+
+/// Uses the route's patient ID, including relatives and archived history profiles.
+/// Never substitutes the signed-in account when that patient is unavailable.
+class RecordPatientName extends StatelessWidget {
+  const RecordPatientName({required this.patientId, super.key});
+  final String patientId;
+
+  @override
+  Widget build(BuildContext context) {
+    final data = context.watch<PatientDataProvider>();
+    final patient =
+        data.recordsPatients.where((p) => p.id == patientId).firstOrNull;
+    final name = patient?.fullName.trim() ?? '';
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
+      child: Text(
+        name.isNotEmpty
+            ? name
+            : data.recordsLoading
+                ? 'Đang tải…'
+                : 'Chưa có tên người khám',
+        key: const ValueKey('records-patient-name'),
+        style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
       ),
     );
   }
@@ -106,7 +135,7 @@ class RecordCard extends StatelessWidget {
   Widget build(BuildContext context) => Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: Card(
-        elevation: 3,
+        elevation: 0,
         shadowColor: const Color(0x26000675),
         child: InkWell(
             onTap: onTap,
@@ -126,7 +155,7 @@ class RecordHeading extends StatelessWidget {
   Widget build(BuildContext context) => Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: Text(text,
-          style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w600)));
+          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600)));
 }
 
 class RecordLine extends StatelessWidget {

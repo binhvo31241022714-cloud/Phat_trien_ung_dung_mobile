@@ -1,3 +1,4 @@
+import 'package:frontend/core/widgets/app_card.dart';
 import 'package:frontend/core/config/app_config.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -44,7 +45,7 @@ void main() {
         profile: backend.provider());
     await openMe(tester, 'Quản lý người thân');
     final card = find
-        .ancestor(of: find.text('Bé Na'), matching: find.byType(Card))
+        .ancestor(of: find.text('Bé Na'), matching: find.byType(AppCard))
         .first;
     await tester.tap(find.descendant(of: card, matching: find.text('Sửa')));
     await tester.pumpAndSettle();

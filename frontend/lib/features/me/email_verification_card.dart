@@ -1,3 +1,4 @@
+import '../../core/constants/app_colors.dart';
 import 'dart:async';
 
 import 'package:flutter/material.dart';
@@ -75,7 +76,7 @@ class _EmailVerificationCardState extends State<EmailVerificationCard> {
       const SizedBox(height: 6),
       Text(
           'Chúng tôi đã gửi thư xác minh tới ${users.account.email}. Hãy mở thư và bấm vào liên kết (kiểm tra cả hộp thư Spam).',
-          style: const TextStyle(color: Color(0xFF666666))),
+          style: const TextStyle(color: AppColors.textSecondary)),
       const SizedBox(height: 8),
       Wrap(spacing: 8, runSpacing: 4, children: [
         OutlinedButton(

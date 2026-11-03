@@ -1,3 +1,5 @@
+import 'notification_widgets.dart';
+import '../../core/constants/app_colors.dart';
 import 'dart:async';
 import '../../core/network/api_client.dart';
 import 'package:flutter/material.dart';
@@ -193,17 +195,22 @@ class _ApiNotificationsViewState extends State<ApiNotificationsView> {
               }.entries)
                 Padding(
                     padding: const EdgeInsets.only(right: 8, bottom: 12),
-                    child: ChoiceChip(
-                        label: Text(entry.value),
+                    child: NotificationFilterChip(
+                        label: entry.value,
                         selected: filter == entry.key,
                         onSelected: (_) => setState(() => filter = entry.key))),
             ])),
+        const Padding(
+            padding: EdgeInsets.only(bottom: 12),
+            child: Text('Mục Lịch hẹn bao gồm cả tái khám và kết quả khám.',
+                style:
+                    TextStyle(fontSize: 12, color: AppColors.textSecondary))),
         if (remindersOff)
           const Padding(
               padding: EdgeInsets.only(bottom: 12),
               child: Text(
                   'Bạn đã tắt "Nhận thông báo" trong Cài đặt: sẽ không có nhắc lịch hẹn và nhắc tái khám. Thông báo đặt lịch, xác nhận, hủy và kết quả khám vẫn được gửi.',
-                  style: TextStyle(color: Color(0xFF666666)))),
+                  style: TextStyle(color: AppColors.textSecondary))),
         Align(
             alignment: Alignment.centerRight,
             child: TextButton(
@@ -233,13 +240,15 @@ class _ApiNotificationsViewState extends State<ApiNotificationsView> {
                   Center(child: Text('Chưa có thông báo trong danh mục này.')))
         else
           for (final n in items)
-            MeCard(
+            NotificationCard(
+                isRead: n.isRead,
+                key: ValueKey('notification-${n.id}'),
                 onTap: content.loading('read') ? null : () => _open(n),
                 child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Row(children: [
-                        Icon(_icon(n.type), color: meBlue, size: 20),
+                        Icon(_icon(n.type), color: AppColors.info, size: 20),
                         const SizedBox(width: 8),
                         Expanded(
                             child: Text(
@@ -247,18 +256,22 @@ class _ApiNotificationsViewState extends State<ApiNotificationsView> {
                                 style: const TextStyle(
                                     fontWeight: FontWeight.w600))),
                         if (!n.isRead)
-                          const Icon(Icons.circle, size: 8, color: meBlue)
+                          const Icon(Icons.circle,
+                              size: 8, color: AppColors.info)
                       ]),
                       const SizedBox(height: 10),
-                      Text(n.body.trim().isEmpty
-                          ? 'Chưa có nội dung thông báo.'
-                          : n.body),
+                      Text(
+                          n.body.trim().isEmpty
+                              ? 'Chưa có nội dung thông báo.'
+                              : n.body,
+                          style: const TextStyle(
+                              color: AppColors.textSecondary, height: 1.5)),
                       if (n.createdAt != null)
                         Text(
                             '${formatVietnameseDate(n.createdAt!)} ${formatVietnameseTime(n.createdAt!)}',
-                            style: const TextStyle(fontSize: 11)),
+                            style: const TextStyle(fontSize: 12)),
                       Text(n.isRead ? 'Đã đọc' : 'Chưa đọc',
-                          style: const TextStyle(fontSize: 11)),
+                          style: const TextStyle(fontSize: 12)),
                     ])),
       ],
     ]);

@@ -28,7 +28,8 @@ Future<PhotoChoice?> choosePhoto(BuildContext context,
     context: context,
     showDragHandle: true,
     builder: (sheetContext) => SafeArea(
-      child: Column(mainAxisSize: MainAxisSize.min, children: [
+      child: SingleChildScrollView(
+          child: Column(mainAxisSize: MainAxisSize.min, children: [
         Padding(
           padding: const EdgeInsets.only(bottom: 8),
           child: Text(title,
@@ -59,7 +60,7 @@ Future<PhotoChoice?> choosePhoto(BuildContext context,
             title: const Text('Gỡ ảnh', style: TextStyle(color: Colors.red)),
             onTap: () => Navigator.pop(sheetContext, _Action.remove),
           ),
-      ]),
+      ])),
     ),
   );
   switch (action) {

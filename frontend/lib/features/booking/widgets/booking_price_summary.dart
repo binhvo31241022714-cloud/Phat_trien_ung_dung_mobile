@@ -27,7 +27,7 @@ class BookingPriceSummary extends StatelessWidget {
                 child: const Text('Thử lại báo giá')),
           ],
           Text('${controller.serviceIds.length} dịch vụ đã chọn',
-              style: const TextStyle(color: Color(0xFF666666))),
+              style: const TextStyle(color: AppColors.textSecondary)),
           Wrap(
               alignment: WrapAlignment.spaceBetween,
               crossAxisAlignment: WrapCrossAlignment.center,
@@ -64,7 +64,7 @@ class BookingPriceSummary extends StatelessWidget {
                                   : null,
                           style: FilledButton.styleFrom(
                               backgroundColor: AppColors.primary,
-                              minimumSize: const Size(0, 36),
+                              minimumSize: const Size(0, 48),
                               padding:
                                   const EdgeInsets.symmetric(horizontal: 14)),
                           child: controller.submitting
