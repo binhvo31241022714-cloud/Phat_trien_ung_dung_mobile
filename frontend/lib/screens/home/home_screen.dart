@@ -7,7 +7,6 @@ import 'package:provider/provider.dart';
 
 import '../../app/patient_navigation.dart';
 import '../../features/shared/catalog_navigation.dart';
-import '../../features/shared/person_avatar.dart';
 import '../../features/services/service_list_screen.dart';
 import '../../features/services/service_detail_screen.dart';
 import '../../features/doctors/doctor_list_screen.dart';
@@ -52,13 +51,14 @@ class _HomeScreenState extends State<HomeScreen> {
 
 class _HomeOverview extends StatelessWidget {
   const _HomeOverview();
+
   @override
   Widget build(BuildContext context) {
     final data = context.watch<PatientDataProvider>();
     // Tên lấy từ /api/users/me; chưa tải được thì hiện email đăng nhập.
-    final profile = context.watch<ProfileProvider>();
-    final displayName =
-        profile.displayName(context.watch<UserProvider>().account.email);
+    final displayName = context
+        .watch<ProfileProvider>()
+        .displayName(context.watch<UserProvider>().account.email);
     final content = AppConfig.current.dataSource == DataSource.api
         ? context.watch<ContentProvider>()
         : null;
@@ -92,197 +92,207 @@ class _HomeOverview extends StatelessWidget {
         content == null ? data.doctors : (content.home?.doctors ?? []);
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF1F5FB),
-      body: SafeArea(
-        child: Center(
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 430),
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      const Expanded(
-                        child: Text(
-                          'Trang chủ',
-                          style: TextStyle(
-                            fontSize: 30,
-                            fontWeight: FontWeight.w700,
-                            color: AppColors.textPrimary,
+      body: DecoratedBox(
+        decoration: const BoxDecoration(gradient: AppColors.pageGradient),
+        child: SafeArea(
+          child: Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 430),
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    SizedBox(
+                      height: 42,
+                      child: Row(
+                        children: [
+                          const Text(
+                            'YourSmile',
+                            style: TextStyle(
+                              fontSize: 19,
+                              fontWeight: FontWeight.w800,
+                              letterSpacing: -0.3,
+                              color: AppColors.primaryDark,
+                            ),
+                          ),
+                          const Spacer(),
+                          Container(
+                            width: 42,
+                            height: 42,
+                            decoration: BoxDecoration(
+                              color: Colors.white.withValues(alpha: 0.78),
+                              border: Border.all(
+                                  color: Colors.white.withValues(alpha: 0.9)),
+                              borderRadius: BorderRadius.circular(20),
+                              boxShadow: const [
+                                BoxShadow(
+                                  color: Color(0x14000675),
+                                  blurRadius: 10,
+                                  offset: Offset(0, 4),
+                                ),
+                              ],
+                            ),
+                            child: IconButton(
+                              tooltip: 'Thông báo',
+                              splashRadius: 18,
+                              onPressed: () {
+                                data.requestNotifications();
+                                PatientNavigation.selectTab(context, 3);
+                              },
+                              icon: Badge(
+                                  isLabelVisible:
+                                      (content?.unreadCount ?? 0) > 0,
+                                  label: Text('${content?.unreadCount ?? 0}'),
+                                  child: const Icon(
+                                      Icons.notifications_none_rounded,
+                                      color: AppColors.textPrimary)),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 14),
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text(
+                                'Xin chào,',
+                                style: TextStyle(
+                                  fontSize: 10,
+                                  color: AppColors.textSecondary,
+                                ),
+                              ),
+                              Text(
+                                displayName,
+                                style: const TextStyle(
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.w700,
+                                  color: AppColors.textPrimary,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ],
                           ),
                         ),
-                      ),
-                      Container(
-                        width: 42,
-                        height: 42,
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          border: Border.all(color: const Color(0xFFE5EBF3)),
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        child: IconButton(
-                          tooltip: 'Thông báo',
-                          splashRadius: 18,
-                          onPressed: () {
-                            data.requestNotifications();
-                            PatientNavigation.selectTab(context, 3);
-                          },
-                          icon: Badge(
-                              isLabelVisible: (content?.unreadCount ?? 0) > 0,
-                              label: Text('${content?.unreadCount ?? 0}'),
-                              child: const Icon(
-                                  Icons.notifications_none_rounded,
-                                  color: AppColors.textPrimary)),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 18),
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      PersonAvatar(
-                        key: const ValueKey('home-avatar'),
-                        mediaId: profile.profile?.avatarMediaId,
-                        radius: 28,
-                        icon: Icons.person_rounded,
-                        iconColor: AppColors.primary,
-                        background: const Color(0xFFDAEBFF),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Text(
-                              'Xin chào,',
-                              style: TextStyle(
-                                fontSize: 14,
-                                color: AppColors.textSecondary,
-                              ),
-                            ),
-                            Text(
-                              displayName,
-                              style: const TextStyle(
-                                fontSize: 22,
-                                fontWeight: FontWeight.w700,
-                                color: AppColors.textPrimary,
-                              ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 24),
-                  if (content?.errors['unread'] != null)
-                    Row(children: [
-                      const Expanded(
-                          child: Text('Chưa tải được số thông báo chưa đọc.')),
-                      TextButton(
-                          onPressed: content!.loadUnread,
-                          child: const Text('Thử lại'))
-                    ]),
-                  _contentState(content) ??
-                      _buildAppointmentCard(context, upcomingAppointments),
-                  const SizedBox(height: 24),
-                  _buildSectionHeader(
-                    icon: Icons.stars_rounded,
-                    title: 'Dịch vụ nổi bật',
-                    actionText: 'Xem tất cả',
-                    onAction: () => CatalogNavigation.open(
-                        context, 'Dịch vụ nha khoa', const ServiceListScreen()),
-                  ),
-                  const SizedBox(height: 12),
-                  _contentState(content) ??
-                      (featuredServices.isEmpty
-                          ? const Center(
-                              child: Text('Chưa có dịch vụ nổi bật.'))
-                          : HorizontalCardCarousel(
-                              key: const ValueKey(
-                                  'home-featuredServices-carousel'),
-                              label: 'Dịch vụ nha khoa',
-                              navigationCenterY: 43,
-                              itemWidth: 176,
-                              itemHeight: 182 + 140 * extraScale,
-                              itemCount: featuredServices.length,
-                              itemBuilder: (context, index) {
-                                final service = featuredServices[index];
-                                return _ServiceTile(
-                                  service: service,
-                                  onTap: () => CatalogNavigation.open(
-                                      context,
-                                      'Chi tiết dịch vụ',
-                                      ServiceDetailScreen(service: service)),
-                                );
-                              },
-                            )),
-                  const SizedBox(height: 24),
-                  _buildSectionHeader(
-                    icon: Icons.groups_rounded,
-                    title: 'Đội ngũ bác sĩ',
-                    actionText: 'Xem tất cả',
-                    onAction: () => CatalogNavigation.open(
-                        context, 'Đội ngũ bác sĩ', const DoctorListScreen()),
-                  ),
-                  const SizedBox(height: 12),
-                  _contentState(content) ??
-                      (doctors.isEmpty
-                          ? const Center(
-                              child: Text('Chưa có thông tin bác sĩ.'))
-                          : HorizontalCardCarousel(
-                              key: const ValueKey('home-doctors-carousel'),
-                              label: 'Bác sĩ',
-                              navigationCenterY: 42,
-                              itemWidth: 120,
-                              itemHeight: 156 + 90 * extraScale,
-                              itemCount: doctors.length,
-                              itemBuilder: (context, index) {
-                                final doctor = doctors[index];
-                                return _DoctorTile(
-                                  doctor: doctor,
-                                  onTap: () => CatalogNavigation.open(
-                                      context,
-                                      'Chi tiết bác sĩ',
-                                      DoctorDetailScreen(doctor: doctor)),
-                                );
-                              },
-                            )),
-                  const SizedBox(height: 24),
-                  _buildSectionHeader(
-                    icon: Icons.menu_book_rounded,
-                    title: 'Kiến thức nha khoa',
-                    actionText: 'Xem tất cả',
-                    onAction: () => CatalogNavigation.open(context,
-                        'Kiến thức nha khoa', const ArticleListScreen()),
-                  ),
-                  const SizedBox(height: 12),
-                  _contentState(content) ??
-                      (articles.isEmpty
-                          ? const Center(child: Text('Chưa có bài viết.'))
-                          : HorizontalCardCarousel(
-                              key: const ValueKey('home-articles-carousel'),
-                              label: 'Kiến thức nha khoa',
-                              navigationCenterY: 58,
-                              itemWidth: 180,
-                              itemHeight: 206 + 160 * extraScale,
-                              itemCount: articles.length,
-                              itemBuilder: (context, index) {
-                                final article = articles[index];
-                                return _ArticleTile(
-                                  article: article,
-                                  onTap: () => CatalogNavigation.open(
-                                      context,
-                                      'Chi tiết bài viết',
-                                      ArticleDetailScreen(article: article)),
-                                );
-                              },
-                            )),
-                ],
+                      ],
+                    ),
+                    const SizedBox(height: 14),
+                    if (content?.errors['unread'] != null)
+                      Row(children: [
+                        const Expanded(
+                            child:
+                                Text('Chưa tải được số thông báo chưa đọc.')),
+                        TextButton(
+                            onPressed: content!.loadUnread,
+                            child: const Text('Thử lại'))
+                      ]),
+                    _contentState(content) ??
+                        _buildAppointmentCard(context, upcomingAppointments),
+                    const SizedBox(height: 24),
+                    _buildSectionHeader(
+                      icon: Icons.folder_rounded,
+                      title: 'Dịch vụ nổi bật',
+                      color: const Color(0xFFD8CCFF),
+                      actionText: 'Xem tất cả',
+                      onAction: () => CatalogNavigation.open(context,
+                          'Dịch vụ nha khoa', const ServiceListScreen()),
+                    ),
+                    const SizedBox(height: 12),
+                    _contentState(content) ??
+                        (featuredServices.isEmpty
+                            ? const Center(
+                                child: Text('Chưa có dịch vụ nổi bật.'))
+                            : HorizontalCardCarousel(
+                                key: const ValueKey(
+                                    'home-featuredServices-carousel'),
+                                label: 'Dịch vụ nha khoa',
+                                navigationCenterY: 37,
+                                itemWidth: 176,
+                                itemHeight: 148 + 140 * extraScale,
+                                itemCount: featuredServices.length,
+                                showNavigation: true,
+                                itemBuilder: (context, index) {
+                                  final service = featuredServices[index];
+                                  return _ServiceTile(
+                                    service: service,
+                                    onTap: () => CatalogNavigation.open(
+                                        context,
+                                        'Chi tiết dịch vụ',
+                                        ServiceDetailScreen(service: service)),
+                                  );
+                                },
+                              )),
+                    const SizedBox(height: 24),
+                    _buildSectionHeader(
+                      icon: Icons.folder_rounded,
+                      title: 'Đội ngũ bác sĩ',
+                      color: const Color(0xFFD8CCFF),
+                      actionText: 'Xem tất cả',
+                      onAction: () => CatalogNavigation.open(
+                          context, 'Đội ngũ bác sĩ', const DoctorListScreen()),
+                    ),
+                    const SizedBox(height: 12),
+                    _contentState(content) ??
+                        (doctors.isEmpty
+                            ? const Center(
+                                child: Text('Chưa có thông tin bác sĩ.'))
+                            : HorizontalCardCarousel(
+                                key: const ValueKey('home-doctors-carousel'),
+                                label: 'Bác sĩ',
+                                navigationCenterY: 37,
+                                itemWidth: 120,
+                                itemHeight: 118 + 90 * extraScale,
+                                itemCount: doctors.length,
+                                itemBuilder: (context, index) {
+                                  final doctor = doctors[index];
+                                  return _DoctorTile(
+                                    doctor: doctor,
+                                    onTap: () => CatalogNavigation.open(
+                                        context,
+                                        'Chi tiết bác sĩ',
+                                        DoctorDetailScreen(doctor: doctor)),
+                                  );
+                                },
+                              )),
+                    const SizedBox(height: 24),
+                    _buildSectionHeader(
+                      icon: Icons.folder_rounded,
+                      title: 'Kiến thức nha khoa',
+                      color: const Color(0xFFD8CCFF),
+                      actionText: 'Xem tất cả',
+                      onAction: () => CatalogNavigation.open(context,
+                          'Kiến thức nha khoa', const ArticleListScreen()),
+                    ),
+                    const SizedBox(height: 12),
+                    _contentState(content) ??
+                        (articles.isEmpty
+                            ? const Center(child: Text('Chưa có bài viết.'))
+                            : HorizontalCardCarousel(
+                                key: const ValueKey('home-articles-carousel'),
+                                label: 'Kiến thức nha khoa',
+                                navigationCenterY: 46,
+                                itemWidth: 180,
+                                itemHeight: 170 + 160 * extraScale,
+                                itemCount: articles.length,
+                                itemBuilder: (context, index) {
+                                  final article = articles[index];
+                                  return _ArticleTile(
+                                    article: article,
+                                    onTap: () => CatalogNavigation.open(
+                                        context,
+                                        'Chi tiết bài viết',
+                                        ArticleDetailScreen(article: article)),
+                                  );
+                                },
+                              )),
+                  ],
+                ),
               ),
             ),
           ),
@@ -315,51 +325,60 @@ class _HomeOverview extends StatelessWidget {
     required IconData icon,
     required String title,
     required String actionText,
+    required Color color,
     required VoidCallback onAction,
   }) {
-    return Row(
-      children: [
-        Icon(icon, size: 18, color: AppColors.primary),
-        const SizedBox(width: 8),
-        Expanded(
-          child: Text(
-            title,
-            style: const TextStyle(
-              fontSize: 17,
-              fontWeight: FontWeight.w700,
-              color: AppColors.textPrimary,
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.75),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.white),
+      ),
+      child: Row(
+        children: [
+          Icon(icon, size: 16, color: AppColors.primary),
+          const SizedBox(width: 6),
+          Expanded(
+            child: Text(
+              title,
+              style: const TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w700,
+                color: AppColors.textPrimary,
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
             ),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
           ),
-        ),
-        InkWell(
-          borderRadius: BorderRadius.circular(12),
-          onTap: onAction,
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  actionText,
-                  style: const TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
+          InkWell(
+            borderRadius: BorderRadius.circular(12),
+            onTap: onAction,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    actionText,
+                    style: const TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.primary,
+                    ),
+                  ),
+                  const SizedBox(width: 2),
+                  const Icon(
+                    Icons.arrow_forward_ios_rounded,
+                    size: 14,
                     color: AppColors.primary,
                   ),
-                ),
-                const SizedBox(width: 2),
-                const Icon(
-                  Icons.arrow_forward_ios_rounded,
-                  size: 14,
-                  color: AppColors.primary,
-                ),
-              ],
+                ],
+              ),
             ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 
@@ -373,8 +392,19 @@ class _HomeOverview extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: const Color(0xFFEAF1F8),
+        gradient: const LinearGradient(
+          colors: [AppColors.primaryDark, AppColors.primary],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
         borderRadius: BorderRadius.circular(18),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x26000675),
+            blurRadius: 16,
+            offset: Offset(0, 8),
+          ),
+        ],
       ),
       child: nextAppointment == null
           ? Column(
@@ -387,11 +417,11 @@ class _HomeOverview extends StatelessWidget {
                     SizedBox(width: 10),
                     Expanded(
                         child: Text(
-                      'Lịch hẹn sắp tới',
+                      'Lịch hẹn',
                       style: TextStyle(
-                        fontSize: 18,
+                        fontSize: 12,
                         fontWeight: FontWeight.w700,
-                        color: AppColors.textPrimary,
+                        color: Colors.white,
                       ),
                     )),
                   ],
@@ -428,15 +458,15 @@ class _HomeOverview extends StatelessWidget {
                 Row(
                   children: [
                     const Icon(Icons.calendar_today_rounded,
-                        color: AppColors.primary),
+                        color: Colors.white),
                     const SizedBox(width: 8),
                     const Expanded(
                       child: Text(
-                        'Lịch hẹn sắp tới',
+                        'Lịch hẹn',
                         style: TextStyle(
-                          fontSize: 18,
+                          fontSize: 14,
                           fontWeight: FontWeight.w700,
-                          color: AppColors.textPrimary,
+                          color: Colors.white,
                         ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
@@ -446,7 +476,7 @@ class _HomeOverview extends StatelessWidget {
                       padding: const EdgeInsets.symmetric(
                           horizontal: 10, vertical: 6),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFDDEEFF),
+                        color: const Color(0x33FFFFFF),
                         borderRadius: BorderRadius.circular(999),
                       ),
                       child: const Text(
@@ -454,7 +484,7 @@ class _HomeOverview extends StatelessWidget {
                         style: TextStyle(
                           fontSize: 11,
                           fontWeight: FontWeight.w600,
-                          color: AppColors.primary,
+                          color: Colors.white,
                         ),
                       ),
                     ),
@@ -465,10 +495,10 @@ class _HomeOverview extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Container(
-                      width: 112,
-                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      width: 104,
+                      padding: const EdgeInsets.symmetric(vertical: 12),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFDCEBFA),
+                        color: const Color(0x22FFFFFF),
                         borderRadius: BorderRadius.circular(14),
                       ),
                       child: Column(
@@ -478,30 +508,30 @@ class _HomeOverview extends StatelessWidget {
                             _weekDayText(
                                 nextAppointment.displayScheduledAt.weekday),
                             style: const TextStyle(
-                              fontSize: 13,
-                              color: AppColors.textSecondary,
+                              fontSize: 12,
+                              color: Color(0xB3FFFFFF),
                             ),
                           ),
-                          const SizedBox(height: 6),
+                          const SizedBox(height: 4),
                           Text(
                             nextAppointment.displayScheduledAt.day.toString(),
                             style: const TextStyle(
-                              fontSize: 38,
+                              fontSize: 26,
                               fontWeight: FontWeight.w700,
-                              color: AppColors.primary,
+                              color: Colors.white,
                             ),
                           ),
                           Text(
                             '${_monthText(nextAppointment.displayScheduledAt.month)} ${nextAppointment.displayScheduledAt.year}',
                             style: const TextStyle(
-                              fontSize: 11,
-                              color: AppColors.textSecondary,
+                              fontSize: 9,
+                              color: Color(0xB3FFFFFF),
                             ),
                           ),
                         ],
                       ),
                     ),
-                    const SizedBox(width: 16),
+                    const SizedBox(width: 14),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -522,62 +552,77 @@ class _HomeOverview extends StatelessWidget {
                                       child: Text(
                                         _appointmentTime(nextAppointment),
                                         style: const TextStyle(
-                                          fontSize: 15,
+                                          fontSize: 13,
                                           fontWeight: FontWeight.w600,
-                                          color: AppColors.textPrimary,
+                                          color: Colors.white,
                                         ),
                                       ))),
                             ],
                           ),
-                          const SizedBox(height: 10),
+                          const SizedBox(height: 8),
                           Text(
                             _firstServiceName(
                               nextAppointment,
                               context: context,
                             ),
                             style: const TextStyle(
-                              fontSize: 18,
+                              fontSize: 14,
                               fontWeight: FontWeight.w700,
-                              color: AppColors.textPrimary,
+                              color: Colors.white,
                             ),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                           ),
-                          const SizedBox(height: 4),
+                          const SizedBox(height: 3),
                           Text(
                             _doctorName(nextAppointment, context),
                             style: const TextStyle(
-                              fontSize: 14,
-                              color: AppColors.textSecondary,
+                              fontSize: 11,
+                              color: Color(0xB3FFFFFF),
                             ),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                           ),
-                          const SizedBox(height: 18),
+                          const SizedBox(height: 14),
                           Align(
                             alignment: Alignment.centerRight,
-                            child: SizedBox(
-                              width: 150,
-                              child: ElevatedButton.icon(
-                                onPressed: () {
-                                  final data =
-                                      context.read<PatientDataProvider>();
-                                  data.focusAppointmentsFor(
-                                      nextAppointment.patientId,
-                                      appointmentId: nextAppointment.id);
-                                  PatientNavigation.selectTab(context, 2);
-                                },
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: Colors.black,
-                                  foregroundColor: Colors.white,
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(24),
-                                  ),
-                                  padding:
-                                      const EdgeInsets.symmetric(vertical: 12),
+                            child: ElevatedButton(
+                              onPressed: () {
+                                final data =
+                                    context.read<PatientDataProvider>();
+                                data.focusAppointmentsFor(
+                                    nextAppointment.patientId,
+                                    appointmentId: nextAppointment.id);
+                                PatientNavigation.selectTab(context, 2);
+                              },
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.white,
+                                foregroundColor: AppColors.primaryDark,
+                                elevation: 0,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(24),
                                 ),
-                                icon: const Icon(Icons.arrow_forward_rounded),
-                                label: const Text('Xem chi tiết'),
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 10, vertical: 6),
+                                minimumSize: Size.zero,
+                                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                              ),
+                              child: const Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Text(
+                                    'Xem chi tiết',
+                                    style: TextStyle(
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                  SizedBox(width: 4),
+                                  Icon(
+                                    Icons.arrow_forward_rounded,
+                                    size: 14,
+                                  ),
+                                ],
                               ),
                             ),
                           ),
@@ -695,9 +740,16 @@ class _ServiceTile extends StatelessWidget {
         width: 176,
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: Colors.white.withValues(alpha: 0.75),
           border: Border.all(color: const Color(0xFFE5EBF3)),
           borderRadius: BorderRadius.circular(18),
+          boxShadow: const [
+            BoxShadow(
+              color: Color(0x18000675),
+              blurRadius: 12,
+              offset: Offset(0, 5),
+            ),
+          ],
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -723,7 +775,7 @@ class _ServiceTile extends StatelessWidget {
             Text(
               service.name,
               style: const TextStyle(
-                fontSize: 14,
+                fontSize: 11,
                 fontWeight: FontWeight.w600,
                 color: AppColors.textPrimary,
               ),
@@ -739,7 +791,7 @@ class _ServiceTile extends StatelessWidget {
                     style: const TextStyle(
                       color: AppColors.primary,
                       fontWeight: FontWeight.w700,
-                      fontSize: 15,
+                      fontSize: 12,
                     ),
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -747,7 +799,7 @@ class _ServiceTile extends StatelessWidget {
                 const Icon(
                   Icons.arrow_forward_rounded,
                   color: AppColors.primary,
-                  size: 18,
+                  size: 16,
                 ),
               ],
             ),
@@ -771,25 +823,38 @@ class _DoctorTile extends StatelessWidget {
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: onTap,
-      child: SizedBox(
+      child: Container(
         width: 120,
+        padding: const EdgeInsets.all(10),
+        decoration: BoxDecoration(
+          color: Colors.white.withValues(alpha: 0.75),
+          border: Border.all(color: const Color(0xFFE5EBF3)),
+          borderRadius: BorderRadius.circular(18),
+          boxShadow: const [
+            BoxShadow(
+              color: Color(0x18000675),
+              blurRadius: 12,
+              offset: Offset(0, 5),
+            ),
+          ],
+        ),
         child: Column(
           children: [
             Container(
-              width: 84,
-              height: 84,
+              width: double.infinity,
+              height: 62,
               clipBehavior: Clip.antiAlias,
               decoration: BoxDecoration(
                 color: const Color(0xFFDAEBFF),
-                borderRadius: BorderRadius.circular(42),
+                borderRadius: BorderRadius.circular(14),
               ),
               child: NetworkImageOrIcon(
                 url: doctor.avatarUrl,
                 icon: Icons.person_rounded,
                 iconSize: 40,
                 color: AppColors.primary,
-                width: 84,
-                height: 84,
+                width: double.infinity,
+                height: 62,
               ),
             ),
             const SizedBox(height: 8),
@@ -797,7 +862,7 @@ class _DoctorTile extends StatelessWidget {
               doctor.fullName.replaceFirst('BS. ', ''),
               textAlign: TextAlign.center,
               style: const TextStyle(
-                fontSize: 14,
+                fontSize: 12,
                 fontWeight: FontWeight.w700,
                 color: AppColors.textPrimary,
               ),
@@ -809,7 +874,7 @@ class _DoctorTile extends StatelessWidget {
               doctor.specialty,
               textAlign: TextAlign.center,
               style: const TextStyle(
-                fontSize: 12,
+                fontSize: 10,
                 color: AppColors.textSecondary,
               ),
               maxLines: 1,
@@ -839,15 +904,22 @@ class _ArticleTile extends StatelessWidget {
         width: 180,
         padding: const EdgeInsets.all(10),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: Colors.white.withValues(alpha: 0.75),
           border: Border.all(color: const Color(0xFFE5EBF3)),
           borderRadius: BorderRadius.circular(18),
+          boxShadow: const [
+            BoxShadow(
+              color: Color(0x18000675),
+              blurRadius: 12,
+              offset: Offset(0, 5),
+            ),
+          ],
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Container(
-              height: 96,
+              height: 62,
               width: double.infinity,
               decoration: BoxDecoration(
                 color: const Color(0xFFEAF1F8),
@@ -872,27 +944,45 @@ class _ArticleTile extends StatelessWidget {
                       ),
               ),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 10),
+            DecoratedBox(
+              decoration: BoxDecoration(
+                color: AppColors.accent,
+                borderRadius: BorderRadius.circular(999),
+              ),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                child: Text(
+                  article.category,
+                  style: const TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.primary,
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: 6),
             Text(
               article.title,
               style: const TextStyle(
-                fontSize: 14,
+                fontSize: 11,
                 fontWeight: FontWeight.w700,
                 color: AppColors.textPrimary,
               ),
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 6),
             Row(
               children: [
                 Expanded(
                   child: Text(
                     article.hasPublishedDate
                         ? formatVietnameseDate(article.publishedAt)
-                        : '',
+                        : 'Đọc ngay',
                     style: const TextStyle(
-                      fontSize: 12,
+                      fontSize: 10,
                       color: AppColors.textSecondary,
                     ),
                   ),

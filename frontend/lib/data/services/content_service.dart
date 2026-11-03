@@ -42,6 +42,13 @@ class ContentHome {
   final List<Doctor> doctors;
   final List<Article> articles;
   final Appointment? appointment;
+  ContentHome.fromParts({
+    this.services = const [],
+    this.doctors = const [],
+    this.articles = const [],
+    this.appointment,
+  });
+
   ContentHome(Map<String, dynamic> j)
       : services = _rows(j['featuredServices'])
             .map((r) => DentalService.fromJson(r))

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/constants/app_colors.dart';
 import '../../../core/utils/formatters.dart';
 import '../../../data/models/dental_service.dart';
 import '../booking_controller.dart';
@@ -94,56 +95,89 @@ class SelectServicesStep extends StatelessWidget {
     required bool enabled,
   }) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.only(bottom: 8),
       child: Card(
+        color: selected
+            ? AppColors.glassPurpleStrong
+            : Colors.white.withValues(alpha: 0.92),
+        elevation: selected ? 2 : 1.5,
+        shadowColor: const Color(0x18000675),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(14),
+          side: BorderSide(
+            color: selected ? AppColors.primary : Colors.white,
+            width: selected ? 1.5 : 1,
+          ),
+        ),
         child: InkWell(
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(14),
           onTap: enabled ? () => controller.toggleCatalogItem(service) : null,
           child: Padding(
             padding: const EdgeInsets.symmetric(
-              vertical: 14,
-              horizontal: 12,
+              vertical: 9,
+              horizontal: 11,
             ),
             child: Row(
               children: [
                 Icon(
                   selected ? Icons.check_circle : Icons.radio_button_unchecked,
-                  color: selected ? const Color(0xFF247BF3) : Colors.grey,
-                  size: 22,
+                  color: selected ? AppColors.primary : Colors.grey.shade400,
+                  size: 20,
                 ),
                 const SizedBox(width: 8),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
                     children: [
-                      Text(
-                        service.name,
-                        style: const TextStyle(
-                          fontWeight: FontWeight.w600,
-                        ),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              service.name,
+                              style: const TextStyle(
+                                fontSize: 13.5,
+                                fontWeight: FontWeight.w600,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          TextButton(
+                            onPressed: () => onDetail(service),
+                            style: TextButton.styleFrom(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 4, vertical: 0),
+                              minimumSize: Size.zero,
+                              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                            ),
+                            child: const Text('Chi tiết',
+                                style: TextStyle(
+                                    fontSize: 11, color: AppColors.primary)),
+                          ),
+                        ],
                       ),
-                      Text(
-                        '${service.isCombo ? 'Combo' : service.category}'
-                        ' · ${service.durationMinutes} phút',
-                        style: const TextStyle(
-                          color: Color(0xFF666666),
-                        ),
-                      ),
-                      Text(
-                        formatVnd(service.price),
-                        style: const TextStyle(
-                          color: Color(0xFF247BF3),
-                          fontWeight: FontWeight.w600,
-                        ),
+                      const SizedBox(height: 2),
+                      Row(
+                        children: [
+                          Text(
+                            '${service.isCombo ? 'Combo' : service.category}'
+                            ' · ${service.durationMinutes} phút',
+                            style: const TextStyle(
+                                fontSize: 11.5, color: Color(0xFF666666)),
+                          ),
+                          const Spacer(),
+                          Text(
+                            formatVnd(service.price),
+                            style: const TextStyle(
+                              fontSize: 12.5,
+                              color: AppColors.primary,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ],
                       ),
                     ],
-                  ),
-                ),
-                TextButton(
-                  onPressed: () => onDetail(service),
-                  child: const Text(
-                    'Chi tiết',
-                    style: TextStyle(color: Colors.black),
                   ),
                 ),
               ],

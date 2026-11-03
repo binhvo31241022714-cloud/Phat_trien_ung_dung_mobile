@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 
 import '../../app/patient_navigation.dart';
 import '../../core/config/app_config.dart';
+import '../../core/constants/app_colors.dart';
 import '../../data/api_client.dart';
 import '../../data/providers/patient_data_provider.dart';
 import '../records/appointment_api_status.dart';
@@ -365,6 +366,7 @@ class _BookingScreenState extends State<BookingScreen> {
     final useApiPatients = apiMode && accountProfile != null;
 
     final patientItems = <DropdownMenuItem<String>>[];
+    final patientLabels = <String>[];
     final patientIds = <String>{};
 
     if (useApiPatients) {
@@ -376,11 +378,13 @@ class _BookingScreenState extends State<BookingScreen> {
             ? account.fullName
             : account.email;
 
+        final label = '$displayName (Bản thân)';
+        patientLabels.add(label);
         patientItems.add(
           DropdownMenuItem<String>(
             value: account.id,
             child: PatientOptionLabel(
-              '$displayName (Bản thân)',
+              label,
               avatarMediaId: account.avatarMediaId,
             ),
           ),
@@ -399,11 +403,13 @@ class _BookingScreenState extends State<BookingScreen> {
             ? 'Người thân'
             : member.relationship;
 
+        final label = '${member.fullName} ($relationship)';
+        patientLabels.add(label);
         patientItems.add(
           DropdownMenuItem<String>(
             value: memberId,
             child: PatientOptionLabel(
-              '${member.fullName} ($relationship)',
+              label,
               avatarMediaId: member.avatarMediaId,
             ),
           ),
@@ -416,12 +422,14 @@ class _BookingScreenState extends State<BookingScreen> {
           continue;
         }
 
+        final label =
+            '${patient.fullName} (${patient.isPrimary ? "Bản thân" : patient.relationship})';
+        patientLabels.add(label);
         patientItems.add(
           DropdownMenuItem<String>(
             value: patient.id,
             child: Text(
-              '${patient.fullName} '
-              '(${patient.isPrimary ? "Bản thân" : patient.relationship})',
+              label,
               overflow: TextOverflow.ellipsis,
             ),
           ),
@@ -509,13 +517,14 @@ class _BookingScreenState extends State<BookingScreen> {
               displayColor: Colors.black,
             ),
         cardTheme: CardThemeData(
-          color: const Color(0xFFF7F7F7),
-          elevation: 0,
+          color: Colors.white.withValues(alpha: 0.94),
+          elevation: 2,
+          shadowColor: const Color(0x14000675),
           margin: EdgeInsets.zero,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
             side: const BorderSide(
-              color: Color(0xFFD8D8D8),
+              color: Colors.white,
             ),
           ),
         ),
@@ -544,8 +553,8 @@ class _BookingScreenState extends State<BookingScreen> {
             PatientNavigation.selectTab(context, 0);
           }
         },
-        child: ColoredBox(
-          color: const Color(0xFFF1F5FB),
+        child: DecoratedBox(
+          decoration: const BoxDecoration(gradient: AppColors.pageGradient),
           child: SafeArea(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -584,8 +593,9 @@ class _BookingScreenState extends State<BookingScreen> {
                                   ? 'Đặt lịch thành công'
                                   : 'Đặt lịch khám',
                           style: const TextStyle(
-                            fontSize: 18,
+                            fontSize: 17,
                             fontWeight: FontWeight.bold,
+                            color: AppColors.primaryDark,
                           ),
                         ),
                       ),
@@ -616,129 +626,176 @@ class _BookingScreenState extends State<BookingScreen> {
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Card(
-                                    child: Padding(
-                                      padding: const EdgeInsets.all(12),
-                                      child: Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          const Row(
-                                            children: [
-                                              Icon(
-                                                Icons.person_outline,
-                                                size: 20,
-                                                color: Color(
-                                                  0xFF247BF3,
+                                  Container(
+                                    padding: const EdgeInsets.all(14),
+                                    decoration: BoxDecoration(
+                                      color: AppColors.primaryDark,
+                                      borderRadius: BorderRadius.circular(16),
+                                      boxShadow: const [
+                                        BoxShadow(
+                                          color: Color(0x0C000675),
+                                          blurRadius: 7,
+                                          offset: Offset(0, 3),
+                                        ),
+                                      ],
+                                    ),
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        const Row(
+                                          children: [
+                                            Icon(
+                                              Icons.person_outline,
+                                              size: 20,
+                                              color: Colors.white,
+                                            ),
+                                            SizedBox(width: 8),
+                                            Expanded(
+                                              child: Text(
+                                                'Người được khám',
+                                                style: TextStyle(
+                                                  fontSize: 16,
+                                                  fontWeight: FontWeight.w600,
+                                                  color: Colors.white,
                                                 ),
                                               ),
-                                              SizedBox(width: 8),
-                                              Expanded(
+                                            ),
+                                          ],
+                                        ),
+                                        const SizedBox(height: 8),
+                                        DropdownButtonFormField<String>(
+                                          key: ValueKey(
+                                            '${c.patientId}-${patientItems.length}',
+                                          ),
+                                          initialValue: patientIds.contains(
+                                            selectedPatientId,
+                                          )
+                                              ? selectedPatientId
+                                              : null,
+                                          isExpanded: true,
+                                          dropdownColor: Colors.white,
+                                          menuMaxHeight: 280,
+                                          selectedItemBuilder: (_) => [
+                                            for (final label in patientLabels)
+                                              Align(
+                                                alignment:
+                                                    Alignment.centerLeft,
                                                 child: Text(
-                                                  'Người được khám',
-                                                  style: TextStyle(
-                                                    fontSize: 18,
-                                                    fontWeight: FontWeight.w600,
-                                                  ),
+                                                  label,
+                                                  overflow:
+                                                      TextOverflow.ellipsis,
+                                                  style: const TextStyle(
+                                                      color: Colors.white,
+                                                      fontSize: 13),
                                                 ),
                                               ),
-                                            ],
+                                          ],
+                                          decoration: InputDecoration(
+                                            filled: true,
+                                            fillColor: Colors.transparent,
+                                            contentPadding:
+                                                const EdgeInsets.symmetric(
+                                              horizontal: 16,
+                                              vertical: 8,
+                                            ),
+                                            border: OutlineInputBorder(
+                                              borderRadius:
+                                                  BorderRadius.circular(30),
+                                              borderSide: const BorderSide(
+                                                  color: Colors.white),
+                                            ),
+                                            enabledBorder: OutlineInputBorder(
+                                              borderRadius:
+                                                  BorderRadius.circular(30),
+                                              borderSide: const BorderSide(
+                                                  color: Colors.white),
+                                            ),
+                                            focusedBorder: OutlineInputBorder(
+                                              borderRadius:
+                                                  BorderRadius.circular(30),
+                                              borderSide: const BorderSide(
+                                                  color: Colors.white,
+                                                  width: 1.5),
+                                            ),
                                           ),
-                                          const SizedBox(height: 8),
-                                          DropdownButtonFormField<String>(
-                                            key: ValueKey(
-                                              '${c.patientId}-${patientItems.length}',
+                                          style: const TextStyle(
+                                              color: Colors.white,
+                                              fontSize: 13),
+                                          icon: const Icon(Icons.expand_more,
+                                              color: Colors.white),
+                                          items: patientItems,
+                                          onChanged: c.locked
+                                              ? null
+                                              : (value) {
+                                                  if (value != null) {
+                                                    c.selectPatient(
+                                                      value,
+                                                    );
+                                                  }
+                                                },
+                                        ),
+                                        if (apiMode && profile.profileLoading)
+                                          const Padding(
+                                            padding: EdgeInsets.only(
+                                              top: 8,
                                             ),
-                                            initialValue: patientIds.contains(
-                                              selectedPatientId,
-                                            )
-                                                ? selectedPatientId
-                                                : null,
-                                            isExpanded: true,
-                                            decoration: InputDecoration(
-                                              contentPadding:
-                                                  const EdgeInsets.symmetric(
-                                                horizontal: 16,
-                                                vertical: 8,
-                                              ),
-                                              border: OutlineInputBorder(
-                                                borderRadius:
-                                                    BorderRadius.circular(30),
+                                            child: Text(
+                                              'Đang tải hồ sơ tài khoản...',
+                                              style: TextStyle(
+                                                color: Color(
+                                                  0xFF666666,
+                                                ),
+                                                fontSize: 12,
                                               ),
                                             ),
-                                            items: patientItems,
-                                            onChanged: c.locked
-                                                ? null
-                                                : (value) {
-                                                    if (value != null) {
-                                                      c.selectPatient(
-                                                        value,
-                                                      );
-                                                    }
-                                                  },
                                           ),
-                                          if (apiMode && profile.profileLoading)
-                                            const Padding(
-                                              padding: EdgeInsets.only(
-                                                top: 8,
-                                              ),
-                                              child: Text(
-                                                'Đang tải hồ sơ tài khoản...',
-                                                style: TextStyle(
-                                                  color: Color(
-                                                    0xFF666666,
-                                                  ),
-                                                  fontSize: 12,
-                                                ),
+                                        if (apiMode &&
+                                            profile.profileError != null)
+                                          Padding(
+                                            padding: const EdgeInsets.only(
+                                              top: 8,
+                                            ),
+                                            child: Text(
+                                              'Không tải được hồ sơ tài khoản: ${profile.profileError}',
+                                              style: const TextStyle(
+                                                color: Colors.red,
+                                                fontSize: 12,
                                               ),
                                             ),
-                                          if (apiMode &&
-                                              profile.profileError != null)
-                                            Padding(
-                                              padding: const EdgeInsets.only(
-                                                top: 8,
-                                              ),
-                                              child: Text(
-                                                'Không tải được hồ sơ tài khoản: ${profile.profileError}',
-                                                style: const TextStyle(
-                                                  color: Colors.red,
-                                                  fontSize: 12,
+                                          ),
+                                        if (useApiPatients &&
+                                            !profile.familyLoaded &&
+                                            profile.familyLoading)
+                                          const Padding(
+                                            padding: EdgeInsets.only(
+                                              top: 8,
+                                            ),
+                                            child: Text(
+                                              'Đang tải danh sách người thân...',
+                                              style: TextStyle(
+                                                color: Color(
+                                                  0xFF666666,
                                                 ),
+                                                fontSize: 12,
                                               ),
                                             ),
-                                          if (useApiPatients &&
-                                              !profile.familyLoaded &&
-                                              profile.familyLoading)
-                                            const Padding(
-                                              padding: EdgeInsets.only(
-                                                top: 8,
-                                              ),
-                                              child: Text(
-                                                'Đang tải danh sách người thân...',
-                                                style: TextStyle(
-                                                  color: Color(
-                                                    0xFF666666,
-                                                  ),
-                                                  fontSize: 12,
-                                                ),
+                                          ),
+                                        if (apiMode &&
+                                            profile.familyError != null)
+                                          Padding(
+                                            padding: const EdgeInsets.only(
+                                              top: 8,
+                                            ),
+                                            child: Text(
+                                              'Không tải được danh sách người thân: ${profile.familyError}',
+                                              style: const TextStyle(
+                                                color: Colors.red,
+                                                fontSize: 12,
                                               ),
                                             ),
-                                          if (apiMode &&
-                                              profile.familyError != null)
-                                            Padding(
-                                              padding: const EdgeInsets.only(
-                                                top: 8,
-                                              ),
-                                              child: Text(
-                                                'Không tải được danh sách người thân: ${profile.familyError}',
-                                                style: const TextStyle(
-                                                  color: Colors.red,
-                                                  fontSize: 12,
-                                                ),
-                                              ),
-                                            ),
-                                        ],
-                                      ),
+                                          ),
+                                      ],
                                     ),
                                   ),
                                   const SizedBox(height: 16),
@@ -747,8 +804,9 @@ class _BookingScreenState extends State<BookingScreen> {
                                   Text(
                                     titles[c.step],
                                     style: const TextStyle(
-                                      fontSize: 18,
+                                      fontSize: 16,
                                       fontWeight: FontWeight.w600,
+                                      color: AppColors.primaryDark,
                                     ),
                                   ),
                                   const SizedBox(height: 14),

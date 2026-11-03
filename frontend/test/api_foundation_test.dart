@@ -111,6 +111,52 @@ void main() {
         offline.get('/api/users'), throwsA(apiError(ApiErrorKind.connection)));
   });
 
+  test('401 refreshes the token once and retries the request', () async {
+    var token = 'expired';
+    var refreshes = 0;
+    var requests = 0;
+    final client = ApiClient(
+        tokenProvider: () => token,
+        refreshTokenProvider: () async {
+          refreshes++;
+          await Future<void>.delayed(const Duration(milliseconds: 5));
+          token = 'fresh';
+          return token;
+        },
+        client: MockClient((request) async {
+          requests++;
+          if (request.headers['Authorization'] == 'Bearer expired') {
+            return http.Response('expired', 401);
+          }
+          expect(request.headers['Authorization'], 'Bearer fresh');
+          return http.Response('{"ok":true}', 200);
+        }));
+
+    expect(await client.get('/protected'), {'ok': true});
+    expect(requests, 2);
+    expect(refreshes, 1);
+  });
+
+  test('concurrent 401 responses share one token refresh', () async {
+    var refreshes = 0;
+    var fresh = false;
+    final client = ApiClient(
+        tokenProvider: () => fresh ? 'fresh' : 'expired',
+        refreshTokenProvider: () async {
+          refreshes++;
+          await Future<void>.delayed(const Duration(milliseconds: 5));
+          fresh = true;
+          return 'fresh';
+        },
+        client: MockClient((request) async => request.headers['Authorization'] ==
+                'Bearer expired'
+            ? http.Response('expired', 401)
+            : http.Response('{"ok":true}', 200)));
+
+    await Future.wait([client.get('/one'), client.get('/two')]);
+    expect(refreshes, 1);
+  });
+
   test('POST PUT DELETE methods and optional token, never supplied by default',
       () async {
     final seen = <String>[];

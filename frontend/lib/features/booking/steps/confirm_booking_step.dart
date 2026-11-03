@@ -198,9 +198,11 @@ class ConfirmBookingStep extends StatelessWidget {
                       border: OutlineInputBorder(),
                       contentPadding: EdgeInsets.symmetric(
                         horizontal: 12,
-                        vertical: 12,
+                        vertical: 8,
                       ),
+                      hintStyle: TextStyle(fontSize: 12),
                     ),
+                    style: const TextStyle(fontSize: 12),
                   ),
                 ),
                 const SizedBox(width: 8),
@@ -235,7 +237,7 @@ class ConfirmBookingStep extends StatelessWidget {
                   c.voucherError!,
                   style: const TextStyle(
                     color: Colors.red,
-                    fontSize: 13,
+                    fontSize: 11,
                   ),
                 ),
               )
@@ -255,7 +257,7 @@ class ConfirmBookingStep extends StatelessWidget {
                         'Đã áp dụng mã ${c.appliedVoucher}',
                         style: const TextStyle(
                           color: Colors.green,
-                          fontSize: 13,
+                          fontSize: 11,
                         ),
                       ),
                     ),
@@ -291,7 +293,11 @@ class ConfirmBookingStep extends StatelessWidget {
               decoration: const InputDecoration(
                 hintText: 'Ví dụ: Tôi thường bị ê buốt răng...',
                 border: OutlineInputBorder(),
+                hintStyle: TextStyle(fontSize: 12),
+                contentPadding:
+                    EdgeInsets.symmetric(horizontal: 12, vertical: 8),
               ),
+              style: const TextStyle(fontSize: 12),
             ),
 
             const Divider(height: 32),

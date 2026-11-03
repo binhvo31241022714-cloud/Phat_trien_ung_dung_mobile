@@ -47,7 +47,7 @@ void main() {
       final right = t.getRect(next);
       final bounds = t.getRect(carousel);
       final controlCenter =
-          {'services': 43.0, 'doctors': 42.0, 'articles': 58.0}[section]!;
+          {'services': 37.0, 'doctors': 37.0, 'articles': 46.0}[section]!;
       expect(left.center.dy, closeTo(viewport.top + controlCenter, 0.1));
       expect(right.center.dy, closeTo(viewport.top + controlCenter, 0.1));
       expect(left.left, closeTo(bounds.left, 0.1));
@@ -132,9 +132,9 @@ void main() {
     // adb wm: 1080x2400 pixels at 420 dpi => density ratio 420/160.
     await f.mount(t, width: 1080 / (420 / 160), height: 2400 / (420 / 160));
     for (final entry in [
-      ('featuredServices', 176.0, 182.0),
-      ('doctors', 120.0, 156.0),
-      ('articles', 180.0, 206.0),
+      ('featuredServices', 176.0, 148.0),
+      ('doctors', 120.0, 118.0),
+      ('articles', 180.0, 170.0),
     ]) {
       final carousel = find.byKey(ValueKey('home-${entry.$1}-carousel'));
       await t.ensureVisible(carousel);

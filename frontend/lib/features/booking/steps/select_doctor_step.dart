@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/constants/app_colors.dart';
+import '../../../core/widgets/horizontal_card_carousel.dart';
+import '../../../core/widgets/network_image_or_icon.dart';
 import '../../../data/models/doctor.dart';
 import '../booking_controller.dart';
 
@@ -72,22 +75,25 @@ class SelectDoctorStep extends StatelessWidget {
 
     return Column(
       children: [
-        Card(
-          child: ListTile(
-            onTap: canSelect ? () => controller.chooseDoctor(null) : null,
-            leading: const Icon(
-              Icons.shuffle,
-              color: Color(0xFF247BF3),
-            ),
-            title: const Text(
-              'Để hệ thống chọn bác sĩ',
-              style: TextStyle(fontWeight: FontWeight.w600),
-            ),
-            subtitle: const Text(
-              'Hệ thống sẽ chọn bác sĩ phù hợp với các dịch vụ đã chọn.',
-            ),
-            trailing: indicator(
-              controller.doctorChosen && controller.doctorId == null,
+        SizedBox(
+          width: double.infinity,
+          child: FilledButton.icon(
+            onPressed: canSelect ? () => controller.chooseDoctor(null) : null,
+            icon: const Icon(Icons.auto_awesome_rounded, size: 16),
+            label: const Text('Để hệ thống tự chọn bác sĩ',
+                style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+            style: FilledButton.styleFrom(
+              backgroundColor:
+                  controller.doctorChosen && controller.doctorId == null
+                      ? AppColors.primary
+                      : AppColors.glassPurpleStrong,
+              foregroundColor:
+                  controller.doctorChosen && controller.doctorId == null
+                      ? Colors.white
+                      : AppColors.primaryDark,
+              elevation: 1,
+              shadowColor: const Color(0x14000675),
+              padding: const EdgeInsets.symmetric(vertical: 9),
             ),
           ),
         ),
@@ -144,81 +150,112 @@ class SelectDoctorStep extends StatelessWidget {
             ),
           )
         else
-          for (final doctor in doctors)
-            Padding(
-              padding: const EdgeInsets.only(bottom: 12),
-              child: Card(
-                child: InkWell(
-                  borderRadius: BorderRadius.circular(16),
-                  onTap: controller.submitting || controller.created != null
-                      ? null
-                      : () => controller.chooseDoctor(doctor.id),
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(
-                      vertical: 14,
-                      horizontal: 12,
+          HorizontalCardCarousel(
+            label: 'Bác sĩ',
+            itemCount: doctors.length,
+            itemWidth: 156,
+            itemHeight: 196,
+            navigationCenterY: 70,
+            showNavigation: doctors.length > 1,
+            itemBuilder: (context, index) {
+              final doctor = doctors[index];
+              final selected =
+                  controller.doctorChosen && controller.doctorId == doctor.id;
+              return GestureDetector(
+                onTap: controller.submitting || controller.created != null
+                    ? null
+                    : () => controller.chooseDoctor(doctor.id),
+                child: Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: selected
+                          ? [
+                              AppColors.glassPurpleStrong,
+                              const Color(0xFFD8CCFF)
+                            ]
+                          : [const Color(0xDFFFFFFF), AppColors.glassPurple],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
                     ),
-                    child: Column(
-                      children: [
-                        Row(
-                          children: [
-                            const CircleAvatar(
-                              backgroundColor: Color(0xFFEAF2FF),
-                              child: Icon(
-                                Icons.person_outline,
-                                color: Color(0xFF247BF3),
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    doctor.fullName,
-                                    style: const TextStyle(
-                                      fontWeight: FontWeight.w600,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 4),
-                                  Text(
-                                    doctor.specialty,
-                                    style: const TextStyle(
-                                      color: Color(0xFF666666),
-                                    ),
-                                  ),
-                                  if (doctor.experienceYears > 0)
-                                    Text(
-                                      '${doctor.experienceYears} năm kinh nghiệm',
-                                      style: const TextStyle(
-                                        color: Color(0xFF666666),
-                                      ),
-                                    ),
-                                ],
-                              ),
-                            ),
-                            indicator(
-                              controller.doctorChosen &&
-                                  controller.doctorId == doctor.id,
-                            ),
-                          ],
-                        ),
-                        Align(
-                          alignment: Alignment.centerRight,
-                          child: TextButton(
-                            onPressed: () => onDetail(doctor),
-                            child: const Text(
-                              'Xem thông tin chi tiết ›',
-                              style: TextStyle(color: Colors.black),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(
+                        color: selected ? AppColors.primary : Colors.white),
+                    boxShadow: const [
+                      BoxShadow(
+                          color: Color(0x18000675),
+                          blurRadius: 10,
+                          offset: Offset(0, 4))
+                    ],
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Stack(children: [
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(12),
+                          child: Container(
+                            height: 92,
+                            width: double.infinity,
+                            color: const Color(0x66D9CCFF),
+                            child: NetworkImageOrIcon(
+                              url: doctor.avatarUrl,
+                              icon: Icons.person_rounded,
+                              iconSize: 46,
+                              color: AppColors.primary,
+                              width: double.infinity,
+                              height: 92,
                             ),
                           ),
                         ),
-                      ],
-                    ),
+                        Positioned(
+                          right: 8,
+                          top: 8,
+                          child: indicator(selected),
+                        ),
+                      ]),
+                      const SizedBox(height: 8),
+                      Text(doctor.fullName,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w700,
+                              color: AppColors.textPrimary)),
+                      const SizedBox(height: 2),
+                      Text(doctor.specialty,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                              fontSize: 10.5, color: AppColors.textSecondary)),
+                      const Spacer(),
+                      Row(children: [
+                        Expanded(
+                          child: Text(
+                            '${doctor.experienceYears} năm kinh nghiệm',
+                            style: const TextStyle(
+                                fontSize: 9.5, color: AppColors.textSecondary),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        TextButton(
+                          onPressed: () => onDetail(doctor),
+                          style: TextButton.styleFrom(
+                              padding: EdgeInsets.zero,
+                              minimumSize: Size.zero,
+                              tapTargetSize: MaterialTapTargetSize.shrinkWrap),
+                          child: const Text('Chi tiết',
+                              style: TextStyle(
+                                  fontSize: 9.5, color: AppColors.primary)),
+                        ),
+                      ]),
+                    ],
                   ),
                 ),
-              ),
-            ),
+              );
+            },
+          ),
       ],
     );
   }

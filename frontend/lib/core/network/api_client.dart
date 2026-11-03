@@ -37,12 +37,17 @@ class ApiClient {
   final Duration timeout;
   // Có thể trả token ngay hoặc trả Future (ví dụ Firebase getIdToken).
   final FutureOr<String?> Function()? tokenProvider;
+  final FutureOr<String?> Function()? refreshTokenProvider;
+  FutureOr<void> Function()? onUnauthorized;
+  Future<void>? _refreshInFlight;
 
   ApiClient(
       {http.Client? client,
       String? baseUrl,
       this.timeout = ApiConstants.timeout,
-      this.tokenProvider})
+      this.tokenProvider,
+      this.refreshTokenProvider,
+      this.onUnauthorized})
       : _client = client ?? http.Client(),
         _ownsClient = client == null,
         baseUrl =
@@ -82,8 +87,8 @@ class ApiClient {
       raw: true) as Uint8List;
 
   Future<dynamic> _send(Future<http.Response> Function() request,
-      {bool raw = false}) async {
-    final http.Response response;
+      {bool raw = false, bool hasRetriedUnauthorized = false}) async {
+    late final http.Response response;
     try {
       response = await request().timeout(timeout);
     } on TimeoutException {
@@ -118,8 +123,25 @@ class ApiClient {
           status < 500 && decoded is Map && decoded['message'] is String
               ? decoded['message'] as String
               : 'Yêu cầu thất bại (HTTP $status).';
-      throw ApiException(message, kind: kind, statusCode: status);
+      final error = ApiException(message, kind: kind, statusCode: status);
+      if (kind == ApiErrorKind.unauthorized &&
+          !hasRetriedUnauthorized &&
+          refreshTokenProvider != null) {
+        try {
+          await _refreshToken();
+        } on Exception {
+          await onUnauthorized?.call();
+          throw error;
+        }
+        return _send(request,
+            raw: raw, hasRetriedUnauthorized: true);
+      }
+      if (kind == ApiErrorKind.unauthorized && hasRetriedUnauthorized) {
+        await onUnauthorized?.call();
+      }
+      throw error;
     }
+
     if (malformed) {
       throw ApiException('Phản hồi máy chủ không phải JSON hợp lệ.',
           statusCode: status);
@@ -132,6 +154,18 @@ class ApiClient {
       return decoded['data'];
     }
     return decoded;
+  }
+
+  Future<void> _refreshToken() {
+    final current = _refreshInFlight;
+    if (current != null) return current;
+    final refresh = Future<void>(() async {
+      await refreshTokenProvider!.call();
+    });
+    _refreshInFlight = refresh;
+    return refresh.whenComplete(() {
+      if (identical(_refreshInFlight, refresh)) _refreshInFlight = null;
+    });
   }
 
   // Injected clients are owned by their caller.

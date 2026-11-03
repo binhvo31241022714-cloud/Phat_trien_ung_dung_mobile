@@ -1,24 +1,16 @@
-import 'dart:convert';
-import 'package:http/http.dart' as http;
-import 'package:http/testing.dart';
-import 'package:frontend/core/network/api_client.dart';
-import 'package:frontend/data/services/content_service.dart';
 import 'package:frontend/providers/content_provider.dart';
+import 'package:frontend/providers/user_provider.dart';
+import 'package:frontend/providers/catalog_provider.dart';
 
-ContentProvider emptyContentProvider() => ContentProvider(
-    service: ContentService(
-        client: ApiClient(
-            baseUrl: 'http://fake.invalid:3000',
-            client: MockClient((r) async => http.Response(
-                jsonEncode(r.url.path.endsWith('unread-count')
-                    ? {'count': 0}
-                    : r.url.path == '/api/home'
-                        ? <String, dynamic>{
-                            'featuredServices': [],
-                            'featuredDoctors': [],
-                            'latestArticles': [],
-                            'upcomingAppointment': null
-                          }
-                        : <dynamic>[]),
-                200,
-                headers: {'content-type': 'application/json'})))));
+/// Content provider with no backend content, used by screens whose tests
+/// exercise local/demo UI rather than the content handover flow.
+class EmptyContentProvider extends ContentProvider {
+  @override
+  void bindUser(UserProvider users, CatalogProvider catalog) {}
+}
+
+EmptyContentProvider emptyContentProvider() {
+  final provider = EmptyContentProvider();
+  provider.signedIn = false;
+  return provider;
+}

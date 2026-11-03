@@ -6,6 +6,7 @@ import 'package:provider/provider.dart';
 
 import 'app.dart';
 import 'core/config/app_config.dart';
+import 'data/api_client.dart';
 import 'data/providers/patient_data_provider.dart';
 import 'data/services/auth_service.dart';
 import 'data/services/booking_service.dart';
@@ -37,6 +38,7 @@ Future<void> startApp(AuthService auth,
     return true;
   }());
   final users = UserProvider(auth: auth, settings: SharedPrefsSettingsStore());
+  api.onUnauthorized = users.handleSessionExpired;
   // Đọc tùy chọn đã lưu trên máy (ngôn ngữ, nhận thông báo).
   await users.loadSettings();
   // Còn phiên đăng nhập cũ thì vào thẳng trang chính.
@@ -49,6 +51,7 @@ Future<void> startApp(AuthService auth,
   final catalog = CatalogProvider(service: catalogService);
   final appointments = AppointmentsProvider(service: bookingService);
   final content = ContentProvider();
+  content.bindUser(users, catalog);
   final privateSession = PrivateSession(
       users: users,
       apiMode: AppConfig.current.dataSource == DataSource.api,

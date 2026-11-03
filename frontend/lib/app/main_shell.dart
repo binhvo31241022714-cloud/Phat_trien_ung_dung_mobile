@@ -1,3 +1,5 @@
+import 'dart:ui';
+
 import '../providers/content_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -15,6 +17,7 @@ import '../screens/home/home_screen.dart';
 import '../features/booking/booking_screen.dart';
 import '../features/records/records_home_screen.dart';
 import '../features/me/me_screen.dart';
+import '../core/constants/app_colors.dart';
 
 class MainShell extends StatefulWidget {
   const MainShell({super.key});
@@ -27,7 +30,6 @@ class _MainShellState extends State<MainShell> with WidgetsBindingObserver {
   int _selectedIndex = 0;
   UserProfile? _appliedProfile;
   List<FamilyMember>? _appliedFamily;
-  List<FamilyMember>? _appliedHistoryFamily;
 
   @override
   void initState() {
@@ -74,12 +76,8 @@ class _MainShellState extends State<MainShell> with WidgetsBindingObserver {
     if (!current() || profiles.profile == null) return;
     if (!profiles.familyLoaded) await profiles.loadFamily();
     if (!current()) return;
-    await profiles.loadHistoryFamily();
-    if (!current()) return;
     records.syncPatients(profiles.profile!, profiles.family,
-        generation: generation,
-        historyFamily:
-            profiles.historyFamilyLoaded ? profiles.historyFamily : null);
+        generation: generation);
     await records.loadRecords();
     if (!current()) return;
     await appointments.ensureLoaded();
@@ -98,10 +96,8 @@ class _MainShellState extends State<MainShell> with WidgetsBindingObserver {
     if (AppConfig.current.dataSource == DataSource.api &&
         profiles.familyLoaded &&
         profiles.profile != null &&
-        (!identical(family, _appliedFamily) ||
-            !identical(profiles.historyFamily, _appliedHistoryFamily))) {
+        !identical(family, _appliedFamily)) {
       _appliedFamily = family;
-      _appliedHistoryFamily = profiles.historyFamily;
       final records = context.read<PatientDataProvider>();
       final generation = records.sessionGeneration;
       WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -111,15 +107,7 @@ class _MainShellState extends State<MainShell> with WidgetsBindingObserver {
             latest == null) {
           return;
         }
-        records.syncPatients(latest, profiles.family,
-            generation: generation,
-            historyFamily:
-                profiles.historyFamilyLoaded ? profiles.historyFamily : null);
-        if (!profiles.historyFamilyLoaded &&
-            !profiles.historyFamilyLoading &&
-            profiles.historyFamilyError == null) {
-          profiles.loadHistoryFamily();
-        }
+        records.syncPatients(latest, profiles.family, generation: generation);
       });
     }
 
@@ -174,6 +162,7 @@ class _MainShellState extends State<MainShell> with WidgetsBindingObserver {
       onSelectTab: _onTabSelected,
       selectedIndex: _selectedIndex,
       child: Scaffold(
+        extendBody: true,
         body: IndexedStack(
           index: _selectedIndex,
           children: const [
@@ -183,61 +172,78 @@ class _MainShellState extends State<MainShell> with WidgetsBindingObserver {
             MeScreen(),
           ],
         ),
-        bottomNavigationBar: Container(
-          decoration: const BoxDecoration(
-            color: Color(0xFFF5F7FA),
-            border: Border(
-              top: BorderSide(color: Color(0xFFE5EBF3)),
+        bottomNavigationBar: Padding(
+          padding: const EdgeInsets.fromLTRB(12, 0, 12, 8),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(26),
+            child: BackdropFilter(
+              filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
+              child: Container(
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.78),
+                  border: Border.all(color: Colors.white),
+                  borderRadius: BorderRadius.circular(26),
+                  boxShadow: const [
+                    BoxShadow(
+                      color: Color(0x18000675),
+                      blurRadius: 18,
+                      offset: Offset(0, 5),
+                    ),
+                  ],
+                ),
+                child: NavigationBarTheme(
+                  data: NavigationBarThemeData(
+                      labelTextStyle: WidgetStateProperty.resolveWith(
+                          (states) => TextStyle(
+                              fontSize: 11,
+                              color: states.contains(WidgetState.selected)
+                                  ? AppColors.primary
+                                  : AppColors.textSecondary,
+                              fontWeight: states.contains(WidgetState.selected)
+                                  ? FontWeight.w600
+                                  : FontWeight.normal))),
+                  child: NavigationBar(
+                    height: 64,
+                    backgroundColor: Colors.transparent,
+                    surfaceTintColor: Colors.transparent,
+                    shadowColor: Colors.transparent,
+                    elevation: 0,
+                    indicatorColor: AppColors.accent,
+                    selectedIndex: _selectedIndex,
+                    onDestinationSelected: _onTabSelected,
+                    labelBehavior:
+                        NavigationDestinationLabelBehavior.alwaysShow,
+                    destinations: const [
+                      NavigationDestination(
+                        icon: Icon(Icons.home_outlined),
+                        selectedIcon:
+                            Icon(Icons.home_rounded, color: AppColors.primary),
+                        label: 'Trang chủ',
+                      ),
+                      NavigationDestination(
+                        icon: Icon(Icons.calendar_month_outlined),
+                        selectedIcon: Icon(Icons.calendar_month_rounded,
+                            color: AppColors.primary),
+                        label: 'Đặt lịch',
+                      ),
+                      NavigationDestination(
+                        icon: Icon(Icons.folder_outlined),
+                        selectedIcon: Icon(Icons.folder_rounded,
+                            color: AppColors.primary),
+                        label: 'Hồ sơ',
+                      ),
+                      NavigationDestination(
+                        icon: Icon(Icons.person_outline),
+                        selectedIcon: Icon(Icons.person_rounded,
+                            color: AppColors.primary),
+                        label: 'Tôi',
+                      ),
+                    ],
+                  ),
+                ),
+              ),
             ),
           ),
-          child: NavigationBarTheme(
-              data: NavigationBarThemeData(
-                  labelTextStyle: WidgetStateProperty.resolveWith((states) =>
-                      TextStyle(
-                          fontSize: 11,
-                          color: states.contains(WidgetState.selected)
-                              ? const Color(0xFF247BF3)
-                              : const Color(0xFF666666),
-                          fontWeight: states.contains(WidgetState.selected)
-                              ? FontWeight.w600
-                              : FontWeight.normal))),
-              child: NavigationBar(
-                height: 72,
-                backgroundColor: const Color(0xFFF5F7FA),
-                surfaceTintColor: Colors.transparent,
-                shadowColor: Colors.transparent,
-                elevation: 0,
-                indicatorColor: const Color(0xFFEAF4FF),
-                selectedIndex: _selectedIndex,
-                onDestinationSelected: _onTabSelected,
-                labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
-                destinations: const [
-                  NavigationDestination(
-                    icon: Icon(Icons.home_outlined),
-                    selectedIcon:
-                        Icon(Icons.home_rounded, color: Color(0xFF247BF3)),
-                    label: 'Trang chủ',
-                  ),
-                  NavigationDestination(
-                    icon: Icon(Icons.calendar_month_outlined),
-                    selectedIcon: Icon(Icons.calendar_month_rounded,
-                        color: Color(0xFF247BF3)),
-                    label: 'Đặt lịch',
-                  ),
-                  NavigationDestination(
-                    icon: Icon(Icons.folder_outlined),
-                    selectedIcon:
-                        Icon(Icons.folder_rounded, color: Color(0xFF247BF3)),
-                    label: 'Hồ sơ',
-                  ),
-                  NavigationDestination(
-                    icon: Icon(Icons.person_outline),
-                    selectedIcon:
-                        Icon(Icons.person_rounded, color: Color(0xFF247BF3)),
-                    label: 'Tôi',
-                  ),
-                ],
-              )),
         ),
       ),
     );

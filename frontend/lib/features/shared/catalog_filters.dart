@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../core/constants/app_colors.dart';
 
 /// Ô tìm kiếm ở đầu danh sách dịch vụ, bác sĩ.
 class CatalogSearchField extends StatelessWidget {
@@ -33,10 +34,10 @@ class CatalogSearchField extends StatelessWidget {
           isDense: true,
           border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(30),
-              borderSide: const BorderSide(color: Color(0xFFCCCCCC))),
+              borderSide: const BorderSide(color: AppColors.divider)),
           enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(30),
-              borderSide: const BorderSide(color: Color(0xFFCCCCCC)))));
+              borderSide: const BorderSide(color: AppColors.divider))));
 }
 
 /// Hàng chip chọn một, cùng kiểu chip đen trắng ở màn hình Thông báo, Đã lưu.
@@ -61,7 +62,7 @@ class SingleChoiceChips<T> extends StatelessWidget {
                   label: Text(entry.value),
                   selected: selected == entry.key,
                   showCheckmark: false,
-                  selectedColor: Colors.black,
+                  selectedColor: AppColors.primary,
                   labelStyle: TextStyle(
                       color:
                           selected == entry.key ? Colors.white : Colors.grey),

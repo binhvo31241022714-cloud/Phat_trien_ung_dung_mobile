@@ -21,4 +21,6 @@ export '../core/network/api_client.dart'
 /// ```
 final api = ApiClient(
   tokenProvider: () async => FirebaseAuth.instance.currentUser?.getIdToken(),
+  refreshTokenProvider: () async =>
+      FirebaseAuth.instance.currentUser?.getIdToken(true),
 );

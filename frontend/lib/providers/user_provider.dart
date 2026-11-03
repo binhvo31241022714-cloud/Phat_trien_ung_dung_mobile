@@ -75,6 +75,20 @@ class UserProvider extends ChangeNotifier {
   UserModel get account => _account;
   UserModel? get currentUser => _authenticated ? _account : null;
   bool get isAuthenticated => _authenticated;
+  String? _sessionExpiredMessage;
+
+  String? takeSessionExpiredMessage() {
+    final message = _sessionExpiredMessage;
+    _sessionExpiredMessage = null;
+    return message;
+  }
+
+  Future<void> handleSessionExpired() async {
+    _sessionExpiredMessage =
+        'Phiên đăng nhập đã hết hạn, vui lòng đăng nhập lại';
+    _setIdentity(null, '');
+    await _auth.signOut();
+  }
   // ===== Tùy chọn lưu trên máy =====
   static const _keyNotifications = 'settings.receiveNotifications';
   static const _keyLanguage = 'settings.languageCode';

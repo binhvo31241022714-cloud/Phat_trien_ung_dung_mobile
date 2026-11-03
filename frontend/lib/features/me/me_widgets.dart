@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
+import '../../core/constants/app_colors.dart';
 import '../../core/media/photo_picker.dart';
 import '../../core/utils/formatters.dart';
 import '../shared/media_image.dart';
 import '../shared/photo_source_sheet.dart';
 import '../../core/widgets/app_card.dart';
 
-const meBlue = Color(0xFF247BF3);
+const meBlue = AppColors.primaryDark;
 const demoSessionNotice =
     'Thay đổi chỉ được giữ trong phiên demo, chưa lưu lên máy chủ.';
 
@@ -33,22 +34,26 @@ class MePage extends StatelessWidget {
   final List<Widget> children;
   @override
   Widget build(BuildContext context) => Scaffold(
-      backgroundColor: const Color(0xFFF1F5FB),
+      extendBodyBehindAppBar: true,
       appBar: meAppBar(title),
-      body: ListView(
-          padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
-          keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
-          children: children));
+      body: DecoratedBox(
+          decoration: const BoxDecoration(gradient: AppColors.pageGradient),
+          child: ListView(
+              padding: const EdgeInsets.fromLTRB(16, 56, 16, 96),
+              keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+              children: children)));
 }
 
 AppBar meAppBar(String title) => AppBar(
     title: Text(title),
     centerTitle: false,
     toolbarHeight: 48,
-    backgroundColor: const Color(0xFFF1F5FB),
+    backgroundColor: Colors.transparent,
     surfaceTintColor: Colors.transparent,
     titleTextStyle: const TextStyle(
-        color: Colors.black, fontSize: 18, fontWeight: FontWeight.w600));
+        color: AppColors.primaryDark,
+        fontSize: 17,
+        fontWeight: FontWeight.w700));
 
 class MeCard extends StatelessWidget {
   const MeCard({required this.child, this.onTap, super.key});
@@ -56,9 +61,11 @@ class MeCard extends StatelessWidget {
   final VoidCallback? onTap;
   @override
   Widget build(BuildContext context) => Padding(
-      padding: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.only(bottom: 8),
       child: AppCard(
-          onTap: onTap, padding: const EdgeInsets.all(12), child: child));
+          onTap: onTap,
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+          child: child));
 }
 
 class MeMenuTile extends StatelessWidget {
@@ -72,12 +79,14 @@ class MeMenuTile extends StatelessWidget {
       contentPadding: EdgeInsets.zero,
       minLeadingWidth: 20,
       leading: Icon(icon, size: 20, color: meBlue),
-      title: Text(title),
+      title: Text(title, style: const TextStyle(fontSize: 14)),
       trailing: Row(mainAxisSize: MainAxisSize.min, children: [
         if (value != null)
           Text(value!,
-              style: const TextStyle(color: Color(0xFF666666), fontSize: 13)),
-        const Icon(Icons.chevron_right, size: 20)
+              style: const TextStyle(
+                  color: AppColors.primaryDark, fontSize: 12)),
+        const Icon(Icons.chevron_right,
+            size: 18, color: AppColors.primaryDark)
       ]),
       onTap: onTap);
 }

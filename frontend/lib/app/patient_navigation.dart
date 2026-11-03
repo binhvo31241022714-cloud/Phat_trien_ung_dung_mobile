@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/appointments_provider.dart';
 import '../providers/catalog_provider.dart';
+import '../providers/content_provider.dart';
 import '../providers/profile_provider.dart';
 import '../providers/user_provider.dart';
 
@@ -87,11 +88,13 @@ class PatientNavigation {
     final profile = context.read<ProfileProvider>();
     final catalog = context.read<CatalogProvider>();
     final appointments = context.read<AppointmentsProvider>();
+    final content = context.read<ContentProvider>();
     await context.read<UserProvider>().logout();
     if (!context.mounted) return;
     profile.clear();
     catalog.clear();
     appointments.clear();
+    content.clear();
     navigator.pushNamedAndRemoveUntil(
       AppRoutes.welcome,
       (_) => false,

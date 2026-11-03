@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../core/constants/app_colors.dart';
 import '../../../core/utils/formatters.dart';
 import '../booking_controller.dart';
 
@@ -39,8 +40,8 @@ class BookingPriceSummary extends StatelessWidget {
                             ? 'Đang tải giá…'
                             : 'Chưa có giá',
                     style: const TextStyle(
-                        color: Color(0xFF247BF3),
-                        fontSize: 18,
+                        color: AppColors.primary,
+                        fontSize: 16,
                         fontWeight: FontWeight.w600)),
                 Wrap(
                     spacing: 8,
@@ -62,7 +63,7 @@ class BookingPriceSummary extends StatelessWidget {
                                   ? onNext
                                   : null,
                           style: FilledButton.styleFrom(
-                              backgroundColor: Colors.black,
+                              backgroundColor: AppColors.primary,
                               minimumSize: const Size(0, 36),
                               padding:
                                   const EdgeInsets.symmetric(horizontal: 14)),

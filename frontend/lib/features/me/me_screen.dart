@@ -25,6 +25,7 @@ import 'change_password_screen.dart';
 import 'privacy_screen.dart';
 import 'help_screen.dart';
 import 'saved_items_screen.dart';
+import '../../core/constants/app_colors.dart';
 
 class MeScreen extends StatefulWidget {
   const MeScreen({super.key});
@@ -74,7 +75,17 @@ class _MeScreenState extends State<MeScreen> {
           child: DoctorDetailScreen(doctor: arg as Doctor)),
       _ => const _AccountOverview(),
     };
-    return MaterialPageRoute<void>(settings: settings, builder: (_) => page);
+    return PageRouteBuilder<void>(
+      settings: settings,
+      pageBuilder: (_, __, ___) => page,
+      transitionsBuilder: (_, animation, __, child) => SlideTransition(
+        position: Tween<Offset>(
+          begin: const Offset(0.12, 0),
+          end: Offset.zero,
+        ).chain(CurveTween(curve: Curves.easeOutCubic)).animate(animation),
+        child: FadeTransition(opacity: animation, child: child),
+      ),
+    );
   }
 
   @override
@@ -85,17 +96,18 @@ class _MeScreenState extends State<MeScreen> {
         borderSide: const BorderSide(color: Color(0xFFCCCCCC)));
     return Theme(
         data: Theme.of(context).copyWith(
-          textTheme: Theme.of(context)
-              .textTheme
-              .apply(bodyColor: Colors.black, displayColor: Colors.black),
-          colorScheme: Theme.of(context).colorScheme.copyWith(primary: meBlue),
+          textTheme: Theme.of(context).textTheme,
+          colorScheme: Theme.of(context)
+              .colorScheme
+              .copyWith(primary: AppColors.primary, secondary: AppColors.sky),
           cardTheme: CardThemeData(
-              color: const Color(0xFFF7F7F7),
-              elevation: 0,
+              color: Colors.white,
+              elevation: 2,
+              shadowColor: const Color(0x14000675),
               margin: EdgeInsets.zero,
               shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16),
-                  side: const BorderSide(color: Color(0xFFD8D8D8)))),
+                  borderRadius: BorderRadius.circular(18),
+                  side: BorderSide.none)),
           filledButtonTheme: FilledButtonThemeData(
               style: FilledButton.styleFrom(
                   backgroundColor: Colors.black,
@@ -104,12 +116,12 @@ class _MeScreenState extends State<MeScreen> {
                   shape: const StadiumBorder())),
           outlinedButtonTheme: OutlinedButtonThemeData(
               style: OutlinedButton.styleFrom(
-                  foregroundColor: Colors.black,
+                  foregroundColor: AppColors.primary,
                   minimumSize: const Size(0, 40),
-                  side: const BorderSide(color: Color(0xFFCCCCCC)),
+                  side: const BorderSide(color: AppColors.divider),
                   shape: const StadiumBorder())),
           textButtonTheme: TextButtonThemeData(
-              style: TextButton.styleFrom(foregroundColor: Colors.black)),
+              style: TextButton.styleFrom(foregroundColor: AppColors.primary)),
           inputDecorationTheme: InputDecorationTheme(
               filled: true,
               fillColor: const Color(0xFFF7F7F7),
@@ -139,32 +151,31 @@ class _AccountOverview extends StatelessWidget {
     final profile = context.watch<ProfileProvider>();
     return MePage(title: 'Tôi', children: [
       Center(
-          child: MeAvatar(
-              radius: 42, mediaId: profile.profile?.avatarMediaId)),
-      const SizedBox(height: 12),
+          child: MeAvatar(radius: 36, mediaId: profile.profile?.avatarMediaId)),
+      const SizedBox(height: 10),
       Text(profile.displayName(user.email),
           textAlign: TextAlign.center,
-          style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-      const SizedBox(height: 4),
+          style: const TextStyle(fontSize: 17, fontWeight: FontWeight.bold)),
+      const SizedBox(height: 3),
       const Text('Tài khoản bệnh nhân',
           textAlign: TextAlign.center,
-          style: TextStyle(color: Color(0xFF666666))),
+          style: TextStyle(fontSize: 12.5, color: Color(0xFF666666))),
       if (profile.profile?.health.hasWarning ?? false) ...[
         const SizedBox(height: 8),
         const Center(child: HealthWarningBadge()),
       ],
       // Chỉ nhắc, không chặn dùng app khi chưa xác minh.
       if (context.watch<UserProvider>().emailVerified == false) ...[
-        const SizedBox(height: 16),
+        const SizedBox(height: 14),
         const EmailVerificationCard(),
       ],
-      const SizedBox(height: 20),
+      const SizedBox(height: 14),
       // Lỗi tải hồ sơ: báo lỗi nhưng vẫn để menu và nút Đăng xuất dùng được.
       if (profile.profileError != null && !profile.profileLoading)
         MeCard(
             child: Row(children: [
           const Icon(Icons.error_outline, color: Colors.red),
-          const SizedBox(width: 12),
+          const SizedBox(width: 10),
           Expanded(child: Text('Chưa tải được hồ sơ: ${profile.profileError}')),
           TextButton(
               onPressed: profile.loadProfile, child: const Text('Thử lại')),
@@ -180,20 +191,24 @@ class _AccountOverview extends StatelessWidget {
         MeCard(
             onTap: () => MeRoutes.open(context, item.$3),
             child: Row(children: [
-              Icon(item.$2, color: meBlue, size: 22),
-              const SizedBox(width: 12),
+              Icon(item.$2, color: meBlue, size: 20),
+              const SizedBox(width: 10),
               Expanded(
                   child: Text(item.$1,
                       style: const TextStyle(
-                          fontSize: 16, fontWeight: FontWeight.w600))),
-              const Icon(Icons.chevron_right, color: Colors.grey, size: 20)
+                          fontSize: 14, fontWeight: FontWeight.w600))),
+              const Icon(Icons.chevron_right, color: Color(0xFF999999), size: 18)
             ])),
+      const SizedBox(height: 4),
       Theme(
           data: Theme.of(context).copyWith(
               outlinedButtonTheme: OutlinedButtonThemeData(
                   style: OutlinedButton.styleFrom(
                       foregroundColor: Colors.red,
                       side: BorderSide(color: Colors.red.shade200),
+                      minimumSize: const Size(0, 38),
+                      textStyle: const TextStyle(
+                          fontSize: 13.5, fontWeight: FontWeight.w600),
                       shape: const StadiumBorder()))),
           child: SecondaryButton(
               label: 'Đăng xuất',
@@ -229,7 +244,11 @@ class _Detail extends StatelessWidget {
   final Widget child;
   @override
   Widget build(BuildContext context) => Scaffold(
-      backgroundColor: const Color(0xFFF1F5FB),
+      extendBodyBehindAppBar: true,
+      backgroundColor: Colors.transparent,
       appBar: meAppBar(title),
-      body: child);
+      body: DecoratedBox(
+          decoration: const BoxDecoration(gradient: AppColors.pageGradient),
+          child: Padding(
+              padding: const EdgeInsets.only(top: 56), child: child)));
 }

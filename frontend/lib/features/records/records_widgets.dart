@@ -6,8 +6,9 @@ import '../../core/utils/formatters.dart';
 import '../../data/models/appointment.dart';
 import '../../data/models/patient_records.dart';
 import '../../data/providers/patient_data_provider.dart';
+import '../../core/constants/app_colors.dart';
 
-const recordsBlue = Color(0xFF247BF3);
+const recordsBlue = AppColors.primary;
 const missingRecordInfo = 'Chưa có thông tin';
 const missingRecordTime = 'Chưa có thời gian';
 
@@ -48,22 +49,6 @@ class RecordsPage extends StatelessWidget {
         (useRecordsState && AppConfig.current.dataSource == DataSource.api
             ? () => data.loadRecords()
             : null);
-    final visibleChildren = <Widget>[
-      if (useRecordsState && data.unavailableRecords > 0)
-        Card(
-            child: Padding(
-          padding: const EdgeInsets.all(12),
-          child:
-              Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            const Text(
-                'Dữ liệu hồ sơ chưa đầy đủ. Một số hồ sơ không còn khả dụng.'),
-            TextButton(
-                onPressed: () => data.loadRecords(),
-                child: const Text('Tải lại')),
-          ]),
-        )),
-      ...children,
-    ];
     final content = useRecordsState && data.recordsLoading
         ? const Center(child: CircularProgressIndicator())
         : useRecordsState && data.recordsError != null
@@ -85,25 +70,30 @@ class RecordsPage extends StatelessWidget {
               )
             : refresh == null
                 ? ListView(
-                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 20),
-                    children: visibleChildren)
+                    padding: const EdgeInsets.fromLTRB(16, 80, 16, 96),
+                    children: children)
                 : RefreshIndicator(
                     onRefresh: refresh,
                     child: ListView(
                         physics: const AlwaysScrollableScrollPhysics(),
-                        padding: const EdgeInsets.fromLTRB(16, 8, 16, 20),
-                        children: visibleChildren));
+                        padding: const EdgeInsets.fromLTRB(16, 80, 16, 96),
+                        children: children));
     return Scaffold(
-      backgroundColor: const Color(0xFFF1F5FB),
+      extendBodyBehindAppBar: true,
       appBar: AppBar(
           title: Text(title),
           centerTitle: false,
           toolbarHeight: 48,
-          backgroundColor: const Color(0xFFF1F5FB),
+          backgroundColor: Colors.transparent,
           surfaceTintColor: Colors.transparent,
           titleTextStyle: const TextStyle(
-              fontSize: 18, color: Colors.black, fontWeight: FontWeight.w600)),
-      body: content,
+              fontSize: 17,
+              color: AppColors.primaryDark,
+              fontWeight: FontWeight.w700)),
+      body: DecoratedBox(
+        decoration: const BoxDecoration(gradient: AppColors.pageGradient),
+        child: content,
+      ),
     );
   }
 }
@@ -116,6 +106,8 @@ class RecordCard extends StatelessWidget {
   Widget build(BuildContext context) => Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: Card(
+        elevation: 3,
+        shadowColor: const Color(0x26000675),
         child: InkWell(
             onTap: onTap,
             borderRadius: BorderRadius.circular(16),

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'media_image.dart';
+import '../../core/constants/app_colors.dart';
 
 /// Ảnh đại diện tròn của người khám: có [mediaId] thì hiện ảnh trên backend,
 /// không có (hoặc tải lỗi) thì hiện biểu tượng [icon].
@@ -50,6 +51,10 @@ class PatientOptionLabel extends StatelessWidget {
   Widget build(BuildContext context) => Row(children: [
         PersonAvatar(mediaId: avatarMediaId, radius: 12),
         const SizedBox(width: 8),
-        Expanded(child: Text(label, overflow: TextOverflow.ellipsis)),
+        Expanded(
+            child: Text(label,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                    color: AppColors.primaryDark, fontSize: 13))),
       ]);
 }

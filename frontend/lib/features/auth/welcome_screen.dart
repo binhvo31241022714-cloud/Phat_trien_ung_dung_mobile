@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../routes/app_routes.dart';
+import '../../core/constants/app_colors.dart';
 
 class WelcomeScreen extends StatelessWidget {
   const WelcomeScreen({super.key});
@@ -10,6 +11,7 @@ class WelcomeScreen extends StatelessWidget {
     final theme = Theme.of(context);
 
     return Scaffold(
+      backgroundColor: AppColors.background,
       body: SafeArea(
         child: LayoutBuilder(
             builder: (context, constraints) => SingleChildScrollView(
@@ -32,7 +34,7 @@ class WelcomeScreen extends StatelessWidget {
                             child: const Icon(
                               Icons.medical_services_rounded,
                               size: 65,
-                              color: Color(0xFF1677DA),
+                              color: AppColors.sky,
                             ),
                           ),
                           const SizedBox(height: 32),
@@ -40,14 +42,14 @@ class WelcomeScreen extends StatelessWidget {
                             'MediCare Dental',
                             style: theme.textTheme.headlineMedium?.copyWith(
                               fontWeight: FontWeight.bold,
-                              color: const Color(0xFF1677DA),
+                              color: AppColors.primary,
                             ),
                           ),
                           const SizedBox(height: 12),
                           const Text(
                             'Chăm sóc nụ cười của bạn',
                             style: TextStyle(
-                              fontSize: 18,
+                              fontSize: 15,
                               fontWeight: FontWeight.w600,
                             ),
                           ),
@@ -58,8 +60,9 @@ class WelcomeScreen extends StatelessWidget {
                             'cho cả gia đình.',
                             textAlign: TextAlign.center,
                             style: TextStyle(
-                              color: Color(0xFF666666),
-                              height: 1.6,
+                              color: AppColors.textSecondary,
+                              fontSize: 13,
+                              height: 1.45,
                             ),
                           ),
                           const Spacer(),
@@ -73,10 +76,7 @@ class WelcomeScreen extends StatelessWidget {
                                   AppRoutes.login,
                                 );
                               },
-                              child: const Text(
-                                'Đăng nhập',
-                                style: TextStyle(fontSize: 16),
-                              ),
+                              child: const Text('Đăng nhập'),
                             ),
                           ),
                           const SizedBox(height: 12),
@@ -90,10 +90,7 @@ class WelcomeScreen extends StatelessWidget {
                                   AppRoutes.register,
                                 );
                               },
-                              child: const Text(
-                                'Tạo tài khoản',
-                                style: TextStyle(fontSize: 16),
-                              ),
+                              child: const Text('Tạo tài khoản'),
                             ),
                           ),
                           const SizedBox(height: 20),

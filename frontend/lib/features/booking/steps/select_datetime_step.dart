@@ -1,7 +1,10 @@
 import '../../../core/utils/clinic_time.dart';
 import 'package:flutter/material.dart';
 
+import '../../../core/constants/app_colors.dart';
+import '../../../core/widgets/network_image_or_icon.dart';
 import '../../../data/models/availability_slot.dart';
+import '../../../data/models/doctor.dart';
 import '../booking_controller.dart';
 
 class SelectDatetimeStep extends StatelessWidget {
@@ -35,7 +38,7 @@ class SelectDatetimeStep extends StatelessWidget {
       context: context,
       initialDate: initialDate,
       firstDate: today,
-      lastDate: DateTime(today.year + 2, today.month, today.day),
+      lastDate: today.add(const Duration(days: 30)),
     );
 
     if (date != null) {
@@ -49,28 +52,39 @@ class SelectDatetimeStep extends StatelessWidget {
     final selectedTime = controller.time;
     final slots = controller.availabilitySlots;
 
+    final selectedDoctor = _selectedDoctor();
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(12),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            if (selectedDoctor != null) ...[
+              _doctorProfile(selectedDoctor),
+              const SizedBox(height: 14),
+            ],
             OutlinedButton(
               onPressed: controller.submitting || controller.created != null
                   ? null
                   : () => _pickDate(context),
+              style: OutlinedButton.styleFrom(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
+              ),
               child: Row(
                 children: [
-                  const Icon(Icons.calendar_today_outlined, size: 18),
-                  const SizedBox(width: 10),
+                  const Icon(Icons.calendar_today_outlined, size: 16),
+                  const SizedBox(width: 8),
                   Expanded(
                     child: Text(
                       selectedDate == null
                           ? 'Chọn ngày khám'
                           : _formatDate(selectedDate),
+                      style: const TextStyle(
+                          fontSize: 13, fontWeight: FontWeight.w500),
                     ),
                   ),
-                  const Icon(Icons.expand_more),
+                  const Icon(Icons.expand_more, size: 20),
                 ],
               ),
             ),
@@ -176,6 +190,13 @@ class SelectDatetimeStep extends StatelessWidget {
                 decoration: BoxDecoration(
                   color: const Color(0xFFEAF2FF),
                   borderRadius: BorderRadius.circular(12),
+                  boxShadow: const [
+                    BoxShadow(
+                      color: Color(0x0C000675),
+                      blurRadius: 6,
+                      offset: Offset(0, 2),
+                    ),
+                  ],
                 ),
                 child: Text(
                   'Đã chọn: $selectedTime'
@@ -189,6 +210,84 @@ class SelectDatetimeStep extends StatelessWidget {
             ],
           ],
         ),
+      ),
+    );
+  }
+
+  Doctor? _selectedDoctor() {
+    final id = controller.doctorId;
+    if (id == null) return null;
+    final doctors = controller.catalog == null
+        ? controller.data.doctors
+        : controller.catalog!.doctors;
+    for (final doctor in doctors) {
+      if (doctor.id == id) return doctor;
+    }
+    return null;
+  }
+
+  Widget _doctorProfile(Doctor doctor) {
+    return Container(
+      padding: const EdgeInsets.all(10),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [AppColors.glassPurpleStrong, Color(0xB8FFFFFF)],
+        ),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.white),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x10000675),
+            blurRadius: 8,
+            offset: Offset(0, 3),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          ClipRRect(
+            borderRadius: BorderRadius.circular(12),
+            child: Container(
+              width: 50,
+              height: 50,
+              color: const Color(0x66D9CCFF),
+              child: NetworkImageOrIcon(
+                url: doctor.avatarUrl,
+                icon: Icons.person_rounded,
+                iconSize: 28,
+                color: AppColors.primary,
+                width: 50,
+                height: 50,
+              ),
+            ),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text('Bác sĩ đã chọn',
+                    style: TextStyle(
+                        fontSize: 10, color: AppColors.textSecondary)),
+                const SizedBox(height: 2),
+                Text(doctor.fullName,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.textPrimary)),
+                Text(doctor.specialty,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                        fontSize: 11, color: AppColors.textSecondary)),
+              ],
+            ),
+          ),
+          const Icon(Icons.check_circle_rounded,
+              color: AppColors.primary, size: 20),
+        ],
       ),
     );
   }
@@ -219,7 +318,14 @@ class SelectDatetimeStep extends StatelessWidget {
             },
       key: ValueKey('slot-${slot.date}-${slot.doctorId}-${slot.startTime}'),
       label: Text(slot.startTime,
-          style: const TextStyle(fontWeight: FontWeight.w600)),
+          style: TextStyle(
+              fontSize: 12.5,
+              fontWeight: selected ? FontWeight.w700 : FontWeight.w500)),
+      elevation: selected ? 1.5 : 0.5,
+      shadowColor: const Color(0x14000675),
+      visualDensity: VisualDensity.compact,
+      materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+      labelPadding: const EdgeInsets.symmetric(horizontal: 4, vertical: 0),
     );
   }
 }
