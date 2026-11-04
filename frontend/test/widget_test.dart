@@ -13,6 +13,8 @@ import 'support/fake_appointments_provider.dart';
 import 'support/fake_catalog_backend.dart';
 import 'support/fake_profile_backend.dart';
 import 'support/fake_auth_service.dart';
+import 'support/empty_content_provider.dart';
+import 'package:frontend/providers/content_provider.dart';
 
 Widget _withProviders(Widget child) {
   return MultiProvider(
@@ -25,6 +27,10 @@ Widget _withProviders(Widget child) {
       ChangeNotifierProvider(create: (_) => FakeCatalogBackend().provider()),
       ChangeNotifierProvider<AppointmentsProvider>(
         create: (_) => FakeAppointmentsProvider(),
+      ),
+      // Như main.dart: luôn có ContentProvider (Đăng xuất sẽ xóa nó).
+      ChangeNotifierProvider<ContentProvider>(
+        create: (_) => emptyContentProvider(),
       ),
     ],
     child: child,
@@ -129,6 +135,12 @@ void main() {
     await tester.pumpAndSettle();
     data.focusAppointmentsFor(data.patients.last.id);
     await tester.pumpAndSettle();
+    // Tab Tôi vẫn đang cuộn tới mục "Đã lưu": cuộn lên để thấy tên tài khoản.
+    await tester.scrollUntilVisible(
+      find.text(data.patients.first.fullName),
+      -200,
+      scrollable: find.byType(Scrollable).first,
+    );
     expect(find.text(data.patients.first.fullName), findsOneWidget);
 
     await tester.tap(find.text('Đặt lịch').last);
