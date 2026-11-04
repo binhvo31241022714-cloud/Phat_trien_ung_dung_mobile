@@ -29,9 +29,24 @@ class AppColors {
   static const selection = Color(0xFFDDF0FF);
   static const translucentSurface = Color(0xBFFFFFFF);
 
-  // Compatibility for screens migrated in later batches: flat page background,
-  // and blue selection fills under the existing token names. No module changes.
-  static const pageGradient = LinearGradient(colors: [background, background]);
+  /// Nền trang: xanh pastel ở trên nhạt dần sang trắng ở dưới.
+  /// AppBar và Scaffold dùng [pageTop] để nối liền với phần đầu gradient.
+  static const pageTop = Color(0xFFDCEBFF);
+  static const pageGradient = LinearGradient(
+    begin: Alignment.topCenter,
+    end: Alignment.bottomCenter,
+    colors: [pageTop, Color(0xFFEEF5FF), Colors.white],
+    stops: [0, .5, 1],
+  );
+
+  /// Thẻ bác sĩ: pastel đậm hơn nền trang một chút.
+  static const doctorCardGradient = LinearGradient(
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+    colors: [Color(0xFFCBE0FD), Color(0xFFBBD6FA)],
+  );
+
+  // Blue selection fills under the existing token names.
   static const glassPurple = Color(0xBFEAF5FF);
   static const glassPurpleStrong = selection;
 }

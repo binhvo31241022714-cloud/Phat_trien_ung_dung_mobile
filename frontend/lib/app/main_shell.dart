@@ -1,3 +1,4 @@
+import '../core/widgets/page_background.dart';
 import '../providers/content_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -30,6 +31,7 @@ class _MainShellState extends State<MainShell> with WidgetsBindingObserver {
   String? _accountError;
   UserProfile? _appliedProfile;
   List<FamilyMember>? _appliedFamily;
+  List<FamilyMember>? _appliedHistoryFamily;
 
   @override
   void initState() {
@@ -84,8 +86,12 @@ class _MainShellState extends State<MainShell> with WidgetsBindingObserver {
     if (!current() || profiles.profile == null) return;
     if (!profiles.familyLoaded) await profiles.loadFamily();
     if (!current()) return;
+    await profiles.loadHistoryFamily();
+    if (!current()) return;
     records.syncPatients(profiles.profile!, profiles.family,
-        generation: generation);
+        generation: generation,
+        historyFamily:
+            profiles.historyFamilyLoaded ? profiles.historyFamily : null);
     content.loadHome();
     content.loadUnread();
     await records.loadRecords();
@@ -106,8 +112,10 @@ class _MainShellState extends State<MainShell> with WidgetsBindingObserver {
     if (AppConfig.current.dataSource == DataSource.api &&
         profiles.familyLoaded &&
         profiles.profile != null &&
-        !identical(family, _appliedFamily)) {
+        (!identical(family, _appliedFamily) ||
+            !identical(profiles.historyFamily, _appliedHistoryFamily))) {
       _appliedFamily = family;
+      _appliedHistoryFamily = profiles.historyFamily;
       final records = context.read<PatientDataProvider>();
       final generation = records.sessionGeneration;
       WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -117,7 +125,15 @@ class _MainShellState extends State<MainShell> with WidgetsBindingObserver {
             latest == null) {
           return;
         }
-        records.syncPatients(latest, profiles.family, generation: generation);
+        records.syncPatients(latest, profiles.family,
+            generation: generation,
+            historyFamily:
+                profiles.historyFamilyLoaded ? profiles.historyFamily : null);
+        if (!profiles.historyFamilyLoaded &&
+            !profiles.historyFamilyLoading &&
+            profiles.historyFamilyError == null) {
+          profiles.loadHistoryFamily();
+        }
       });
     }
 
@@ -159,16 +175,18 @@ class _MainShellState extends State<MainShell> with WidgetsBindingObserver {
         context.watch<PatientDataProvider>().patients.isEmpty) {
       final profiles = context.watch<ProfileProvider>();
       return Scaffold(
-          body: Center(
-              child: (_accountError ?? profiles.profileError) == null
-                  ? const CircularProgressIndicator()
-                  : Column(mainAxisSize: MainAxisSize.min, children: [
-                      Text(_accountError ??
-                          profiles.profileError ??
-                          'Chưa có hồ sơ người khám'),
-                      TextButton(
-                          onPressed: _loadAccount, child: const Text('Thử lại'))
-                    ])));
+          body: PageBackground(
+              child: Center(
+                  child: (_accountError ?? profiles.profileError) == null
+                      ? const CircularProgressIndicator()
+                      : Column(mainAxisSize: MainAxisSize.min, children: [
+                          Text(_accountError ??
+                              profiles.profileError ??
+                              'Chưa có hồ sơ người khám'),
+                          TextButton(
+                              onPressed: _loadAccount,
+                              child: const Text('Thử lại'))
+                        ]))));
     }
     return MainShellScope(
       onSelectTab: _onTabSelected,

@@ -43,7 +43,7 @@ class AppTheme {
     return ThemeData(
       useMaterial3: true,
       colorScheme: scheme,
-      scaffoldBackgroundColor: AppColors.background,
+      scaffoldBackgroundColor: AppColors.pageTop,
       visualDensity: VisualDensity.standard,
       textTheme: const TextTheme(
           headlineMedium: AppTextStyles.headline,
@@ -56,7 +56,7 @@ class AppTheme {
           labelLarge: AppTextStyles.button),
       appBarTheme: const AppBarTheme(
           centerTitle: false,
-          backgroundColor: AppColors.background,
+          backgroundColor: AppColors.pageTop,
           foregroundColor: AppColors.textPrimary,
           elevation: 0,
           surfaceTintColor: Colors.transparent,

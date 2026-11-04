@@ -10,6 +10,8 @@ import 'package:provider/provider.dart';
 
 import '../../app/patient_navigation.dart';
 import '../../features/shared/catalog_navigation.dart';
+import '../../features/shared/doctor_profile_card.dart';
+import '../../features/shared/person_avatar.dart';
 import '../../features/services/service_list_screen.dart';
 import '../../features/services/service_detail_screen.dart';
 import '../../features/doctors/doctor_list_screen.dart';
@@ -22,7 +24,6 @@ import '../../core/widgets/network_image_or_icon.dart';
 import '../../data/models/appointment.dart';
 import '../../data/models/article.dart';
 import '../../data/models/dental_service.dart';
-import '../../data/models/doctor.dart';
 import '../../data/providers/patient_data_provider.dart';
 import '../../providers/catalog_provider.dart';
 import '../../providers/profile_provider.dart';
@@ -59,9 +60,9 @@ class _HomeOverview extends StatelessWidget {
   Widget build(BuildContext context) {
     final data = context.watch<PatientDataProvider>();
     // Tên lấy từ /api/users/me; chưa tải được thì hiện email đăng nhập.
-    final displayName = context
-        .watch<ProfileProvider>()
-        .displayName(context.watch<UserProvider>().account.email);
+    final profile = context.watch<ProfileProvider>();
+    final displayName =
+        profile.displayName(context.watch<UserProvider>().account.email);
     final content = AppConfig.current.dataSource == DataSource.api
         ? context.watch<ContentProvider>()
         : null;
@@ -94,7 +95,7 @@ class _HomeOverview extends StatelessWidget {
 
     return Scaffold(
       body: DecoratedBox(
-        decoration: const BoxDecoration(color: AppColors.background),
+        decoration: const BoxDecoration(gradient: AppColors.pageGradient),
         child: SafeArea(
           child: Center(
             child: ConstrainedBox(
@@ -159,6 +160,17 @@ class _HomeOverview extends StatelessWidget {
                     Row(
                       crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
+                        // Ảnh đại diện đồng bộ với tab Tôi; chưa có ảnh thì
+                        // hiện biểu tượng người.
+                        PersonAvatar(
+                          key: const ValueKey('home-avatar'),
+                          mediaId: profile.profile?.avatarMediaId,
+                          radius: 24,
+                          icon: Icons.person_rounded,
+                          iconColor: AppColors.primary,
+                          background: Colors.white,
+                        ),
+                        const SizedBox(width: 12),
                         Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
@@ -215,7 +227,7 @@ class _HomeOverview extends StatelessWidget {
                                 key: const ValueKey(
                                     'home-featuredServices-carousel'),
                                 label: 'Dịch vụ nha khoa',
-                                navigationCenterY: 37,
+                                navigationCenterY: 52,
                                 itemWidth: 176,
                                 itemCount: featuredServices.length,
                                 showNavigation: true,
@@ -248,11 +260,14 @@ class _HomeOverview extends StatelessWidget {
                                 key: const ValueKey('home-doctors-carousel'),
                                 label: 'Bác sĩ',
                                 navigationCenterY: 37,
-                                itemWidth: 120,
+                                itemWidth: 320,
+                                pageSnapping: true,
                                 itemCount: doctors.length,
                                 itemBuilder: (context, index) {
                                   final doctor = doctors[index];
-                                  return _DoctorTile(
+                                  return DoctorProfileCard(
+                                    key: ValueKey(
+                                        'home-doctor-card-${doctor.id}'),
                                     doctor: doctor,
                                     onTap: () => CatalogNavigation.open(
                                         context,
@@ -400,7 +415,7 @@ class _HomeOverview extends StatelessWidget {
                     SizedBox(width: 10),
                     Expanded(
                         child: Text(
-                      'Lịch hẹn',
+                      'Lịch hẹn sắp tới',
                       style: TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.w700,
@@ -445,7 +460,7 @@ class _HomeOverview extends StatelessWidget {
                     const SizedBox(width: 8),
                     const Expanded(
                       child: Text(
-                        'Lịch hẹn',
+                        'Lịch hẹn sắp tới',
                         style: TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w700,
@@ -789,72 +804,6 @@ class _ServiceTile extends StatelessWidget {
                   size: 16,
                 ),
               ],
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _DoctorTile extends StatelessWidget {
-  final Doctor doctor;
-  final VoidCallback onTap;
-
-  const _DoctorTile({
-    required this.doctor,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      width: 120,
-      child: AppCard(
-        onTap: onTap,
-        padding: const EdgeInsets.all(12),
-        child: Column(
-          children: [
-            Container(
-              width: double.infinity,
-              height: 62,
-              clipBehavior: Clip.antiAlias,
-              decoration: BoxDecoration(
-                color: AppColors.accent,
-                borderRadius: BorderRadius.circular(14),
-              ),
-              child: NetworkImageOrIcon(
-                url: doctor.avatarUrl,
-                alignment: Alignment.topCenter,
-                icon: Icons.person_rounded,
-                iconSize: 40,
-                color: AppColors.primary,
-                width: double.infinity,
-                height: 62,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              doctor.fullName.replaceFirst('BS. ', ''),
-              textAlign: TextAlign.center,
-              style: const TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w700,
-                color: AppColors.textPrimary,
-              ),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
-            const SizedBox(height: 2),
-            Text(
-              doctor.specialty,
-              textAlign: TextAlign.center,
-              style: const TextStyle(
-                fontSize: 12,
-                color: AppColors.textSecondary,
-              ),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
             ),
           ],
         ),

@@ -1,3 +1,4 @@
+import '../../core/widgets/page_background.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -55,7 +56,8 @@ class _UserFormScreenState extends State<UserFormScreen> {
     return Scaffold(
       appBar:
           AppBar(title: Text(_isEdit ? 'Sửa người dùng' : 'Thêm người dùng')),
-      body: Form(
+      body: PageBackground(
+          child: Form(
         key: _formKey,
         child: ListView(
           padding: const EdgeInsets.all(16),
@@ -84,7 +86,7 @@ class _UserFormScreenState extends State<UserFormScreen> {
             ),
           ],
         ),
-      ),
+      )),
     );
   }
 }

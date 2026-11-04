@@ -6,31 +6,48 @@ import 'package:frontend/screens/home/home_screen.dart';
 import 'support/api_app_fixture.dart';
 import 'support/data_source_scope.dart';
 
+/// Thêm 3 bản sao cho mỗi danh mục để carousel có thể cuộn.
+void _addRows(ApiAppFixture f) {
+  for (final rows in [f.services, f.doctors, f.articles]) {
+    final sample = Map<String, dynamic>.from(rows.first);
+    rows.addAll([
+      for (var i = 1; i < 4; i++)
+        {
+          ...sample,
+          'id': '${sample['id']}-$i',
+          if (sample.containsKey('name')) 'name': '${sample['name']} $i',
+          if (sample.containsKey('title')) 'title': '${sample['title']} $i',
+        }
+    ]);
+  }
+}
+
+const _keys = {
+  'services': 'featuredServices',
+  'doctors': 'doctors',
+  'articles': 'articles',
+};
+
+/// Thẻ bác sĩ rộng bằng khung carousel; dịch vụ và bài viết có độ rộng cố định.
+Finder _tiles(Finder carousel, String section) => find.descendant(
+    of: carousel,
+    matching: section == 'doctors'
+        ? find.byWidgetPredicate((w) =>
+            w.key is ValueKey<String> &&
+            (w.key as ValueKey<String>).value.startsWith('home-doctor-card-'))
+        : find.byWidgetPredicate((w) =>
+            w is SizedBox &&
+            w.width == (section == 'services' ? 176.0 : 180.0)));
+
 void main() {
   setUp(() => useDataSourceForTest(DataSource.api));
   for (final section in ['services', 'doctors', 'articles']) {
-    testWidgets('Home $section arrows, card and View all retain API navigation',
+    testWidgets('Home $section scroll, card and View all retain API navigation',
         (t) async {
       final f = ApiAppFixture();
-      for (final rows in [f.services, f.doctors, f.articles]) {
-        final sample = Map<String, dynamic>.from(rows.first);
-        rows.addAll([
-          for (var i = 1; i < 4; i++)
-            {
-              ...sample,
-              'id': '${sample['id']}-$i',
-              if (sample.containsKey('name')) 'name': '${sample['name']} $i',
-              if (sample.containsKey('title')) 'title': '${sample['title']} $i',
-            }
-        ]);
-      }
+      _addRows(f);
       await f.mount(t, width: 360, height: 700);
-      final key = {
-        'services': 'featuredServices',
-        'doctors': 'doctors',
-        'articles': 'articles'
-      }[section]!;
-      final carousel = find.byKey(ValueKey('home-$key-carousel'));
+      final carousel = find.byKey(ValueKey('home-${_keys[section]}-carousel'));
       await t.ensureVisible(carousel);
       await t.pumpAndSettle();
       final calls = f.requests.length;
@@ -41,30 +58,47 @@ void main() {
           matching: find.byKey(const ValueKey('carousel-previous')));
       final scroll =
           find.descendant(of: carousel, matching: find.byType(Scrollable));
-      final viewport = t.getRect(
-          find.descendant(of: carousel, matching: find.byType(ListView)));
-      final left = t.getRect(previous);
-      final right = t.getRect(next);
+      final position = t.state<ScrollableState>(scroll).position;
       final bounds = t.getRect(carousel);
-      final controlCenter =
-          {'services': 37.0, 'doctors': 37.0, 'articles': 46.0}[section]!;
-      expect(left.center.dy, closeTo(viewport.top + controlCenter, 0.1));
-      expect(right.center.dy, closeTo(viewport.top + controlCenter, 0.1));
-      expect(left.left, closeTo(bounds.left, 0.1));
-      expect(right.right, closeTo(bounds.right, 0.1));
-      expect(viewport.left, closeTo(bounds.left, 0.1));
-      expect(viewport.right, closeTo(bounds.right, 0.1));
-      expect(left.size, const Size(32, 32));
-      expect(right.size, const Size(32, 32));
-      expect(find.descendant(of: carousel, matching: find.byType(IconButton)),
-          findsNWidgets(2));
-      await t.tap(next);
-      await t.pumpAndSettle();
-      expect(t.state<ScrollableState>(scroll).position.pixels, greaterThan(0));
-      await t.tap(previous);
-      await t.pumpAndSettle();
-      expect(t.state<ScrollableState>(scroll).position.pixels, 0);
-      expect(f.requests.length, calls, reason: 'arrows must not fetch the API');
+      expect(t.getRect(scroll).left, closeTo(bounds.left, 0.1));
+      expect(t.getRect(scroll).right, closeTo(bounds.right, 0.1));
+
+      if (section == 'services') {
+        // Chỉ mục Dịch vụ có mũi tên, nằm sát hai mép carousel.
+        expect(t.getRect(previous).left, closeTo(bounds.left, 0.1));
+        expect(t.getRect(next).right, closeTo(bounds.right, 0.1));
+        expect(t.getRect(previous).center.dy,
+            closeTo(t.getRect(next).center.dy, 0.1));
+        expect(t.getRect(previous).center.dy, closeTo(bounds.top + 52, 0.1));
+        // Ở đầu danh sách: không lùi được.
+        expect(t.widget<IconButton>(previous).onPressed, isNull);
+        await t.tap(next);
+        await t.pumpAndSettle();
+        expect(position.pixels, closeTo(176, 0.5));
+        await t.tap(previous);
+        await t.pumpAndSettle();
+        expect(position.pixels, 0);
+      } else {
+        expect(next, findsNothing);
+        expect(previous, findsNothing);
+        // Bác sĩ cần quẹt (có vận tốc); kéo chậm dưới nửa thẻ sẽ bật về.
+        if (section == 'doctors') {
+          await t.fling(scroll, const Offset(-120, 0), 800);
+        } else {
+          await t.drag(scroll, const Offset(-120, 0));
+        }
+        await t.pumpAndSettle();
+        expect(position.pixels, greaterThan(0));
+        if (section == 'doctors') {
+          // Bác sĩ dừng đúng mép thẻ kế tiếp.
+          expect(position.pixels, closeTo(bounds.width - 8 + 12, 0.5));
+        }
+        position.jumpTo(0);
+        await t.pump();
+      }
+      expect(f.requests.length, calls,
+          reason: 'scrolling must not fetch the API');
+
       final cardText = {
         'services': 'Dịch vụ API',
         'doctors': 'Bác sĩ API',
@@ -72,16 +106,22 @@ void main() {
       }[section]!;
       final card = find.descendant(of: carousel, matching: find.text(cardText));
       await t.ensureVisible(card);
-      final titleBounds = t.getRect(card);
-      final currentArrows = [t.getRect(previous), t.getRect(next)];
-      for (final arrowBounds in currentArrows) {
-        expect(arrowBounds.overlaps(titleBounds), isFalse,
-            reason: 'floating controls must not cover the title/name');
+      await t.pumpAndSettle();
+      if (section == 'services') {
+        final title = t.getRect(card);
+        for (final arrow in [t.getRect(previous), t.getRect(next)]) {
+          expect(arrow.overlaps(title), isFalse,
+              reason: 'floating controls must not cover the title');
+        }
       }
-      final tile =
-          find.ancestor(of: card, matching: find.byType(SizedBox)).first;
-      expect(t.getSize(tile).width,
-          {'services': 176.0, 'doctors': 120.0, 'articles': 180.0}[section]);
+      final tile = _tiles(carousel, section);
+      expect(
+          t.getSize(tile.first).width,
+          {
+            'services': 176.0,
+            'doctors': bounds.width - 8,
+            'articles': 180.0
+          }[section]!);
       await t.tap(card);
       await t.pumpAndSettle();
       final detail = {
@@ -92,7 +132,7 @@ void main() {
       expect(find.text(detail), findsOneWidget);
       await t.tap(find.byIcon(Icons.arrow_back).first);
       await t.pumpAndSettle();
-      // Home keeps all three existing View-all actions; the arrows are separate.
+      // Trang chủ giữ nguyên 3 nút "Xem tất cả".
       final action = find
           .text('Xem tất cả')
           .at({'services': 0, 'doctors': 1, 'articles': 2}[section]!);
@@ -119,43 +159,37 @@ void main() {
     expect(t.takeException(), isNull);
     expect(find.byType(HomeScreen), findsOneWidget);
   });
-  testWidgets(
-      'original Home geometry at current emulator logical size 1080x2400 density420',
+
+  testWidgets('Home geometry at emulator logical size 1080x2400 density420',
       (t) async {
     final f = ApiAppFixture();
-    for (final rows in [f.services, f.doctors, f.articles]) {
-      final sample = Map<String, dynamic>.from(rows.first);
-      rows.addAll([
-        for (var i = 1; i < 4; i++) {...sample, 'id': '${sample['id']}-$i'}
-      ]);
-    }
+    _addRows(f);
     // adb wm: 1080x2400 pixels at 420 dpi => density ratio 420/160.
-    await f.mount(t, width: 1080 / (420 / 160), height: 2400 / (420 / 160));
-    for (final entry in [
-      ('featuredServices', 176.0, 148.0),
-      ('doctors', 120.0, 118.0),
-      ('articles', 180.0, 170.0),
-    ]) {
-      final carousel = find.byKey(ValueKey('home-${entry.$1}-carousel'));
+    const width = 1080 / (420 / 160);
+    await f.mount(t, width: width, height: 2400 / (420 / 160));
+    for (final section in ['services', 'doctors', 'articles']) {
+      final carousel = find.byKey(ValueKey('home-${_keys[section]}-carousel'));
       await t.ensureVisible(carousel);
-      await t.pumpAndSettle();
-      final viewport =
-          find.descendant(of: carousel, matching: find.byType(ListView));
-      expect(t.getSize(viewport).width, closeTo(1080 / (420 / 160) - 32, 0.1));
-      expect(t.getSize(carousel).height, entry.$3);
-      final tile = find.descendant(
-          of: viewport,
-          matching: find
-              .byWidgetPredicate((w) => w is SizedBox && w.width == entry.$2));
-      expect(tile, findsWidgets);
-      expect(t.getSize(tile.first).width, entry.$2);
-      final next = find.descendant(
-          of: carousel, matching: find.byKey(const ValueKey('carousel-next')));
-      await t.tap(next);
       await t.pumpAndSettle();
       final scroll =
           find.descendant(of: carousel, matching: find.byType(Scrollable));
-      expect(t.state<ScrollableState>(scroll).position.pixels, greaterThan(0));
+      expect(t.getSize(scroll).width, closeTo(width - 32, 0.1));
+      final tiles = _tiles(carousel, section);
+      expect(tiles, findsWidgets);
+      expect(
+          t.getSize(tiles.first).width,
+          closeTo(
+              {
+                'services': 176.0,
+                'doctors': width - 32 - 8,
+                'articles': 180.0
+              }[section]!,
+              0.1));
+      // Các thẻ trong cùng carousel cao bằng nhau.
+      final height = t.getSize(tiles.first).height;
+      for (var i = 0; i < tiles.evaluate().length; i++) {
+        expect(t.getSize(tiles.at(i)).height, height);
+      }
       expect(t.takeException(), isNull);
     }
   });

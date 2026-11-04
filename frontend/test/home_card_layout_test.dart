@@ -27,10 +27,20 @@ void main() {
           expect(t.takeException(), isNull);
           final cards = find.descendant(
               of: carousel,
-              matching: find.byWidgetPredicate((w) =>
-                  w is SizedBox &&
-                  w.width == (section == 'doctors' ? 120 : 180)));
+              matching: section == 'doctors'
+                  ? find.byWidgetPredicate((w) =>
+                      w.key is ValueKey<String> &&
+                      (w.key as ValueKey<String>)
+                          .value
+                          .startsWith('home-doctor-card-'))
+                  : find.byWidgetPredicate(
+                      (w) => w is SizedBox && w.width == 180));
           final height = t.getSize(cards.first).height;
+          if (section == 'doctors') {
+            // Thẻ bác sĩ rộng bằng khung carousel (trừ padding 4 mỗi bên).
+            expect(t.getSize(cards.first).width,
+                closeTo(t.getSize(carousel).width - 8, 0.1));
+          }
           for (var i = 0; i < cards.evaluate().length; i++) {
             expect(t.getSize(cards.at(i)).height, height);
           }
@@ -38,4 +48,35 @@ void main() {
       });
     }
   }
+
+  testWidgets('Home doctors swipe moves exactly one doctor per gesture',
+      (t) async {
+    final f = ApiAppFixture();
+    final sample = Map<String, dynamic>.from(f.doctors.first);
+    f.doctors.addAll([
+      for (var i = 1; i < 4; i++)
+        {...sample, 'id': '${sample['id']}-$i', 'name': '${sample['name']} $i'}
+    ]);
+    f.content.setAccount(ApiAppFixture.owner);
+    await f.content.loadHome();
+    await f.mount(t, width: 360, height: 800, home: const HomeScreen());
+    final carousel = find.byKey(const ValueKey('home-doctors-carousel'));
+    await t.ensureVisible(carousel);
+    await t.pumpAndSettle();
+    final scroll =
+        find.descendant(of: carousel, matching: find.byType(Scrollable));
+    final position = t.state<ScrollableState>(scroll).position;
+    final page = t.getSize(carousel).width - 8 + 12;
+    // Vuốt ngắn vẫn sang đúng 1 thẻ; vuốt mạnh cũng không nhảy quá 1 thẻ.
+    await t.fling(carousel, const Offset(-60, 0), 400);
+    await t.pumpAndSettle();
+    expect(position.pixels, closeTo(page, 0.5));
+    await t.fling(carousel, const Offset(-300, 0), 3000);
+    await t.pumpAndSettle();
+    expect(position.pixels, closeTo(page * 2, 0.5));
+    await t.fling(carousel, const Offset(60, 0), 400);
+    await t.pumpAndSettle();
+    expect(position.pixels, closeTo(page, 0.5));
+    expect(t.takeException(), isNull);
+  });
 }

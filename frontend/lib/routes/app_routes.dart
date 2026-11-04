@@ -1,3 +1,4 @@
+import '../core/widgets/page_background.dart';
 import 'package:flutter/material.dart';
 
 import '../data/models/user_model.dart';
@@ -90,9 +91,10 @@ class AppRoutes {
       default:
         return MaterialPageRoute(
           builder: (_) => const Scaffold(
-            body: Center(
+            body: PageBackground(
+                child: Center(
               child: Text('Không tìm thấy trang'),
-            ),
+            )),
           ),
         );
     }
@@ -106,9 +108,10 @@ class _InvalidRouteArgumentsScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('Không thể mở nội dung')),
-      body: const Center(
+      body: const PageBackground(
+          child: Center(
         child: Text('Thông tin trang chi tiết không hợp lệ.'),
-      ),
+      )),
     );
   }
 }

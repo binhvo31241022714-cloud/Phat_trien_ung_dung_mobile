@@ -1,3 +1,4 @@
+import '../../core/widgets/page_background.dart';
 import 'package:flutter/material.dart';
 
 class PatientDetailArguments {
@@ -26,12 +27,13 @@ class PatientDetailScreen extends StatelessWidget {
           tooltip: 'Quay lại',
         ),
       ),
-      body: SafeArea(
+      body: PageBackground(
+          child: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(20),
           child: Text(details.description),
         ),
-      ),
+      )),
     );
   }
 }

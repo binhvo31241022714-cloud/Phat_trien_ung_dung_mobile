@@ -52,6 +52,22 @@ class RecordsPage extends StatelessWidget {
         (useRecordsState && AppConfig.current.dataSource == DataSource.api
             ? () => data.loadRecords()
             : null);
+    final visibleChildren = <Widget>[
+      if (useRecordsState && data.unavailableRecords > 0)
+        Card(
+            child: Padding(
+          padding: const EdgeInsets.all(12),
+          child:
+              Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            const Text(
+                'Dữ liệu hồ sơ chưa đầy đủ. Một số hồ sơ không còn khả dụng.'),
+            TextButton(
+                onPressed: () => data.loadRecords(),
+                child: const Text('Tải lại')),
+          ]),
+        )),
+      ...children,
+    ];
     final listPadding = patientId == null
         ? AppTokens.scrollInsets
         : AppTokens.scrollInsets.copyWith(top: 0);
@@ -75,13 +91,13 @@ class RecordsPage extends StatelessWidget {
                 ),
               )
             : refresh == null
-                ? ListView(padding: listPadding, children: children)
+                ? ListView(padding: listPadding, children: visibleChildren)
                 : RefreshIndicator(
                     onRefresh: refresh,
                     child: ListView(
                         physics: const AlwaysScrollableScrollPhysics(),
                         padding: listPadding,
-                        children: children));
+                        children: visibleChildren));
     return Scaffold(
       appBar: AppBar(title: Text(title)),
       body: DecoratedBox(

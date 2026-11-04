@@ -171,7 +171,8 @@ void main() {
     final provider = PatientDataProvider();
     expect(() => provider.patients.clear(), throwsUnsupportedError);
     expect(AppTheme.light.useMaterial3, isTrue);
-    expect(AppTheme.light.colorScheme.primary.toARGB32(), 0xFF1677DA);
+    // Màu chủ đạo theo bộ nhận diện mới.
+    expect(AppTheme.light.colorScheme.primary, AppColors.primary);
   });
 
   testWidgets('thẻ dùng chung vừa màn hình mobile hẹp', (tester) async {
@@ -203,6 +204,6 @@ void main() {
         reason: '${card.runtimeType} should fit a narrow mobile viewport',
       );
     }
-    expect(AppColors.background, const Color(0xFFF8FBFF));
+    expect(AppColors.background, const Color(0xFFF8FAFF));
   });
 }

@@ -6,6 +6,6 @@ class PageBackground extends StatelessWidget {
   final Widget child;
   @override
   Widget build(BuildContext context) => DecoratedBox(
-      decoration: const BoxDecoration(color: AppColors.background),
+      decoration: const BoxDecoration(gradient: AppColors.pageGradient),
       child: SizedBox.expand(child: child));
 }

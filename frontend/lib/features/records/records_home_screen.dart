@@ -128,7 +128,7 @@ class _RecordsOverview extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final data = context.watch<PatientDataProvider>();
-    final profiles = context.watch<ProfileProvider>();
+    final profiles = context.watch<ProfileProvider?>();
     final p = data.recordsPatient;
     final counts = [
       data
@@ -147,11 +147,12 @@ class _RecordsOverview extends StatelessWidget {
       RecordsRoutes.treatments
     ];
     return RecordsPage(title: 'Hồ sơ nha khoa', children: [
-      if (profiles.historyFamilyLoading) const LinearProgressIndicator(),
-      if (profiles.historyFamilyError != null)
+      if (profiles?.historyFamilyLoading == true)
+        const LinearProgressIndicator(),
+      if (profiles?.historyFamilyError != null)
         Column(children: [
           Text(
-              'Không tải được danh sách lịch sử: ${profiles.historyFamilyError}'),
+              'Không tải được danh sách lịch sử: ${profiles!.historyFamilyError}'),
           TextButton(
               onPressed: profiles.loadHistoryFamily,
               child: const Text('Thử lại')),
@@ -173,22 +174,42 @@ class _RecordsOverview extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Row(
+            Row(
               children: [
-                Icon(
-                  Icons.person_outline,
-                  size: 20,
-                  color: Colors.white,
+                PersonAvatar(
+                  key: ValueKey('records-patient-avatar-${p.id}'),
+                  mediaId: p.avatarMediaId,
+                  radius: 24,
+                  icon: Icons.monitor_heart_outlined,
+                  iconColor: recordsBlue,
                 ),
-                SizedBox(width: 8),
+                const SizedBox(width: 12),
                 Expanded(
-                  child: Text(
-                    'Người được khám',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.white,
-                    ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'Người được khám',
+                        style: TextStyle(fontSize: 12, color: Colors.white70),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        p.fullName,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.white,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        '${p.isPrimary ? "Bản thân" : p.relationship} · Mã bệnh nhân ${p.id}',
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                            fontSize: 12, color: Colors.white70),
+                      ),
+                    ],
                   ),
                 ),
               ],

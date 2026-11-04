@@ -199,7 +199,7 @@ void main() {
       final d = PatientDataProvider();
       await pumpShell(tester, d, width: width);
       await open(tester, 'Lịch sử khám');
-      expect(find.text('Đã hoàn tất'), findsOneWidget);
+      expect(find.text('Đã hoàn thành'), findsOneWidget);
       final visit = d.visits.first;
       await open(tester, visitServices(d, visit));
       expect(find.text(visit.diagnosis), findsOneWidget);

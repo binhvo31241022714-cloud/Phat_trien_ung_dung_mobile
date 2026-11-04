@@ -1,3 +1,4 @@
+import '../../core/widgets/page_background.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -60,7 +61,7 @@ class _UserListScreenState extends State<UserListScreen> {
         onPressed: () => Navigator.pushNamed(context, AppRoutes.userForm),
         child: const Icon(Icons.add),
       ),
-      body: Builder(builder: (_) {
+      body: PageBackground(child: Builder(builder: (_) {
         if (provider.isLoading) return const LoadingView();
         if (provider.error != null) {
           return AppErrorView(
@@ -97,7 +98,7 @@ class _UserListScreenState extends State<UserListScreen> {
             },
           ),
         );
-      }),
+      })),
     );
   }
 }

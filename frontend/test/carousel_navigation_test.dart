@@ -15,6 +15,7 @@ void main() {
             itemCount: count,
             itemWidth: 180,
             itemHeight: 100,
+            showNavigation: true,
             itemBuilder: (_, index) => Text('Card $index'),
           )),
     ))));
@@ -98,8 +99,9 @@ void main() {
       expect(right.center.dy, closeTo(viewport.center.dy, 0.1));
       expect(viewport.left, closeTo(carousel.left, 0.1));
       expect(viewport.right, closeTo(carousel.right, 0.1));
-      expect(left.size, const Size(32, 32));
-      expect(right.size, const Size(32, 32));
+      // Kiểu nút mới: tròn trắng 30x30.
+      expect(left.size, const Size(30, 30));
+      expect(right.size, const Size(30, 30));
       expect(
           t
               .widget<Icon>(find.descendant(

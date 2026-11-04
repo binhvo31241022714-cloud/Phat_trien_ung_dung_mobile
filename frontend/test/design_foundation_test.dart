@@ -37,7 +37,8 @@ void main() {
         greaterThanOrEqualTo(4.5));
   });
 
-  testWidgets('ordinary page uses a solid surface without blur', (t) async {
+  testWidgets('ordinary page uses the pastel-to-white gradient without blur',
+      (t) async {
     await t.pumpWidget(MaterialApp(
         theme: AppTheme.light,
         home: const Scaffold(
@@ -49,8 +50,10 @@ void main() {
         .first;
     final decoration =
         t.widget<DecoratedBox>(background).decoration as BoxDecoration;
-    expect(decoration.gradient, isNull);
-    expect(decoration.color, isNotNull);
+    // Nền trang: xanh pastel ở trên nhạt dần sang trắng, không làm mờ.
+    expect(decoration.gradient, AppColors.pageGradient);
+    expect(AppColors.pageGradient.colors.first, AppColors.pageTop);
+    expect(AppColors.pageGradient.colors.last, Colors.white);
     expect(find.byType(BackdropFilter), findsNothing);
     expect(t.takeException(), isNull);
   });

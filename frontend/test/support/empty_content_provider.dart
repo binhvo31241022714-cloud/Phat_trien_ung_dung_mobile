@@ -9,8 +9,5 @@ class EmptyContentProvider extends ContentProvider {
   void bindUser(UserProvider users, CatalogProvider catalog) {}
 }
 
-EmptyContentProvider emptyContentProvider() {
-  final provider = EmptyContentProvider();
-  provider.signedIn = false;
-  return provider;
-}
+/// Chưa gắn tài khoản nên `signedIn` mặc định là false.
+EmptyContentProvider emptyContentProvider() => EmptyContentProvider();

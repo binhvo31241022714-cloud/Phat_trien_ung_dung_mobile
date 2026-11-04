@@ -38,7 +38,8 @@ void main() {
   testWidgets('Ứng dụng mở màn hình chào mừng', (tester) async {
     await tester.pumpWidget(_withProviders(const App()));
 
-    expect(find.text('MediCare Dental'), findsOneWidget);
+    // Thương hiệu mới của ứng dụng.
+    expect(find.text('YourSmile Dental'), findsOneWidget);
     expect(find.text('Chăm sóc nụ cười của bạn'), findsOneWidget);
     expect(find.text('Đăng nhập'), findsOneWidget);
     expect(find.text('Tạo tài khoản'), findsOneWidget);
