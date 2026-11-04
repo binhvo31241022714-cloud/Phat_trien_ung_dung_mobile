@@ -10,7 +10,7 @@
 # ĐĂNG NHẬP (dùng chung)
 ######################################################################
 
-### Đăng nhập bệnh nhân test123 (bấm trước mọi request cần token)
+### Đăng nhập bệnh nhân test123 (dùng cho các test module bên dưới)
 # @name login
 POST https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key={{apiKey}}
 Content-Type: application/json
@@ -20,7 +20,18 @@ Content-Type: application/json
 ###
 @token = {{login.response.body.$.idToken}}
 
-### Đăng nhập nhân viên (staff), cần cho phần xác nhận lịch Module 2
+### B0.1 Đăng nhập bệnh nhân demo mobile1234 (tài khoản Nhi demo, dùng cho phần thuyết trình)
+# @name demoLogin
+POST https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key={{apiKey}}
+Content-Type: application/json
+
+{ "email": "mobile1234@gmail.com", "password": "{{$dotenv DEMO_PASSWORD}}", "returnSecureToken": true }
+
+###
+@demoToken = {{demoLogin.response.body.$.idToken}}
+@demoUid = {{demoLogin.response.body.$.localId}}
+
+### B0.2 Đăng nhập nhân viên phòng khám (staff)
 # Tài khoản phải được gán quyền: cd backend, node scripts/set-staff.js {{staffEmail}}
 # @name staffLogin
 POST https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key={{apiKey}}
@@ -30,6 +41,323 @@ Content-Type: application/json
 
 ###
 @staffToken = {{staffLogin.response.body.$.idToken}}
+
+######################################################################
+# THUYẾT TRÌNH BÌNH: CƠ CHẾ KỸ THUẬT
+######################################################################
+# Bấm B0.1 và B0.2 ở trên trước, sau đó bấm lần lượt từ trên xuống.
+# Bệnh nhân = mobile1234 ({{demoToken}}), nhân viên = staff ({{staffToken}}).
+
+# ===== PHẦN 1. XÁC THỰC VÀ PHÂN QUYỀN =====
+
+### B1.1 Gọi API hồ sơ mà không gửi token
+# Chứng minh: mọi API cá nhân đều bắt buộc đăng nhập
+# Mong đợi: 401 "Chưa đăng nhập"
+GET {{baseUrl}}/api/users/me
+
+### B1.2 Bệnh nhân demo xem hồ sơ của chính mình
+# Chứng minh: có token hợp lệ thì backend biết đúng người và trả đúng dữ liệu của người đó
+# Mong đợi: 200, đúng họ tên và thông tin sức khỏe Nhi vừa mở trên app
+GET {{baseUrl}}/api/users/me
+Authorization: Bearer {{demoToken}}
+
+### B1.3 Bệnh nhân demo xem hồ sơ khám của một người không thuộc tài khoản mình
+# Chứng minh: không xem được dữ liệu của người khác, kể cả khi tự gõ mã người đó
+# Mong đợi: 403 "Bạn không có quyền truy cập hồ sơ này"
+GET {{baseUrl}}/api/patients/nguoi_khac_khong_thuoc_tai_khoan/visits
+Authorization: Bearer {{demoToken}}
+
+### B1.4 Bệnh nhân demo gọi API danh sách lịch hẹn của phòng khám (chỉ dành cho nhân viên)
+# Chứng minh: đăng nhập rồi vẫn phải đúng vai trò mới được dùng chức năng nhân viên
+# Mong đợi: 403 "Chỉ nhân viên mới được thực hiện thao tác này"
+GET {{baseUrl}}/api/appointments/staff
+Authorization: Bearer {{demoToken}}
+
+# ===== PHẦN 2. QUY TRÌNH ĐẶT LỊCH VÀ NHÂN VIÊN XÁC NHẬN =====
+
+### B2.1 Bệnh nhân demo xem danh sách lịch hẹn của mình
+# Chứng minh: dữ liệu trên app chính là dữ liệu backend trả về
+# Mong đợi: 200, có lịch Nhi vừa đặt với status "booked" (trên app là "Chờ xác nhận")
+GET {{baseUrl}}/api/appointments
+Authorization: Bearer {{demoToken}}
+
+### B2.2 Nhân viên xem lịch đang chờ xác nhận, mới đặt nhất lên đầu
+# Chứng minh: nhân viên thấy yêu cầu đặt lịch của bệnh nhân
+# Mong đợi: 200, phần tử đầu tiên có patientName của tài khoản demo, followUpId null
+# @name b2Booked
+GET {{baseUrl}}/api/appointments/staff?status=booked&sort=newest
+Authorization: Bearer {{staffToken}}
+
+### B2.3 Bệnh nhân demo tự xác nhận lịch của chính mình
+# Chứng minh: Flutter không tự đổi trạng thái được, chỉ nhân viên mới được xác nhận
+# Mong đợi: 403 "Chỉ nhân viên mới được thực hiện thao tác này"
+PATCH {{baseUrl}}/api/appointments/{{b2Booked.response.body.$[0].id}}/status
+Authorization: Bearer {{demoToken}}
+Content-Type: application/json
+
+{ "status": "confirmed" }
+
+### B2.4 Nhân viên xác nhận lịch đó
+# Chứng minh: booked chuyển sang confirmed, backend tạo thông báo cho bệnh nhân
+# Mong đợi: 200, status "confirmed"
+PATCH {{baseUrl}}/api/appointments/{{b2Booked.response.body.$[0].id}}/status
+Authorization: Bearer {{staffToken}}
+Content-Type: application/json
+
+{ "status": "confirmed" }
+
+### B2.5 Bệnh nhân demo xem lại chi tiết lịch
+# Chứng minh: phía bệnh nhân nhận đúng trạng thái mới (app kéo làm mới sẽ thấy "Đã xác nhận")
+# Mong đợi: 200, status "confirmed"
+GET {{baseUrl}}/api/appointments/{{b2Booked.response.body.$[0].id}}
+Authorization: Bearer {{demoToken}}
+
+### B2.6 Nhân viên lỡ bấm xác nhận lần nữa
+# Chứng minh: chỉ được chuyển theo đúng các bước cho phép, không tạo thông báo trùng
+# Mong đợi: 409 'Không thể chuyển lịch hẹn từ "confirmed" sang "confirmed"'
+PATCH {{baseUrl}}/api/appointments/{{b2Booked.response.body.$[0].id}}/status
+Authorization: Bearer {{staffToken}}
+Content-Type: application/json
+
+{ "status": "confirmed" }
+
+# ===== PHẦN 3. CHỐNG ĐẶT LỊCH TRÙNG =====
+# Ngày mai là Chủ nhật thì đổi "1 d" thành "2 d" ở B3.1 (phòng khám làm thứ 2 đến thứ 7).
+
+### B3.1 Tìm khung giờ còn trống ngày mai cho dịch vụ Khám tổng quát
+# Chứng minh: backend tính giờ trống từ lịch làm việc bác sĩ, lịch đã đặt và khóa giờ
+# Mong đợi: 200, danh sách slots; các bước sau dùng slot đầu tiên
+# @name b3Slots
+GET {{baseUrl}}/api/availability?date={{$datetime "YYYY-MM-DD" 1 d}}&serviceIds=svc_01
+
+### B3.2 Bệnh nhân demo đặt slot đó, kèm mã yêu cầu (Idempotency-Key) ngẫu nhiên
+# Chứng minh: đặt lịch chạy trong 1 transaction, giữ khóa giờ cho bác sĩ
+# Mong đợi: 201, có "id" của lịch mới, status "booked"
+# @name b3Book
+POST {{baseUrl}}/api/appointments
+Authorization: Bearer {{demoToken}}
+Content-Type: application/json
+Idempotency-Key: demo-{{$guid}}
+
+{ "serviceIds": ["svc_01"], "doctorId": "{{b3Slots.response.body.$.slots[0].doctorId}}", "date": "{{b3Slots.response.body.$.slots[0].date}}", "startTime": "{{b3Slots.response.body.$.slots[0].startTime}}", "note": "Lịch thử chống trùng" }
+
+### B3.3 Gửi lại y hệt với CÙNG mã yêu cầu (giống app tự gửi lại khi mạng chập chờn)
+# Chứng minh: bấm nhiều lần không sinh nhiều lịch
+# Mong đợi: 201, "id" GIỐNG HỆT B3.2, không có lịch mới
+POST {{baseUrl}}/api/appointments
+Authorization: Bearer {{demoToken}}
+Content-Type: application/json
+Idempotency-Key: {{b3Book.request.headers.Idempotency-Key}}
+
+{ "serviceIds": ["svc_01"], "doctorId": "{{b3Slots.response.body.$.slots[0].doctorId}}", "date": "{{b3Slots.response.body.$.slots[0].date}}", "startTime": "{{b3Slots.response.body.$.slots[0].startTime}}", "note": "Lịch thử chống trùng" }
+
+### B3.4 Một người khác (dùng tài khoản staff đóng vai bệnh nhân thứ hai) đặt ĐÚNG giờ đó
+# Chứng minh: một khung giờ không thể bị hai lịch hợp lệ cùng chiếm
+# Mong đợi: 409 "Khung giờ vừa được đặt; vui lòng chọn giờ khác"
+POST {{baseUrl}}/api/appointments
+Authorization: Bearer {{staffToken}}
+Content-Type: application/json
+
+{ "serviceIds": ["svc_01"], "doctorId": "{{b3Slots.response.body.$.slots[0].doctorId}}", "date": "{{b3Slots.response.body.$.slots[0].date}}", "startTime": "{{b3Slots.response.body.$.slots[0].startTime}}" }
+
+### B3.5 Dọn dẹp: bệnh nhân demo hủy lịch thử ở B3.2
+# Chứng minh: hủy lịch thì backend trả lại khóa giờ, người khác đặt được
+# Mong đợi: 200, status "cancelled"
+PATCH {{baseUrl}}/api/appointments/{{b3Book.response.body.$.id}}/cancel
+Authorization: Bearer {{demoToken}}
+### (TẠM) Hủy lịch thử bị sót, xóa request này sau khi dùng
+PATCH {{baseUrl}}/api/appointments/UifgDj2sLOCXQIZupWWD/cancel
+Authorization: Bearer {{demoToken}}
+# ===== PHẦN 4. LIÊN KẾT LỊCH KHÁM, HỒ SƠ VÀ TÁI KHÁM =====
+# Cần đã bấm phần 2 (B2.2 và B2.4): hoàn tất đúng lịch vừa xác nhận.
+
+### B4.1 Nhân viên hoàn tất lịch, kèm chẩn đoán và 2 loại thuốc
+# Chứng minh: 1 thao tác tạo cùng lúc kết quả khám, đơn thuốc, hóa đơn và thông báo, trong 1 transaction
+# Mong đợi: 200, status "completed", visitId = "visit_" + mã lịch
+# @name b4Done
+PATCH {{baseUrl}}/api/appointments/{{b2Booked.response.body.$[0].id}}/status
+Authorization: Bearer {{staffToken}}
+Content-Type: application/json
+
+{
+  "status": "completed",
+  "visit": {
+    "diagnosis": "Viêm nướu nhẹ, có cao răng mặt trong răng cửa dưới",
+    "result": "Đã lấy cao răng và đánh bóng toàn hàm",
+    "notes": "Chải răng 2 lần/ngày, dùng chỉ nha khoa, tái khám sau 2 tuần"
+  },
+  "prescriptions": [
+    { "medicineName": "Nước súc miệng Chlorhexidine 0,12%", "dosage": "15 ml/lần", "frequency": "2 lần/ngày sau chải răng", "durationDays": 7, "instructions": "Súc 30 giây rồi nhổ, không nuốt" },
+    { "medicineName": "Paracetamol 500mg", "dosage": "1 viên/lần", "frequency": "Khi đau, cách nhau ít nhất 6 giờ", "durationDays": 3, "instructions": "Uống sau ăn" }
+  ]
+}
+
+### B4.2 Bệnh nhân demo xem kết quả khám
+# Chứng minh: kết quả khám gắn đúng bệnh nhân và đúng lịch hẹn
+# Mong đợi: 200, có chẩn đoán vừa nhập, appointmentId là mã lịch ở phần 2
+GET {{baseUrl}}/api/visits/{{b4Done.response.body.$.visitId}}
+Authorization: Bearer {{demoToken}}
+
+### B4.3 Bệnh nhân demo xem đơn thuốc, mã ghép từ mã lịch: rx_ + mã lịch
+# Chứng minh: từ 1 lịch hẹn luôn tìm ra đúng đơn thuốc của nó
+# Mong đợi: 200, 1 đơn gồm 2 thuốc
+GET {{baseUrl}}/api/visits/{{b4Done.response.body.$.visitId}}/prescriptions
+Authorization: Bearer {{demoToken}}
+
+### B4.4 Bệnh nhân demo xem hóa đơn, mã ghép từ mã lịch: inv_ + mã lịch
+# Chứng minh: hóa đơn lấy đúng giá đã chốt lúc đặt lịch, không tính lại theo giá hôm nay
+# Mong đợi: 200, totalAmount đúng tổng tiền lúc đặt, paymentStatus "unpaid"
+GET {{baseUrl}}/api/invoices/inv_{{b2Booked.response.body.$[0].id}}
+Authorization: Bearer {{demoToken}}
+
+### B4.5 Nhân viên lỡ bấm hoàn tất lần nữa
+# Chứng minh: không sinh hồ sơ khám, đơn thuốc, hóa đơn trùng
+# Mong đợi: 409 'Không thể chuyển lịch hẹn từ "completed" sang "completed"'
+PATCH {{baseUrl}}/api/appointments/{{b2Booked.response.body.$[0].id}}/status
+Authorization: Bearer {{staffToken}}
+Content-Type: application/json
+
+{ "status": "completed", "visit": { "diagnosis": "Gửi lại" } }
+
+### B4.6 Nhân viên xem lịch đang chờ: lịch tái khám Nhi đặt từ đề xuất của bác sĩ
+# Chứng minh: lịch mới mang followUpId, nối với đề xuất tái khám
+# Mong đợi: 200, phần tử đầu có followUpId khác null
+# @name b4FollowUpAppt
+GET {{baseUrl}}/api/appointments/staff?status=booked&sort=newest
+Authorization: Bearer {{staffToken}}
+
+### B4.7 Bệnh nhân demo xem đề xuất tái khám đó
+# Chứng minh: đặt lịch xong, đề xuất tự chuyển trạng thái trong cùng transaction
+# Mong đợi: 200, status "booked", appointmentId = mã lịch tái khám ở B4.6
+GET {{baseUrl}}/api/follow-ups/{{b4FollowUpAppt.response.body.$[0].followUpId}}
+Authorization: Bearer {{demoToken}}
+
+### B4.8 (Tùy chọn) Bệnh nhân demo đặt lịch lần nữa từ CÙNG đề xuất đó
+# Chứng minh: một đề xuất tái khám chỉ đặt được 1 lịch
+# Mong đợi: 409 "Đề xuất tái khám này đã được đặt lịch"
+# Dùng lại khung giờ trống của B3.1 (cần đã bấm phần 3).
+POST {{baseUrl}}/api/appointments
+Authorization: Bearer {{demoToken}}
+Content-Type: application/json
+
+{ "serviceIds": {{b4FollowUpAppt.response.body.$[0].serviceIds}}, "doctorId": "{{b3Slots.response.body.$.slots[0].doctorId}}", "date": "{{b3Slots.response.body.$.slots[0].date}}", "startTime": "{{b3Slots.response.body.$.slots[0].startTime}}", "followUpId": "{{b4FollowUpAppt.response.body.$[0].followUpId}}" }
+
+# ===== PHẦN 5. THÔNG BÁO VÀ NHẮC LỊCH =====
+
+### B5.1 Bệnh nhân demo xem thông báo
+# Chứng minh: thông báo sự kiện được tạo ngay khi đặt, xác nhận, hủy, hoàn tất lịch
+# Mong đợi: 200, mới nhất lên đầu, có appointment_booked, appointment_confirmed, visit_result...
+GET {{baseUrl}}/api/notifications
+Authorization: Bearer {{demoToken}}
+
+### B5.2 Nhân viên tạo đề xuất tái khám 2 ngày sau cho bệnh nhân demo
+# Chứng minh: đề xuất tái khám rơi vào khoảng 3 ngày tới sẽ được nhắc
+# Mong đợi: 201, status "suggested"
+POST {{baseUrl}}/api/follow-ups
+Authorization: Bearer {{staffToken}}
+Content-Type: application/json
+
+{ "accountId": "{{demoUid}}", "patientId": "{{demoUid}}", "scheduledAt": "{{$datetime "YYYY-MM-DD" 2 d}}", "reason": "Kiểm tra lại nướu sau 2 ngày" }
+
+### B5.3 Chạy tác vụ nhắc lịch ngay (bình thường server tự chạy mỗi 10 phút)
+# Chứng minh: tác vụ định kỳ tìm lịch đã xác nhận trong 24 giờ tới và tái khám trong 3 ngày tới
+# Mong đợi: 200, "followUpReminders": 1
+POST {{baseUrl}}/api/notifications/run-reminders
+Authorization: Bearer {{staffToken}}
+
+### B5.4 Chạy lại lần nữa
+# Chứng minh: mỗi lời nhắc có mã cố định, đã có thì bỏ qua, không nhắc trùng
+# Mong đợi: 200, "created": 0, "followUpReminders": 0
+POST {{baseUrl}}/api/notifications/run-reminders
+Authorization: Bearer {{staffToken}}
+
+### B5.5 Bệnh nhân demo xem lại thông báo
+# Chứng minh: lời nhắc nằm trong danh sách thông báo của app
+# Mong đợi: 200, đầu danh sách có "Nhắc lịch tái khám" (follow_up_reminder) và "Bác sĩ đề xuất tái khám"
+GET {{baseUrl}}/api/notifications
+Authorization: Bearer {{demoToken}}
+
+### B5.6 Bệnh nhân demo tự gọi chạy nhắc lịch
+# Chứng minh: chỉ nhân viên hoặc server mới được chạy tác vụ này
+# Mong đợi: 403
+POST {{baseUrl}}/api/notifications/run-reminders
+Authorization: Bearer {{demoToken}}
+
+# ----- 5B (TÙY CHỌN): LỊCH ĐÃ HỦY THÌ KHÔNG CÒN NHẮC -----
+# Dùng lại khung giờ trống ngày mai ở B3.1 (cần đã bấm phần 3). Lịch phải bắt đầu trong vòng 24 giờ tới.
+
+### B5.7 Bệnh nhân demo đặt lịch vào khung giờ ngày mai
+# Mong đợi: 201, status "booked"
+# @name b5Appt
+POST {{baseUrl}}/api/appointments
+Authorization: Bearer {{demoToken}}
+Content-Type: application/json
+
+{ "serviceIds": ["svc_01"], "doctorId": "{{b3Slots.response.body.$.slots[0].doctorId}}", "date": "{{b3Slots.response.body.$.slots[0].date}}", "startTime": "{{b3Slots.response.body.$.slots[0].startTime}}", "note": "Lịch thử nhắc lịch" }
+
+### B5.8 Nhân viên xác nhận lịch đó
+# Mong đợi: 200, status "confirmed"
+PATCH {{baseUrl}}/api/appointments/{{b5Appt.response.body.$.id}}/status
+Authorization: Bearer {{staffToken}}
+Content-Type: application/json
+
+{ "status": "confirmed" }
+
+### B5.9 Chạy nhắc lịch
+# Chứng minh: lịch đã xác nhận trong 24 giờ tới được nhắc
+# Mong đợi: 200, "created": 1 (bệnh nhân có thông báo "Nhắc lịch hẹn")
+POST {{baseUrl}}/api/notifications/run-reminders
+Authorization: Bearer {{staffToken}}
+
+### B5.10 Bệnh nhân demo hủy lịch đó
+# Chứng minh: hủy lịch thì backend xóa luôn lời nhắc của lịch đó, trong cùng transaction
+# Mong đợi: 200, status "cancelled"
+PATCH {{baseUrl}}/api/appointments/{{b5Appt.response.body.$.id}}/cancel
+Authorization: Bearer {{demoToken}}
+
+### B5.11 Bệnh nhân demo xem lại thông báo
+# Chứng minh: không còn bị nhắc một lịch đã hủy
+# Mong đợi: 200, KHÔNG còn "Nhắc lịch hẹn" của lịch vừa hủy, có "Đã hủy lịch hẹn"
+GET {{baseUrl}}/api/notifications
+Authorization: Bearer {{demoToken}}
+
+# ===== PHẦN 6. GIÁ, VOUCHER VÀ KẾT THÚC =====
+# Điền một mã voucher còn hiệu lực vào @b6Voucher (xem bằng: node scripts/preflight-demo.js)
+@b6Voucher = DIEN_MA_VOUCHER
+
+### B6.1 Hỏi giá dịch vụ Khám tổng quát
+# Chứng minh: giá lấy từ dữ liệu gốc trên Firestore, do server tính
+# Mong đợi: 200, có subtotal, totalPrice, durationMinutes
+POST {{baseUrl}}/api/bookings/quote
+Content-Type: application/json
+
+{ "serviceIds": ["svc_01"] }
+
+### B6.2 Giả sử app bị sửa, tự gửi kèm giá 1.000 VND
+# Chứng minh: server bỏ qua giá app gửi lên, luôn tự tính lại
+# Mong đợi: 200, totalPrice VẪN BẰNG B6.1, không phải 1000
+POST {{baseUrl}}/api/bookings/quote
+Content-Type: application/json
+
+{ "serviceIds": ["svc_01"], "totalPrice": 1000, "discount": 999999 }
+
+### B6.3 Dùng mã giảm giá không tồn tại
+# Chứng minh: voucher được kiểm tra ở server, không tin mã do app gửi
+# Mong đợi: 400 "Mã giảm giá không tồn tại"
+POST {{baseUrl}}/api/bookings/quote
+Content-Type: application/json
+
+{ "serviceIds": ["svc_01"], "voucherCode": "GIAMGIA_GIA_MAO" }
+
+### B6.4 (Tùy chọn) Dùng mã giảm giá hợp lệ
+# Chứng minh: server kiểm tra còn bật, còn hạn, còn lượt, đủ giá tối thiểu rồi mới tính giảm
+# Mong đợi: 200, discount > 0, totalPrice = subtotal - discount
+POST {{baseUrl}}/api/bookings/quote
+Content-Type: application/json
+
+{ "serviceIds": ["svc_01"], "voucherCode": "{{b6Voucher}}" }
+
+# ===== HẾT PHẦN THUYẾT TRÌNH BÌNH =====
 
 ######################################################################
 # DEMO THUYẾT TRÌNH (chỉ cần đăng nhập staff ở trên)
